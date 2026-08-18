@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>// CASE TEAM :: CASE BRIEF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0d10; --bg-1:#10151a; --bg-2:#141b22; --panel:#0d1216f0; --panel-2:#121920;
+    --line:rgba(63,143,209,.2); --line-strong:rgba(63,143,209,.42);
+    --blue:#3f8fd1; --grey:#7c8791; --text:#dbe4ea; --text-dim:#8793a0; --text-faint:#4a545e;
+    --danger:#d1483f; --warn:#cfa23f;
+    --font-display:'Space Grotesk', sans-serif; --font-body:'Inter', sans-serif; --font-mono:'JetBrains Mono', monospace;
+    --grain-op:.045;
+  }
+  html[data-theme="light"]{
+    --bg:#eef1f4; --bg-1:#e6ebef; --bg-2:#dde4e9; --panel:#f6f8faf0; --panel-2:#eef2f5;
+    --line:rgba(31,111,168,.24); --line-strong:rgba(31,111,168,.46);
+    --blue:#1f6fa8; --grey:#4b555f; --text:#12161a; --text-dim:#445059; --text-faint:#74808a;
+    --danger:#a83f2f; --warn:#8c6a10; --grain-op:.025;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg); color:var(--text); font-family:var(--font-body); overflow-x:hidden; transition:background .5s,color .5s; position:relative;}
+
+  #datamotes{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.7;}
+  .grain{position:fixed; inset:0; z-index:1; pointer-events:none; mix-blend-mode:overlay; opacity:var(--grain-op);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .vignette{position:fixed; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse at center, transparent 46%, rgba(0,0,0,.42) 100%);}
+  html[data-theme="light"] .vignette{background:radial-gradient(ellipse at center, transparent 52%, rgba(10,20,30,.1) 100%);}
+
+  #boot{position:fixed; inset:0; z-index:999; background:#070a0c; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; font-family:var(--font-mono); color:var(--blue); transition:opacity .7s ease, visibility .7s ease;}
+  #boot.hide{opacity:0; visibility:hidden;}
+  #boot .lock{width:46px; height:46px; position:relative;}
+  #boot .lock .shackle{position:absolute; left:11px; top:0; width:24px; height:22px; border:4px solid var(--grey); border-bottom:none; border-radius:14px 14px 0 0; transform-origin:14px 20px; transition:transform .5s cubic-bezier(.3,1.6,.4,1), border-color .3s;}
+  #boot .lock .body{position:absolute; left:5px; top:18px; width:36px; height:26px; background:var(--panel-2); border:2px solid var(--blue); border-radius:4px;}
+  #boot .lock .body::after{content:''; position:absolute; left:16px; top:8px; width:4px; height:9px; background:var(--blue); border-radius:1px;}
+  #boot .lock.open .shackle{transform:rotate(-38deg) translate(-3px,-2px); border-color:var(--blue);}
+  #boot .lock .flash{position:absolute; inset:-14px; border-radius:50%; background:radial-gradient(circle, rgba(63,143,209,.5), transparent 65%); opacity:0;}
+  #boot .lock.open .flash{animation:unlockflash .5s ease-out;}
+  @keyframes unlockflash{0%{opacity:0; transform:scale(.6);}40%{opacity:1;}100%{opacity:0; transform:scale(1.5);}}
+  #boot .glyph{font-size:13px; letter-spacing:3px; opacity:.75;}
+  #boot .bootbar{width:min(420px,70vw); height:3px; background:rgba(255,255,255,.07); position:relative; overflow:hidden;}
+  #boot .bootbar::after{content:''; position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg,var(--blue),var(--grey)); animation:bootfill 2s cubic-bezier(.3,.9,.4,1) forwards;}
+  @keyframes bootfill{to{width:100%}}
+  #boot .bootline{font-size:10.5px; color:var(--text-dim); letter-spacing:1.5px;}
+
+  #themeToggle{position:fixed; top:18px; right:18px; z-index:60; display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line-strong); padding:8px 14px; cursor:pointer; font-family:var(--font-mono); font-size:10.5px; letter-spacing:1px; color:var(--text-dim); backdrop-filter:blur(6px);}
+  #themeToggle:hover{border-color:var(--blue); color:var(--blue);}
+  #themeToggle .dot{width:8px; height:8px; border-radius:50%; background:var(--grey); box-shadow:0 0 8px var(--grey); transition:.4s;}
+  html[data-theme="light"] #themeToggle .dot{background:var(--blue); box-shadow:0 0 8px var(--blue);}
+
+  .wrap{position:relative; z-index:5; max-width:1180px; margin:0 auto; padding:90px 24px 120px;}
+
+  .frame{position:relative; border:1px solid var(--line);}
+  .frame::before,.frame::after,.frame .bl,.frame .br{content:''; position:absolute; width:14px; height:14px; pointer-events:none;}
+  .frame::before{top:-1px; left:-1px; border-top:2px solid var(--blue); border-left:2px solid var(--blue);}
+  .frame::after{top:-1px; right:-1px; border-top:2px solid var(--grey); border-right:2px solid var(--grey);}
+  .frame .bl{bottom:-1px; left:-1px; border-bottom:2px solid var(--grey);}
+  .frame .br{bottom:-1px; right:-1px; border-bottom:2px solid var(--blue); border-right:2px solid var(--blue);}
+
+  header.classbar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; padding:14px 20px; margin-bottom:26px; background:var(--panel-2); border-top:2px solid var(--blue); border-bottom:1px solid var(--line);}
+  .classbar .left{display:flex; align-items:center; gap:12px;}
+  .classbar .badge{width:34px; height:34px; border:1px solid var(--blue); border-radius:6px; display:flex; align-items:center; justify-content:center; position:relative; font-family:var(--font-display); font-size:.85rem; color:var(--blue);}
+  .classbar .badge::before{content:''; position:absolute; inset:4px; border:1px solid var(--grey); border-radius:3px; opacity:.5;}
+  .classbar .orgtext{font-family:var(--font-mono); font-size:10.5px; letter-spacing:1.5px; color:var(--text-dim); line-height:1.5;}
+  .classbar .orgtext b{color:var(--text); font-family:var(--font-display); letter-spacing:.3px;}
+  .classbar .right{display:flex; gap:22px; font-family:var(--font-mono); font-size:10px; color:var(--text-dim); letter-spacing:.5px; text-align:right;}
+  .classbar .right .k{color:var(--blue);}
+
+  .titleblock{margin:34px 0 40px; text-align:center;}
+  .titleblock .eyebrow{font-family:var(--font-mono); font-size:11.5px; letter-spacing:6px; color:var(--blue); display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:14px;}
+  .titleblock .eyebrow::before,.titleblock .eyebrow::after{content:''; height:1px; width:60px; background:linear-gradient(90deg,transparent,var(--blue));}
+  .titleblock .eyebrow::after{background:linear-gradient(90deg,var(--blue),transparent);}
+  h1.title{font-family:var(--font-display); font-weight:700; font-size:clamp(1.9rem,5.6vw,3.6rem); letter-spacing:-.5px; line-height:1.1; color:var(--text);}
+  .subtitle{font-family:var(--font-mono); font-size:12px; letter-spacing:1.5px; color:var(--text-dim); margin-top:10px;}
+
+  nav.tabs{position:sticky; top:0; z-index:40; display:flex; gap:2px; flex-wrap:wrap; justify-content:center; margin:0 -24px 40px; padding:12px 24px; background:linear-gradient(180deg, var(--bg) 60%, transparent); backdrop-filter:blur(8px);}
+  nav.tabs a{font-family:var(--font-mono); font-size:10.5px; letter-spacing:1.5px; color:var(--text-dim); text-decoration:none; padding:8px 14px; border:1px solid var(--line); background:var(--panel); text-transform:uppercase; transition:.25s;}
+  nav.tabs a:hover{color:var(--bg); background:var(--blue); border-color:var(--blue); box-shadow:0 0 14px rgba(63,143,209,.4);}
+
+  section{margin-bottom:56px; opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
+  section.in{opacity:1; transform:translateY(0);}
+  .sechead{display:flex; align-items:baseline; gap:14px; margin-bottom:18px;}
+  .sechead .num{font-family:var(--font-mono); color:var(--blue); font-size:13px;}
+  .sechead h2{font-family:var(--font-display); font-size:1.1rem; letter-spacing:1px; color:var(--text);}
+  .sechead .rule{flex:1; height:1px; background:linear-gradient(90deg,var(--line-strong),transparent);}
+
+  .panel{background:var(--panel); padding:22px; position:relative;}
+  .grid-2{display:grid; grid-template-columns:1.3fr 1fr; gap:20px;}
+  @media(max-width:820px){.grid-2{grid-template-columns:1fr;}}
+  p.body-copy{font-size:.98rem; line-height:1.75; color:var(--text-dim); margin-bottom:14px;}
+  p.body-copy b{color:var(--text); font-weight:600;}
+  .kv{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--line); font-family:var(--font-mono); font-size:11.5px;}
+  .kv span:first-child{color:var(--text-faint);}
+  .kv span:last-child{color:var(--blue);}
+
+  .mapbox{height:220px; position:relative; overflow:hidden; background:radial-gradient(circle at 30% 30%, var(--panel-2), var(--bg-2) 70%); display:flex; align-items:center; justify-content:center;}
+  .mapbox .grid-overlay{position:absolute; inset:0; background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size:24px 24px; opacity:.4;}
+  .mapbox .ping{width:9px; height:9px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 0 var(--blue); animation:ping 2.2s ease-out infinite;}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(63,143,209,.55)}70%{box-shadow:0 0 0 24px rgba(63,143,209,0)}100%{box-shadow:0 0 0 0 rgba(63,143,209,0)}}
+  .mapbox .sweep{position:absolute; inset:0; background:conic-gradient(from 0deg, transparent 0deg, var(--blue) 6deg, transparent 26deg); animation:sweep 4.5s linear infinite; opacity:.4; mix-blend-mode:screen;}
+  html[data-theme="light"] .mapbox .sweep{mix-blend-mode:multiply; opacity:.22;}
+  @keyframes sweep{to{transform:rotate(360deg)}}
+
+  .feed{aspect-ratio:16/8; position:relative; overflow:hidden; background:linear-gradient(135deg,var(--bg-2),var(--panel-2)); display:flex; align-items:center; justify-content:center;}
+  .feed .feedlabel{position:absolute; top:12px; left:12px; font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--blue); display:flex; align-items:center; gap:6px;}
+  .feed .feedlabel .rec{width:7px; height:7px; border-radius:50%; background:var(--danger); animation:blink 1.1s steps(2) infinite;}
+  @keyframes blink{50%{opacity:.15}}
+  .feed .feedmeta{position:absolute; bottom:12px; right:14px; font-family:var(--font-mono); font-size:10px; color:var(--text-faint);}
+  .feed .placeholder-icon{font-family:var(--font-display); font-size:1.9rem; color:var(--text-faint); letter-spacing:1px; opacity:.5;}
+
+  .threat-row{display:grid; grid-template-columns:220px 1fr 90px; align-items:center; gap:16px; padding:11px 0; border-bottom:1px solid var(--line);}
+  .threat-row:last-child{border-bottom:none;}
+  .threat-row .label{font-family:var(--font-mono); font-size:11.5px; letter-spacing:.3px; color:var(--text);}
+  .meter{height:8px; background:var(--bg-2); position:relative; overflow:hidden; clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);}
+  .meter i{position:absolute; inset:0; width:0%; background:linear-gradient(90deg,var(--grey),var(--blue)); transition:width 1.4s cubic-bezier(.2,.8,.2,1);}
+  .meter.high i{background:linear-gradient(90deg,var(--warn),var(--danger));}
+  .meter.vhigh i{background:linear-gradient(90deg,var(--danger),#7a1f18);}
+  .threat-row .pct{font-family:var(--font-mono); font-size:11px; color:var(--text-dim); text-align:right;}
+
+  .obj{display:grid; grid-template-columns:44px 1fr auto; gap:16px; align-items:start; padding:18px; background:var(--panel); margin-bottom:10px; border-left:2px solid var(--line); transition:.3s; transform:translateX(-12px); opacity:0;}
+  .obj.in{transform:translateX(0); opacity:1;}
+  .obj:hover{border-left-color:var(--blue); background:var(--panel-2);}
+  .obj .idx{font-family:var(--font-display); font-size:1.25rem; color:var(--grey); opacity:.7;}
+  .obj h3{font-family:var(--font-body); font-weight:600; font-size:.98rem; margin-bottom:6px;}
+  .obj p{color:var(--text-dim); font-size:.9rem; line-height:1.55;}
+  .tag{font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; padding:5px 10px; border:1px solid; white-space:nowrap; height:fit-content;}
+  .tag.primary{color:var(--blue); border-color:var(--blue);}
+  .tag.secondary{color:var(--warn); border-color:var(--warn);}
+  .tag.tertiary{color:var(--grey); border-color:var(--grey);}
+
+  .gallery{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+  @media(max-width:820px){.gallery{grid-template-columns:repeat(2,1fr);}}
+  .gitem{aspect-ratio:1; position:relative; overflow:hidden; background:linear-gradient(160deg,var(--bg-2),var(--panel-2)); cursor:pointer; transition:transform .3s;}
+  .gitem::before{content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.5), transparent 50%);}
+  .gitem .gtag{position:absolute; bottom:8px; left:8px; font-family:var(--font-mono); font-size:9px; letter-spacing:.5px; color:var(--blue); z-index:2;}
+  .gitem .gicon{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--text-faint); opacity:.4;}
+  .gitem::after{content:''; position:absolute; inset:0; border:1px solid var(--line); transition:.3s;}
+  .gitem:hover::after{border-color:var(--blue); box-shadow:inset 0 0 22px rgba(63,143,209,.25);}
+  .gitem:hover{transform:scale(1.02);}
+
+  .audiolog{display:flex; align-items:center; gap:16px; padding:16px 20px; background:var(--panel);}
+  .playbtn{width:38px; height:38px; border-radius:50%; border:1px solid var(--blue); display:flex; align-items:center; justify-content:center; color:var(--blue); cursor:pointer; flex-shrink:0; transition:.25s;}
+  .playbtn:hover{background:var(--blue); color:var(--bg); box-shadow:0 0 16px var(--blue);}
+  .waveform{display:flex; align-items:center; gap:3px; height:30px; flex:1;}
+  .waveform span{width:3px; background:linear-gradient(180deg,var(--blue),var(--grey)); animation:wave 1.2s ease-in-out infinite; border-radius:2px;}
+  @keyframes wave{0%,100%{height:20%;}50%{height:100%;}}
+  .audiolog .meta{font-family:var(--font-mono); font-size:10px; color:var(--text-dim); letter-spacing:.5px; white-space:nowrap;}
+
+  .casestatus{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+  @media(max-width:700px){.casestatus{grid-template-columns:repeat(2,1fr);}}
+  .cstat{background:var(--panel); padding:16px; text-align:center; border-top:2px solid var(--blue);}
+  .cstat .val{font-family:var(--font-display); font-size:1.35rem; color:var(--blue);}
+  .cstat .lbl{font-family:var(--font-mono); font-size:9.5px; color:var(--text-dim); letter-spacing:1px; margin-top:4px;}
+
+  .logline{display:grid; grid-template-columns:110px 1fr; gap:16px; padding:10px 0; border-bottom:1px dotted var(--line); font-size:.92rem;}
+  .logline .ts{font-family:var(--font-mono); color:var(--blue); font-size:10.5px; padding-top:2px;}
+  .logline .entry{color:var(--text-dim);}
+  .logline .entry b{color:var(--text);}
+
+  footer{text-align:center; padding:50px 20px 10px; position:relative; z-index:5;}
+  footer .quote{font-family:var(--font-mono); font-style:italic; color:var(--text-dim); font-size:.9rem; max-width:520px; margin:0 auto 8px;}
+  footer .sig{font-family:var(--font-mono); font-size:10px; color:var(--text-faint); letter-spacing:2px;}
+  footer .starlogo{width:26px; height:26px; margin:0 auto 16px; position:relative;}
+  footer .starlogo::before{content:'◆'; color:var(--blue); font-size:18px; display:block; text-align:center; animation:pulse 3s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.5; transform:scale(1);}50%{opacity:1; transform:scale(1.12);}}
+  ::selection{background:var(--blue); color:#fff;}
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div class="lock" id="lock">
+    <div class="flash"></div>
+    <div class="shackle"></div>
+    <div class="body"></div>
+  </div>
+  <div class="glyph">OPENING CASE FILE</div>
+  <div class="bootbar"></div>
+  <div class="bootline">verifying clearance · ST-119-05</div>
+</div>
+
+<canvas id="datamotes"></canvas>
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<button id="themeToggle"><span class="dot"></span><span id="themeLabel">NIGHT SHIFT</span></button>
+
+<div class="wrap">
+
+  <header class="classbar frame"><span class="bl"></span><span class="br"></span>
+    <div class="left">
+      <div class="badge">◆</div>
+      <div class="orgtext"><b>SHATTERED TALES CASE TEAM</b><br>CASE MANAGEMENT SYSTEM · MODERN URBAN</div>
+    </div>
+    <div class="right">
+      <div><span class="k">CLASS</span><br>Confidential</div>
+      <div><span class="k">DIST</span><br>Case Team Only</div>
+      <div><span class="k">SESSION</span><br>5</div>
+      <div><span class="k">CODE</span><br>ST-119-05</div>
+    </div>
+  </header>
+
+  <div class="titleblock">
+    <div class="eyebrow">CASE BRIEF</div>
+    <h1 class="title">The Kim Seng Road Renovation</h1>
+    <div class="subtitle">SHATTERED TALES — CONTEMPORARY SINGAPORE, CASE 5</div>
+  </div>
+
+  <nav class="tabs">
+    <a href="#background">Background</a>
+    <a href="#fieldmap">Field Map</a>
+    <a href="#risk">Risk</a>
+    <a href="#leads">Leads</a>
+    <a href="#files">Files &amp; Photos</a>
+    <a href="#timeline">Case Timeline</a>
+  </nav>
+
+  <section id="background">
+    <div class="sechead"><span class="num">01</span><h2>Background</h2><span class="rule"></span></div>
+    <div class="grid-2">
+      <div class="panel frame"><span class="bl"></span><span class="br"></span>
+        <p class="body-copy">Three contractors have quit the Kim Seng Road shophouse renovation in as many weeks, each citing the same thing: <b>something moves in the walls after the workers leave</b>. The client wants it handled quietly before the story reaches the press.</p>
+        <p class="body-copy">The building predates the war and was, according to one elderly neighbour, "never meant to be lived in" — a phrase nobody on the team has managed to get her to explain further.</p>
+        <p class="body-copy">The team's read: either a very committed prankster, a structural issue nobody wants to admit to, or something the client isn't telling them.</p>
+      </div>
+      <div class="panel frame"><span class="bl"></span><span class="br"></span>
+        <div class="kv"><span>CASE #</span><span>5</span></div>
+        <div class="kv"><span>CLIENT</span><span>PRIVATE — WITHHELD</span></div>
+        <div class="kv"><span>OPENED</span><span>12 DAYS AGO</span></div>
+        <div class="kv"><span>TEAM TRUST</span><span>MEDIUM</span></div>
+        <div class="kv"><span>ACTIVE COMPLICATION</span><span>PRESS INTEREST</span></div>
+        <div class="kv"><span>NEXT SESSION</span><span>Thursday, 8pm</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="fieldmap">
+    <div class="sechead"><span class="num">02</span><h2>Field Map</h2><span class="rule"></span></div>
+    <div class="grid-2">
+      <div class="panel frame"><span class="bl"></span><span class="br"></span>
+        <div class="mapbox">
+          <div class="grid-overlay"></div>
+          <div class="sweep"></div>
+          <div class="ping"></div>
+        </div>
+      </div>
+      <div class="panel frame"><span class="bl"></span><span class="br"></span>
+        <p class="body-copy"><b>KIM SENG ROAD SHOPHOUSE</b> — pre-war conservation building, mid-renovation, currently unoccupied after hours.</p>
+        <div class="kv"><span>DISTRICT</span><span>RIVER VALLEY</span></div>
+        <div class="kv"><span>BUILDING AGE</span><span>~1920s</span></div>
+        <div class="kv"><span>SITE ACCESS</span><span>CLIENT KEY, LOGGED</span></div>
+        <div class="kv"><span>KNOWN HAZARDS</span><span>UNSTABLE FLOORING</span></div>
+        <div class="kv"><span>NEAREST WITNESS</span><span>NEIGHBOUR, UNIT 12</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="risk">
+    <div class="sechead"><span class="num">03</span><h2>Risk Assessment</h2><span class="rule"></span></div>
+    <div class="panel frame"><span class="bl"></span><span class="br"></span>
+      <div class="threat-row"><div class="label">STRUCTURAL / SAFETY RISK</div><div class="meter" data-fill="45"><i></i></div><div class="pct">MEDIUM</div></div>
+      <div class="threat-row"><div class="label">PRESS / EXPOSURE RISK</div><div class="meter high" data-fill="70"><i></i></div><div class="pct">HIGH</div></div>
+      <div class="threat-row"><div class="label">CLIENT WITHHOLDING INFO</div><div class="meter high" data-fill="65"><i></i></div><div class="pct">HIGH</div></div>
+      <div class="threat-row"><div class="label">UNEXPLAINED PHENOMENA</div><div class="meter vhigh" data-fill="80"><i></i></div><div class="pct">V.HIGH</div></div>
+      <div class="threat-row"><div class="label">LEGAL EXPOSURE</div><div class="meter" data-fill="30"><i></i></div><div class="pct">LOW</div></div>
+    </div>
+
+    <div class="sechead" style="margin-top:34px;"><span class="num"></span><h2>Case Status</h2><span class="rule"></span></div>
+    <div class="casestatus">
+      <div class="cstat"><div class="val">3</div><div class="lbl">LEADS OPEN</div></div>
+      <div class="cstat"><div class="val">12d</div><div class="lbl">CASE AGE</div></div>
+      <div class="cstat"><div class="val">MED</div><div class="lbl">CLIENT TRUST</div></div>
+      <div class="cstat"><div class="val">$2.4K</div><div class="lbl">BUDGET LEFT</div></div>
+    </div>
+  </section>
+
+  <section id="leads">
+    <div class="sechead"><span class="num">04</span><h2>Leads</h2><span class="rule"></span></div>
+
+    <div class="obj"><div class="idx">01</div><div><h3>Interview the Unit 12 Neighbour</h3><p>She's spoken to two contractors already. Find out what she won't say to strangers.</p></div><div class="tag primary">PRIORITY LEAD</div></div>
+
+    <div class="obj"><div class="idx">02</div><div><h3>Pull the Building's Pre-War Records</h3><p>Land registry and any surviving occupancy records — find out what "never meant to be lived in" refers to.</p></div><div class="tag primary">PRIORITY LEAD</div></div>
+
+    <div class="obj"><div class="idx">03</div><div><h3>Get the Client to Talk</h3><p>Something about this brief doesn't add up. Push for the full story.</p></div><div class="tag secondary">SECONDARY LEAD</div></div>
+
+    <div class="obj"><div class="idx">04</div><div><h3>Check the Contractors' Stories</h3><p>Three independent accounts saying the same thing is either corroboration or coordination.</p></div><div class="tag secondary">SECONDARY LEAD</div></div>
+
+    <div class="obj"><div class="idx">05</div><div><h3>The 1920s Newspaper Clipping</h3><p>A team member found a reference to a fire at the address. Possibly unrelated.</p></div><div class="tag tertiary">LOOSE THREAD</div></div>
+  </section>
+
+  <section id="files">
+    <div class="sechead"><span class="num">05</span><h2>Files &amp; Photos</h2><span class="rule"></span></div>
+
+    <div class="panel frame" style="margin-bottom:16px;"><span class="bl"></span><span class="br"></span>
+      <div class="feed">
+        <div class="feedlabel"><span class="rec"></span>SITE PHOTO — GROUND FLOOR, NIGHT ACCESS</div>
+        <div class="feedmeta">CASE 5 · FIELD FILE</div>
+        <div class="placeholder-icon">EVIDENCE PHOTO / VIDEO SLOT</div>
+      </div>
+    </div>
+
+    <div class="gallery" style="margin-bottom:16px;">
+      <div class="gitem"><div class="gicon">◆</div><div class="gtag">WITNESS · UNIT 12</div></div>
+      <div class="gitem"><div class="gicon">◆</div><div class="gtag">DOCUMENT · LAND REGISTRY</div></div>
+      <div class="gitem"><div class="gicon">◆</div><div class="gtag">SITE MAP · SHOPHOUSE</div></div>
+      <div class="gitem"><div class="gicon">◆</div><div class="gtag">CLIPPING · 1920s FIRE</div></div>
+    </div>
+
+    <div class="audiolog frame"><span class="bl"></span><span class="br"></span>
+      <div class="playbtn" id="playBtn">▶</div>
+      <div class="waveform" id="waveform"></div>
+      <div class="meta">RECORDED INTERVIEW · NEIGHBOUR_UNIT12.WAV · 02:31</div>
+    </div>
+  </section>
+
+  <section id="timeline">
+    <div class="sechead"><span class="num">06</span><h2>Case Timeline</h2><span class="rule"></span></div>
+    <div class="panel frame"><span class="bl"></span><span class="br"></span>
+      <div class="logline"><div class="ts">Day 1</div><div class="entry">Client opens the case after the second contractor quits mid-shift.</div></div>
+      <div class="logline"><div class="ts">Day 6</div><div class="entry">Team's first site visit; no incident during daylight hours.</div></div>
+      <div class="logline"><div class="ts">Day 11</div><div class="entry">Third contractor quits. Team schedules a night visit.</div></div>
+      <div class="logline"><div class="ts">TBD</div><div class="entry">— next entry pending session 6 —</div></div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="starlogo"></div>
+  <div class="quote">"Every old building in this city has a story. Ours just happens to still be moving."</div>
+  <div class="sig">— SHATTERED TALES CASE TEAM · END OF BRIEF —</div>
+</footer>
+
+<script>
+  window.addEventListener('load', ()=>{ setTimeout(()=>{ document.getElementById('boot').classList.add('hide'); }, 2100); });
+  setTimeout(()=> document.getElementById('lock').classList.add('open'), 1100);
+
+  const html = document.documentElement;
+  const toggle = document.getElementById('themeToggle');
+  const label = document.getElementById('themeLabel');
+  toggle.addEventListener('click', ()=>{
+    const isLight = html.getAttribute('data-theme') === 'light';
+    html.setAttribute('data-theme', isLight ? 'dark' : 'light');
+    label.textContent = isLight ? 'NIGHT SHIFT' : 'DAY SHIFT';
+    drawField();
+  });
+
+  const canvas = document.getElementById('datamotes');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+  function makeParticles(){
+    const light = html.getAttribute('data-theme') === 'light';
+    const count = light ? 55 : 100;
+    particles = Array.from({length:count}, ()=>({
+      x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+      r: Math.random()*1.3 + .3, s: Math.random()*.35 + .08, a: Math.random()
+    }));
+  }
+  function drawField(){ makeParticles(); }
+  function animate(){
+    const light = html.getAttribute('data-theme') === 'light';
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = light ? 'rgba(31,111,168,0.45)' : 'rgba(63,143,209,0.75)';
+    particles.forEach(p=>{
+      p.a += 0.008 * (Math.random()>.5?1:-1); p.a = Math.max(0,Math.min(1,p.a));
+      p.y += p.s;
+      if(p.y > canvas.height) p.y = 0;
+      ctx.globalAlpha = p.a;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animate);
+  }
+  resize(); makeParticles(); animate();
+  window.addEventListener('resize', ()=>{ resize(); makeParticles(); });
+
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        e.target.querySelectorAll('.obj').forEach((o,i)=> setTimeout(()=>o.classList.add('in'), i*90));
+        e.target.querySelectorAll('.meter').forEach(m=>{ m.querySelector('i').style.width = m.dataset.fill + '%'; });
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:.2});
+  document.querySelectorAll('section').forEach(s=>io.observe(s));
+
+  const wf = document.getElementById('waveform');
+  for(let i=0;i<38;i++){
+    const bar = document.createElement('span');
+    bar.style.animationDelay = (Math.random()*1.2)+'s';
+    bar.style.animationDuration = (0.7+Math.random()*0.8)+'s';
+    wf.appendChild(bar);
+  }
+  let playing = true;
+  document.getElementById('playBtn').addEventListener('click', function(){
+    playing = !playing;
+    this.textContent = playing ? '▶' : '❚❚';
+    wf.style.animationPlayState = playing ? 'running':'paused';
+    wf.querySelectorAll('span').forEach(s=> s.style.animationPlayState = playing?'running':'paused');
+  });
+</script>
+</body>
+</html>

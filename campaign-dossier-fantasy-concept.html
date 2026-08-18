@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>// TITAN'S GATE :: CHRONICLE ENTRY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Crimson+Pro:wght@400;500;600;700&family=IM+Fell+English&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0f14; --bg-1:#131522; --bg-2:#171a2a; --panel:#12141ef0; --panel-2:#161a28;
+    --line:rgba(58,127,217,.2); --line-strong:rgba(58,127,217,.42);
+    --blue:#3f7fd9; --orange:#e08a2e; --text:#e4e9f2; --text-dim:#8993ab; --text-faint:#4c5470;
+    --danger:#e0522e; --warn:#e0b12e;
+    --font-display:'Cinzel', serif; --font-body:'Crimson Pro', serif; --font-mono:'IM Fell English', serif;
+    --grain-op:.06;
+  }
+  html[data-theme="light"]{
+    --bg:#f0ede2; --bg-1:#ece6d4; --bg-2:#e5ddc5; --panel:#f7f3e6f0; --panel-2:#efe8d5;
+    --line:rgba(43,90,160,.28); --line-strong:rgba(43,90,160,.5);
+    --blue:#2b5aa0; --orange:#b8641c; --text:#1c1f28; --text-dim:#544d38; --text-faint:#867c5c;
+    --danger:#a83f22; --warn:#a5820c; --grain-op:.04;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg); color:var(--text); font-family:var(--font-body); overflow-x:hidden; transition:background .6s,color .6s; position:relative;}
+
+  #embers{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.75;}
+  .grain{position:fixed; inset:0; z-index:1; pointer-events:none; mix-blend-mode:overlay; opacity:var(--grain-op);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .vignette{position:fixed; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,.5) 100%);}
+  html[data-theme="light"] .vignette{background:radial-gradient(ellipse at center, transparent 48%, rgba(60,45,10,.15) 100%);}
+
+  #boot{position:fixed; inset:0; z-index:999; background:#08090c; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; font-family:var(--font-mono); color:var(--orange); transition:opacity .9s ease, visibility .9s ease;}
+  #boot.hide{opacity:0; visibility:hidden;}
+  #boot .glyph{font-size:15px; letter-spacing:3px; opacity:.7; animation:candleflicker 2.6s infinite;}
+  #boot .bootbar{width:min(420px,70vw); height:3px; background:rgba(255,255,255,.08); position:relative; overflow:hidden;}
+  #boot .bootbar::after{content:''; position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg,var(--orange),var(--blue)); animation:bootfill 2.6s cubic-bezier(.3,.9,.4,1) forwards;}
+  @keyframes bootfill{to{width:100%}}
+  #boot .bootline{font-size:11px; color:var(--text-dim); letter-spacing:1.5px; font-style:italic;}
+  #boot .seal{width:64px; height:64px; position:relative; margin-bottom:4px;}
+  #boot .seal .half{position:absolute; top:0; width:32px; height:64px; overflow:hidden;}
+  #boot .seal .half.l{left:0;}
+  #boot .seal .half.r{right:0;}
+  #boot .seal .half::before{content:'⚜'; position:absolute; top:0; left:0; width:64px; height:64px; font-size:56px; line-height:64px; text-align:center; color:var(--orange); text-shadow:0 0 14px rgba(224,138,46,.5);}
+  #boot .seal .half.r::before{right:0; left:auto;}
+  #boot .seal.crack .half.l{animation:crackleft 1.1s cubic-bezier(.4,0,.2,1) 1.1s forwards;}
+  #boot .seal.crack .half.r{animation:crackright 1.1s cubic-bezier(.4,0,.2,1) 1.1s forwards;}
+  @keyframes crackleft{to{transform:translate(-14px,10px) rotate(-14deg); opacity:0;}}
+  @keyframes crackright{to{transform:translate(14px,10px) rotate(14deg); opacity:0;}}
+  @keyframes candleflicker{0%,100%{opacity:.7}38%{opacity:.3}41%{opacity:.75}68%{opacity:.4}71%{opacity:.7}}
+
+  #themeToggle{position:fixed; top:18px; right:18px; z-index:60; display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--line-strong); padding:8px 14px; cursor:pointer; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-dim); backdrop-filter:blur(6px); font-style:italic;}
+  #themeToggle:hover{border-color:var(--orange); color:var(--orange);}
+  #themeToggle .dot{width:8px; height:8px; border-radius:50%; background:var(--blue); box-shadow:0 0 8px var(--blue); transition:.4s;}
+  html[data-theme="light"] #themeToggle .dot{background:var(--orange); box-shadow:0 0 8px var(--orange);}
+
+  .wrap{position:relative; z-index:5; max-width:1180px; margin:0 auto; padding:90px 24px 120px;}
+
+  .frame{position:relative; border:1px solid var(--line);}
+  .frame::before,.frame::after,.frame .bl,.frame .br{content:''; position:absolute; width:16px; height:16px; pointer-events:none;}
+  .frame::before{top:-1px; left:-1px; border-top:2px solid var(--blue); border-left:2px solid var(--blue); border-radius:6px 0 0 0;}
+  .frame::after{top:-1px; right:-1px; border-top:2px solid var(--orange); border-right:2px solid var(--orange); border-radius:0 6px 0 0;}
+  .frame .bl{bottom:-1px; left:-1px; border-bottom:2px solid var(--orange); border-left:2px solid var(--orange); border-radius:0 0 0 6px;}
+  .frame .br{bottom:-1px; right:-1px; border-bottom:2px solid var(--blue); border-right:2px solid var(--blue); border-radius:0 0 6px 0;}
+
+  header.classbar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; padding:14px 20px; margin-bottom:26px; background:var(--panel-2); border-top:2px solid var(--orange); border-bottom:1px solid var(--line);}
+  .classbar .left{display:flex; align-items:center; gap:12px;}
+  .classbar .badge{width:36px; height:36px; border:1px solid var(--blue); border-radius:50%; display:flex; align-items:center; justify-content:center; position:relative; font-family:var(--font-display); font-size:.9rem; color:var(--orange);}
+  .classbar .badge::before{content:''; position:absolute; inset:5px; border:1px dashed var(--orange); border-radius:50%; animation:spin 12s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .classbar .orgtext{font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--text-dim); line-height:1.5; font-style:italic;}
+  .classbar .orgtext b{color:var(--text); font-family:var(--font-display); letter-spacing:.5px; font-style:normal;}
+  .classbar .right{display:flex; gap:22px; font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); letter-spacing:.5px; text-align:right; font-style:italic;}
+  .classbar .right .k{color:var(--orange); font-style:normal;}
+
+  .titleblock{margin:34px 0 40px; text-align:center;}
+  .titleblock .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:6px; color:var(--blue); display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:14px; font-style:italic;}
+  .titleblock .eyebrow::before,.titleblock .eyebrow::after{content:''; height:1px; width:60px; background:linear-gradient(90deg,transparent,var(--blue));}
+  .titleblock .eyebrow::after{background:linear-gradient(90deg,var(--blue),transparent);}
+  h1.title{font-family:var(--font-display); font-weight:900; font-size:clamp(2rem,6vw,4rem); letter-spacing:1px; line-height:1.08; color:var(--text); position:relative; display:inline-block; text-shadow:0 0 18px rgba(224,138,46,.25);}
+  h1.title .glow-layer{position:absolute; inset:0; color:var(--orange); opacity:0;}
+  h1.title.flare .glow-layer{opacity:.55; animation:flarepulse .5s ease-out;}
+  @keyframes flarepulse{0%{opacity:0; filter:blur(4px);}40%{opacity:.7; filter:blur(1px);}100%{opacity:0; filter:blur(0);}}
+  .subtitle{font-family:var(--font-mono); font-size:13px; letter-spacing:1px; color:var(--text-dim); margin-top:12px; font-style:italic;}
+
+  nav.tabs{position:sticky; top:0; z-index:40; display:flex; gap:2px; flex-wrap:wrap; justify-content:center; margin:0 -24px 40px; padding:12px 24px; background:linear-gradient(180deg, var(--bg) 60%, transparent); backdrop-filter:blur(8px);}
+  nav.tabs a{font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--text-dim); text-decoration:none; padding:8px 14px; border:1px solid var(--line); background:var(--panel); font-style:italic; transition:.25s;}
+  nav.tabs a:hover{color:var(--bg); background:var(--orange); border-color:var(--orange); box-shadow:0 0 16px rgba(224,138,46,.5);}
+
+  section{margin-bottom:56px; opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
+  section.in{opacity:1; transform:translateY(0);}
+  .sechead{display:flex; align-items:baseline; gap:14px; margin-bottom:18px;}
+  .sechead .num{font-family:var(--font-mono); color:var(--orange); font-size:14px; font-style:italic;}
+  .sechead h2{font-family:var(--font-display); font-size:1.15rem; letter-spacing:2px; color:var(--text);}
+  .sechead .rule{flex:1; height:1px; background:linear-gradient(90deg,var(--line-strong),transparent);}
+
+  .panel{background:var(--panel); padding:22px; position:relative;}
+  .grid-2{display:grid; grid-template-columns:1.3fr 1fr; gap:20px;}
+  @media(max-width:820px){.grid-2{grid-template-columns:1fr;}}
+  p.body-copy{font-size:1.05rem; line-height:1.8; color:var(--text-dim); margin-bottom:14px;}
+  p.body-copy b{color:var(--text); font-weight:600;}
+  .kv{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--line); font-family:var(--font-mono); font-size:12px; font-style:italic;}
+  .kv span:first-child{color:var(--text-faint);}
+  .kv span:last-child{color:var(--orange); font-style:normal;}
+
+  .mapbox{height:220px; position:relative; overflow:hidden; background:radial-gradient(circle at 30% 30%, var(--panel-2), var(--bg-2) 70%); display:flex; align-items:center; justify-content:center;}
+  .mapbox .rings{position:absolute; width:180px; height:180px; border-radius:50%; border:1px dashed var(--line);}
+  .mapbox .rings::before,.mapbox .rings::after{content:''; position:absolute; inset:20px; border:1px dashed var(--line); border-radius:50%;}
+  .mapbox .rings::after{inset:40px; border-color:var(--line-strong);}
+  .mapbox .ping{width:10px; height:10px; border-radius:50%; background:var(--orange); box-shadow:0 0 0 0 var(--orange); animation:ping 2.4s ease-out infinite;}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(224,138,46,.6)}70%{box-shadow:0 0 0 26px rgba(224,138,46,0)}100%{box-shadow:0 0 0 0 rgba(224,138,46,0)}}
+  .mapbox .sweep{position:absolute; inset:0; background:conic-gradient(from 0deg, transparent 0deg, var(--blue) 6deg, transparent 30deg); animation:sweep 6s linear infinite; opacity:.55; mix-blend-mode:screen;}
+  html[data-theme="light"] .mapbox .sweep{mix-blend-mode:multiply; opacity:.3;}
+  @keyframes sweep{to{transform:rotate(360deg)}}
+  .mapbox .runes{position:absolute; width:130px; height:130px; border:1px dotted var(--orange); border-radius:50%; opacity:.5; animation:spin 20s linear infinite reverse;}
+
+  .feed{aspect-ratio:16/8; position:relative; overflow:hidden; background:linear-gradient(135deg,var(--bg-2),var(--panel-2)); display:flex; align-items:center; justify-content:center;}
+  .feed .feedlabel{position:absolute; top:12px; left:12px; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--blue); display:flex; align-items:center; gap:6px; font-style:italic;}
+  .feed .feedlabel .rec{width:7px; height:7px; border-radius:50%; background:var(--orange); animation:emberpulse 1.6s ease-in-out infinite;}
+  @keyframes emberpulse{50%{opacity:.25; transform:scale(.8);}}
+  .feed .feedmeta{position:absolute; bottom:12px; right:14px; font-family:var(--font-mono); font-size:10px; color:var(--text-faint); font-style:italic;}
+  .feed .placeholder-icon{font-family:var(--font-display); font-size:2rem; color:var(--text-faint); letter-spacing:2px; opacity:.5;}
+
+  .threat-row{display:grid; grid-template-columns:220px 1fr 90px; align-items:center; gap:16px; padding:11px 0; border-bottom:1px solid var(--line);}
+  .threat-row:last-child{border-bottom:none;}
+  .threat-row .label{font-family:var(--font-mono); font-size:12px; letter-spacing:.5px; color:var(--text); font-style:italic;}
+  .meter{height:8px; background:var(--bg-2); position:relative; overflow:hidden; clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);}
+  .meter i{position:absolute; inset:0; width:0%; background:linear-gradient(90deg,var(--blue),var(--orange)); transition:width 1.4s cubic-bezier(.2,.8,.2,1);}
+  .meter.high i{background:linear-gradient(90deg,var(--warn),var(--danger));}
+  .meter.vhigh i{background:linear-gradient(90deg,var(--danger),#7a1f0e);}
+  .threat-row .pct{font-family:var(--font-mono); font-size:11px; color:var(--text-dim); text-align:right; font-style:italic;}
+
+  .obj{display:grid; grid-template-columns:44px 1fr auto; gap:16px; align-items:start; padding:18px; background:var(--panel); margin-bottom:10px; border-left:2px solid var(--line); transition:.3s; transform:translateX(-12px); opacity:0;}
+  .obj.in{transform:translateX(0); opacity:1;}
+  .obj:hover{border-left-color:var(--orange); background:var(--panel-2);}
+  .obj .idx{font-family:var(--font-display); font-size:1.3rem; color:var(--blue); opacity:.65;}
+  .obj h3{font-family:var(--font-body); font-weight:700; letter-spacing:.3px; font-size:1.02rem; margin-bottom:6px;}
+  .obj p{color:var(--text-dim); font-size:.94rem; line-height:1.55;}
+  .tag{font-family:var(--font-mono); font-size:10px; letter-spacing:1px; padding:5px 10px; border:1px solid; white-space:nowrap; height:fit-content; font-style:italic;}
+  .tag.primary{color:var(--orange); border-color:var(--orange);}
+  .tag.secondary{color:var(--warn); border-color:var(--warn);}
+  .tag.tertiary{color:var(--blue); border-color:var(--blue);}
+
+  .gallery{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+  @media(max-width:820px){.gallery{grid-template-columns:repeat(2,1fr);}}
+  .gitem{aspect-ratio:1; position:relative; overflow:hidden; background:linear-gradient(160deg,var(--bg-2),var(--panel-2)); cursor:pointer; transition:transform .3s;}
+  .gitem::before{content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.55), transparent 50%);}
+  .gitem .gtag{position:absolute; bottom:8px; left:8px; font-family:var(--font-mono); font-size:9.5px; letter-spacing:.5px; color:var(--orange); z-index:2; font-style:italic;}
+  .gitem .gicon{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:var(--text-faint); opacity:.45;}
+  .gitem::after{content:''; position:absolute; inset:0; border:1px solid var(--line); transition:.3s;}
+  .gitem:hover::after{border-color:var(--orange); box-shadow:inset 0 0 24px rgba(224,138,46,.25);}
+  .gitem:hover{transform:scale(1.02);}
+
+  .audiolog{display:flex; align-items:center; gap:16px; padding:16px 20px; background:var(--panel);}
+  .playbtn{width:38px; height:38px; border-radius:50%; border:1px solid var(--blue); display:flex; align-items:center; justify-content:center; color:var(--blue); cursor:pointer; flex-shrink:0; transition:.25s;}
+  .playbtn:hover{background:var(--blue); color:var(--bg); box-shadow:0 0 18px var(--blue);}
+  .waveform{display:flex; align-items:center; gap:3px; height:30px; flex:1;}
+  .waveform span{width:3px; background:linear-gradient(180deg,var(--blue),var(--orange)); animation:wave 1.3s ease-in-out infinite; border-radius:2px;}
+  @keyframes wave{0%,100%{height:20%;}50%{height:100%;}}
+  .audiolog .meta{font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); letter-spacing:.5px; white-space:nowrap; font-style:italic;}
+
+  .partystatus{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+  @media(max-width:700px){.partystatus{grid-template-columns:repeat(2,1fr);}}
+  .pstat{background:var(--panel); padding:16px; text-align:center; border-top:2px solid var(--blue);}
+  .pstat .val{font-family:var(--font-display); font-size:1.6rem; color:var(--orange);}
+  .pstat .lbl{font-family:var(--font-mono); font-size:10px; color:var(--text-dim); letter-spacing:1px; margin-top:4px; font-style:italic;}
+
+  .logline{display:grid; grid-template-columns:110px 1fr; gap:16px; padding:10px 0; border-bottom:1px dotted var(--line); font-size:.95rem;}
+  .logline .ts{font-family:var(--font-mono); color:var(--orange); font-size:11px; padding-top:2px; font-style:italic;}
+  .logline .entry{color:var(--text-dim);}
+  .logline .entry b{color:var(--text);}
+
+  footer{text-align:center; padding:50px 20px 10px; position:relative; z-index:5;}
+  footer .quote{font-family:var(--font-mono); font-style:italic; color:var(--text-dim); font-size:.95rem; max-width:540px; margin:0 auto 8px;}
+  footer .sig{font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); letter-spacing:2px; font-style:italic;}
+  footer .starlogo{width:26px; height:26px; margin:0 auto 16px; position:relative;}
+  footer .starlogo::before{content:'⚜'; color:var(--orange); font-size:22px; display:block; text-align:center; animation:pulse 3s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.5; transform:scale(1);}50%{opacity:1; transform:scale(1.15);}}
+  ::selection{background:var(--orange); color:#000;}
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div class="seal" id="seal"><span class="half l"></span><span class="half r"></span></div>
+  <div class="glyph">// unsealing the chronicle — the guild archive</div>
+  <div class="bootbar"></div>
+  <div class="bootline">breaking the wax seal · TG-119-14</div>
+</div>
+
+<canvas id="embers"></canvas>
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<button id="themeToggle"><span class="dot"></span><span id="themeLabel">NIGHT / HEARTH</span></button>
+
+<div class="wrap">
+
+  <header class="classbar frame"><span class="bl"></span><span class="br"></span>
+    <div class="left">
+      <div class="badge">⚜</div>
+      <div class="orgtext"><b>THE ADVENTURER'S GUILD</b><br>CAMPAIGN CHRONICLE SYSTEM</div>
+    </div>
+    <div class="right">
+      <div><span class="k">CIRCLE</span><br>Party Eyes Only</div>
+      <div><span class="k">SYSTEM</span><br>D&amp;D 5e / Pathfinder</div>
+      <div><span class="k">SESSION</span><br>14</div>
+      <div><span class="k">CODE</span><br>TG-119-14</div>
+    </div>
+  </header>
+
+  <div class="titleblock">
+    <div class="eyebrow">CHRONICLE ENTRY</div>
+    <h1 class="title" id="mainTitle">Titan's Gate<span class="glow-layer" aria-hidden="true">Titan's Gate</span></h1>
+    <div class="subtitle">Where Titans Fell, Mountains Rose, and Their Memories Remain</div>
+  </div>
+
+  <nav class="tabs">
+    <a href="#overview">The Tale</a>
+    <a href="#realm">The Realm</a>
+    <a href="#encounters">Encounters</a>
+    <a href="#quests">Quests</a>
+    <a href="#gallery">Illustrations</a>
+    <a href="#chroniclelog">Chronicle Log</a>
+  </nav>
+
+  <section id="overview">
+    <div class="sechead"><span class="num">I.</span><h2>The Tale So Far</h2><span class="rule"></span></div>
+    <div class="grid-2">
+      <div class="panel frame"><span class="bl"></span><span class="br"></span>
+        <p class="body-copy">The party descended into the Sundered Vale seeking the last resting place of a fallen titan, where the old stories say its bones still hum with a memory of the world before the Gate closed.</p>
+        <p class="body-copy">What they found instead was a <b>Frost Giant warband</b> encamped at the vale's mouth, and stranger still, the marks of the <b>Cult of the Fallen Star</b> carved fresh into the stone — a symbol none of the party's scholars could place.</p>
+        <p class="body-copy">The Guildmaster suspects the two are not unconnected, and has asked the party to determine whether the cult seeks the titan's remains for the same reason the party does — or for something far worse.</p>
+      </div>
+      <div class="panel frame"><span class="bl"></span><span class="br"></span>
+        <div class="kv"><span>SESSION #</span><span>14</span></div>
+        <div class="kv"><span>PARTY LOCATION</span><span>THE SUNDERED VALE</span></div>
+        <div class="kv"><span>IN-GAME DATE</span><span>19th of Frostfall</span></div>
+        <div class="kv"><span>GUILD STANDING</span><span>TRUSTED</span></div>
+        <div class="kv"><span>ACTIVE COMPLICATION</span><span>CULT ACTIVITY</span></div>
+        <div class="kv"><span>NEXT SESSION</span><span>Saturday, 7pm</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="realm">
+    <div class="sechead"><span class="num">II.</span><h2>The Realm</h2><span class="rule"></span></div>
+    <div class="grid-2">
+      <div class="panel frame"><span class="bl"></span><span class="br"></span>
+        <div class="mapbox">
+          <div class="sweep"></div>
+          <div class="rings"></div>
+          <div class="runes"></div>
+          <div class="ping"></div>
+        </div>
+      </div>
+      <div class="panel frame"><span class="bl"></span><span class="br"></span>
+        <p class="body-copy"><b>THE SUNDERED VALE</b> — a scar of broken earth beneath Titan's Gate, said to cradle the bones of the world's first giants.</p>
+        <div class="kv"><span>REGION</span><span>NORTHERN REACH</span></div>
+        <div class="kv"><span>NEAREST SETTLEMENT</span><span>HOLLOWMERE</span></div>
+        <div class="kv"><span>CONTROLLING POWER</span><span>UNCLAIMED</span></div>
+        <div class="kv"><span>KNOWN HAZARDS</span><span>WILD MAGIC POCKETS</span></div>
+        <div class="kv"><span>NEAREST SHRINE</span><span>2 DAYS' TRAVEL</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="encounters">
+    <div class="sechead"><span class="num">III.</span><h2>Encounter Standing</h2><span class="rule"></span></div>
+    <div class="panel frame"><span class="bl"></span><span class="br"></span>
+      <div class="threat-row"><div class="label">FROST GIANT WARBAND</div><div class="meter high" data-fill="70"><i></i></div><div class="pct">HIGH</div></div>
+      <div class="threat-row"><div class="label">CULT OF THE FALLEN STAR</div><div class="meter vhigh" data-fill="85"><i></i></div><div class="pct">V.HIGH</div></div>
+      <div class="threat-row"><div class="label">RIVAL COMPANY — ASHEN BLADES</div><div class="meter" data-fill="45"><i></i></div><div class="pct">MEDIUM</div></div>
+      <div class="threat-row"><div class="label">WILD MAGIC SURGE ZONE</div><div class="meter" data-fill="55"><i></i></div><div class="pct">MEDIUM</div></div>
+      <div class="threat-row"><div class="label">WINTER'S ONSET</div><div class="meter" data-fill="30"><i></i></div><div class="pct">LOW</div></div>
+    </div>
+
+    <div class="sechead" style="margin-top:34px;"><span class="num"></span><h2>Party Status</h2><span class="rule"></span></div>
+    <div class="partystatus">
+      <div class="pstat"><div class="val">9</div><div class="lbl">PARTY LEVEL</div></div>
+      <div class="pstat"><div class="val">5</div><div class="lbl">ADVENTURERS</div></div>
+      <div class="pstat"><div class="val">3</div><div class="lbl">TORCHES LEFT</div></div>
+      <div class="pstat"><div class="val">12</div><div class="lbl">DAYS TO WINTER</div></div>
+    </div>
+  </section>
+
+  <section id="quests">
+    <div class="sechead"><span class="num">IV.</span><h2>Quest Objectives</h2><span class="rule"></span></div>
+
+    <div class="obj"><div class="idx">I</div><div><h3>Reach the Titan's Resting Place</h3><p>Navigate the Sundered Vale to the site marked on the eldest guild maps before the cult arrives.</p></div><div class="tag primary">MAIN QUEST</div></div>
+
+    <div class="obj"><div class="idx">II</div><div><h3>Uncover the Cult's Purpose</h3><p>Determine what the Cult of the Fallen Star seeks in the titan's remains.</p></div><div class="tag primary">MAIN QUEST</div></div>
+
+    <div class="obj"><div class="idx">III</div><div><h3>Parley With the Frost Giants</h3><p>The warband may be persuaded rather than fought — if the party can find common ground.</p></div><div class="tag secondary">SIDE QUEST</div></div>
+
+    <div class="obj"><div class="idx">IV</div><div><h3>Investigate the Ashen Blades</h3><p>A rival company has been asking after the same site. Learn who hired them.</p></div><div class="tag secondary">SIDE QUEST</div></div>
+
+    <div class="obj"><div class="idx">V</div><div><h3>The Hollowmere Rumor</h3><p>Locals whisper that a star fell into the vale a generation ago. Worth chasing down.</p></div><div class="tag tertiary">RUMOR</div></div>
+  </section>
+
+  <section id="gallery">
+    <div class="sechead"><span class="num">V.</span><h2>Illustrations &amp; Handouts</h2><span class="rule"></span></div>
+
+    <div class="panel frame" style="margin-bottom:16px;"><span class="bl"></span><span class="br"></span>
+      <div class="feed">
+        <div class="feedlabel"><span class="rec"></span>SCENE — THE SUNDERED VALE</div>
+        <div class="feedmeta">SESSION 14 · GUILD ARCHIVE</div>
+        <div class="placeholder-icon">HERO ILLUSTRATION SLOT</div>
+      </div>
+    </div>
+
+    <div class="gallery" style="margin-bottom:16px;">
+      <div class="gitem"><div class="gicon">⚜</div><div class="gtag">NPC · GUILDMASTER</div></div>
+      <div class="gitem"><div class="gicon">⚜</div><div class="gtag">HANDOUT · CULT SIGIL</div></div>
+      <div class="gitem"><div class="gicon">⚜</div><div class="gtag">MAP · THE VALE</div></div>
+      <div class="gitem"><div class="gicon">⚜</div><div class="gtag">ITEM · TITAN'S BONE</div></div>
+    </div>
+
+    <div class="audiolog frame"><span class="bl"></span><span class="br"></span>
+      <div class="playbtn" id="playBtn">▶</div>
+      <div class="waveform" id="waveform"></div>
+      <div class="meta">BARD'S RECORDING · SESSION_14_RECAP.WAV · 03:12</div>
+    </div>
+  </section>
+
+  <section id="chroniclelog">
+    <div class="sechead"><span class="num">VI.</span><h2>Chronicle Log</h2><span class="rule"></span></div>
+    <div class="panel frame"><span class="bl"></span><span class="br"></span>
+      <div class="logline"><div class="ts">Eve</div><div class="entry">The party makes camp at the mouth of the <b>Sundered Vale</b>, cult sigils fresh on the stone.</div></div>
+      <div class="logline"><div class="ts">Night</div><div class="entry">First contact with the <b>Frost Giant warband</b> — parley offered, not yet accepted.</div></div>
+      <div class="logline"><div class="ts">Dawn</div><div class="entry">Scouts report Ashen Blade tracks converging on the same site from the east.</div></div>
+      <div class="logline"><div class="ts">TBD</div><div class="entry">— next entry pending session 15 —</div></div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="starlogo"></div>
+  <div class="quote">"Where titans fell, mountains rose, and their memories remain."</div>
+  <div class="sig">— THE GUILDMASTER · END OF CHRONICLE ENTRY —</div>
+</footer>
+
+<script>
+  document.getElementById('seal').classList.add('crack');
+  window.addEventListener('load', ()=>{ setTimeout(()=>{ document.getElementById('boot').classList.add('hide'); }, 2300); });
+
+  const html = document.documentElement;
+  const toggle = document.getElementById('themeToggle');
+  const label = document.getElementById('themeLabel');
+  toggle.addEventListener('click', ()=>{
+    const isLight = html.getAttribute('data-theme') === 'light';
+    html.setAttribute('data-theme', isLight ? 'dark' : 'light');
+    label.textContent = isLight ? 'NIGHT / HEARTH' : 'DAY / PARCHMENT';
+    drawField();
+  });
+
+  const titleEl = document.getElementById('mainTitle');
+  setInterval(()=>{ titleEl.classList.add('flare'); setTimeout(()=>titleEl.classList.remove('flare'), 500); }, 4600);
+
+  const canvas = document.getElementById('embers');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+  function makeParticles(){
+    const light = html.getAttribute('data-theme') === 'light';
+    const count = light ? 50 : 90;
+    particles = Array.from({length:count}, ()=>({
+      x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+      r: Math.random()*1.6 + .4, s: Math.random()*.5 + .1, a: Math.random(), drift: (Math.random()-.5)*.3
+    }));
+  }
+  function drawField(){ makeParticles(); }
+  function animate(){
+    const light = html.getAttribute('data-theme') === 'light';
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.a += 0.008 * (Math.random()>.5?1:-1); p.a = Math.max(0,Math.min(1,p.a));
+      p.y -= p.s * (light?0.1:0.18); p.x += p.drift;
+      if(p.y < 0) p.y = canvas.height;
+      ctx.globalAlpha = p.a;
+      ctx.fillStyle = light ? 'rgba(184,100,28,0.55)' : 'rgba(224,138,46,0.85)';
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animate);
+  }
+  resize(); makeParticles(); animate();
+  window.addEventListener('resize', ()=>{ resize(); makeParticles(); });
+
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        e.target.querySelectorAll('.obj').forEach((o,i)=> setTimeout(()=>o.classList.add('in'), i*90));
+        e.target.querySelectorAll('.meter').forEach(m=>{ m.querySelector('i').style.width = m.dataset.fill + '%'; });
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:.2});
+  document.querySelectorAll('section').forEach(s=>io.observe(s));
+
+  const wf = document.getElementById('waveform');
+  for(let i=0;i<40;i++){
+    const bar = document.createElement('span');
+    bar.style.animationDelay = (Math.random()*1.2)+'s';
+    bar.style.animationDuration = (0.7+Math.random()*0.8)+'s';
+    wf.appendChild(bar);
+  }
+  let playing = true;
+  document.getElementById('playBtn').addEventListener('click', function(){
+    playing = !playing;
+    this.textContent = playing ? '▶' : '❚❚';
+    wf.style.animationPlayState = playing ? 'running':'paused';
+    wf.querySelectorAll('span').forEach(s=> s.style.animationPlayState = playing?'running':'paused');
+  });
+</script>
+</body>
+</html>
