@@ -135,6 +135,21 @@ export default defineType({
         defineField({ name: "bootSubtitle", title: "Boot Subtitle", type: "string" }),
       ],
     }),
+    defineField({
+      name: "locationMotif",
+      title: "Location Motif",
+      type: "string",
+      description:
+        "Selects which decorative visual renders in the dossier page's Location section (the radar-sweep-style panel) — NOT tied to genre/campaign name directly, the template picks the module by this value alone. See src/templates/locationMotifs.js.",
+      options: {
+        list: [
+          { title: "Radar Sweep (sci-fi)", value: "radar-sweep" },
+          { title: "Parchment Map (fantasy)", value: "parchment-map" },
+          { title: "Static Scan (horror)", value: "static-scan" },
+          { title: "Grid Scan (modern)", value: "grid-scan" },
+        ],
+      },
+    }),
   ],
   preview: {
     select: { title: "genre", subtitle: "campaignOverride" },

@@ -20,6 +20,7 @@ const FALLBACK_LABELS = {
 };
 
 const FALLBACK_MOTIF = "terminal-decrypt";
+const FALLBACK_LOCATION_MOTIF = "radar-sweep";
 
 /** Builds the `:root { --x: y; }` CSS block for a theme's dark+light colors + fonts. */
 export function themeToCssVars(theme) {
@@ -57,4 +58,11 @@ export function resolveLabels(theme) {
 
 export function resolveMotif(theme) {
   return theme?.loadingScreen?.motif || FALLBACK_MOTIF;
+}
+
+/** Which Location-section decorative visual to render — see
+ * templates/locationMotifs.js. Same "data-driven, not genre-name-keyed"
+ * rule as resolveMotif above. */
+export function resolveLocationMotif(theme) {
+  return theme?.locationMotif || FALLBACK_LOCATION_MOTIF;
 }

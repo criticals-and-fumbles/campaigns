@@ -1,0 +1,100 @@
+/**
+ * Location-section decorative visuals — 4 reusable modules, selected by
+ * `theme.locationMotif`, NOT hardcoded per genre/campaign name (same
+ * rule as loading-screen motifs.js, see CLAUDE.md § Data model). Sits
+ * inside the Location section's left panel (`.mapbox`), pure CSS
+ * animation, no JS needed for any of these — matches the original
+ * radar-sweep implementation's own simplicity.
+ *
+ *   radar-sweep    — sci-fi: rotating sonar sweep + concentric rings + ping
+ *   parchment-map  — fantasy: wavering compass needle + candlelit glow
+ *   static-scan    — horror: VHS-style tracking bar + glitch flicker
+ *   grid-scan      — modern: GPS/security grid + scanning line + reticle
+ *
+ * Each entry provides `html` (the .mapbox inner markup) and `css`
+ * (.mapbox-scoped rules — the container's own size/position/overflow
+ * lives in dossier.js's BASE_CSS, only the background + moving parts
+ * are motif-specific).
+ */
+
+export const LOCATION_MOTIFS = {
+  "radar-sweep": {
+    html: `
+      <div class="sweep"></div>
+      <div class="rings"></div>
+      <div class="ping"></div>
+    `,
+    css: `
+      .mapbox{background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.04), rgba(0,0,0,.2) 70%);}
+      .mapbox .rings{position:absolute; width:180px; height:180px; border-radius:50%; border:1px solid rgba(255,255,255,.15);}
+      .mapbox .rings::before,.mapbox .rings::after{content:''; position:absolute; inset:20px; border:1px solid rgba(255,255,255,.15); border-radius:50%;}
+      .mapbox .ping{width:10px; height:10px; border-radius:50%; background:var(--accent-b); box-shadow:0 0 0 0 var(--accent-b); animation:locping 2s ease-out infinite;}
+      @keyframes locping{0%{box-shadow:0 0 0 0 rgba(255,79,174,.6)}70%{box-shadow:0 0 0 26px rgba(255,79,174,0)}100%{box-shadow:0 0 0 0 rgba(255,79,174,0)}}
+      .mapbox .sweep{position:absolute; inset:0; background:conic-gradient(from 0deg, transparent 0deg, var(--accent-a) 8deg, transparent 40deg); animation:locsweep 4s linear infinite; opacity:.5; mix-blend-mode:screen;}
+      @keyframes locsweep{to{transform:rotate(360deg)}}
+    `,
+  },
+
+  "parchment-map": {
+    html: `
+      <div class="compass">
+        <div class="needle"></div>
+        <span class="point n">N</span><span class="point s">S</span><span class="point e">E</span><span class="point w">W</span>
+      </div>
+      <div class="glow"></div>
+    `,
+    css: `
+      .mapbox{background:radial-gradient(circle at 40% 35%, rgba(255,255,255,.05), rgba(0,0,0,.25) 75%);}
+      .mapbox .glow{position:absolute; width:140px; height:140px; border-radius:50%; background:radial-gradient(circle, var(--accent-b) 0%, transparent 70%); opacity:.18; animation:locflicker 3.2s ease-in-out infinite;}
+      @keyframes locflicker{0%,100%{opacity:.14; transform:scale(1);}45%{opacity:.24; transform:scale(1.04);}60%{opacity:.1;}}
+      .mapbox .compass{position:relative; width:120px; height:120px; border:1px solid rgba(255,255,255,.2); border-radius:50%;}
+      .mapbox .compass::before{content:''; position:absolute; inset:14px; border:1px solid rgba(255,255,255,.12); border-radius:50%;}
+      .mapbox .compass .point{position:absolute; font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--text); opacity:.5;}
+      .mapbox .compass .point.n{top:2px; left:50%; transform:translateX(-50%);}
+      .mapbox .compass .point.s{bottom:2px; left:50%; transform:translateX(-50%);}
+      .mapbox .compass .point.e{right:2px; top:50%; transform:translateY(-50%);}
+      .mapbox .compass .point.w{left:2px; top:50%; transform:translateY(-50%);}
+      .mapbox .compass .needle{position:absolute; left:50%; top:50%; width:2px; height:44px; margin:-44px 0 0 -1px; transform-origin:50% 44px; background:linear-gradient(to top, var(--accent-a), transparent); animation:locwaver 5s ease-in-out infinite;}
+      @keyframes locwaver{0%,100%{transform:rotate(-9deg);}50%{transform:rotate(9deg);}}
+    `,
+  },
+
+  "static-scan": {
+    html: `
+      <div class="tracking"></div>
+      <div class="noise"></div>
+      <div class="glitchping"></div>
+    `,
+    css: `
+      .mapbox{background:linear-gradient(160deg, rgba(0,0,0,.35), rgba(255,255,255,.02));}
+      .mapbox .noise{position:absolute; inset:0; opacity:.05; mix-blend-mode:overlay; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+      .mapbox .tracking{position:absolute; left:0; right:0; height:26px; background:linear-gradient(var(--accent-b), transparent); mix-blend-mode:screen; opacity:.4; animation:loctrackingsweep 3.6s linear infinite;}
+      @keyframes loctrackingsweep{0%{top:-26px;}100%{top:100%;}}
+      .mapbox .glitchping{position:absolute; width:8px; height:8px; background:var(--accent-a); box-shadow:0 0 8px var(--accent-a); animation:locglitch 2.4s steps(1) infinite;}
+      @keyframes locglitch{0%,100%{opacity:0;}4%{opacity:1; transform:translate(0,0);}6%{opacity:0;}48%{opacity:0;}52%{opacity:1; transform:translate(6px,-4px);}54%{opacity:0;}}
+    `,
+  },
+
+  "grid-scan": {
+    html: `
+      <div class="grid"></div>
+      <div class="scanline"></div>
+      <div class="reticle"></div>
+    `,
+    css: `
+      .mapbox{background:rgba(0,0,0,.2);}
+      .mapbox .grid{position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px); background-size:22px 22px;}
+      .mapbox .scanline{position:absolute; left:0; right:0; height:2px; background:var(--accent-a); box-shadow:0 0 8px var(--accent-a); opacity:.6; animation:locgridscan 3s linear infinite;}
+      @keyframes locgridscan{0%{top:0;}100%{top:100%;}}
+      .mapbox .reticle{position:absolute; width:26px; height:26px; border:1px solid var(--accent-b);}
+      .mapbox .reticle::before,.mapbox .reticle::after{content:''; position:absolute; background:var(--accent-b);}
+      .mapbox .reticle::before{left:50%; top:-6px; width:1px; height:6px;}
+      .mapbox .reticle::after{top:50%; left:-6px; width:6px; height:1px;}
+    `,
+  },
+};
+
+export function renderLocationMotif(motifKey) {
+  const motif = LOCATION_MOTIFS[motifKey] || LOCATION_MOTIFS["radar-sweep"];
+  return { html: motif.html, css: motif.css };
+}

@@ -13,8 +13,9 @@
  * tabs, sections, meters, objectives, gallery, audio log, footer) is a
  * direct port of the shared structure common to all 4 concept files.
  */
-import { themeToCssVars, resolveLabels, resolveMotif } from "../lib/theme.js";
+import { themeToCssVars, resolveLabels, resolveMotif, resolveLocationMotif } from "../lib/theme.js";
 import { renderMotif } from "./motifs.js";
+import { renderLocationMotif } from "./locationMotifs.js";
 import { urlFor } from "../lib/sanity-image.js";
 
 function esc(s) {
@@ -71,6 +72,7 @@ export function renderDossierPage({ dossier, campaign, theme }) {
   const bootTitle = theme?.loadingScreen?.bootTitle || "LOADING";
   const bootSubtitle = theme?.loadingScreen?.bootSubtitle || "PLEASE WAIT";
   const motif = renderMotif(motifKey, bootTitle, bootSubtitle, code);
+  const locationMotif = renderLocationMotif(resolveLocationMotif(theme));
 
   const heroUrl = dossier.heroImage
     ? urlFor(dossier.heroImage).width(1600).height(800).url()
@@ -141,6 +143,7 @@ export function renderDossierPage({ dossier, campaign, theme }) {
 ${themeToCssVars(theme)}
 ${BASE_CSS}
 ${motif.css}
+${locationMotif.css}
 </style>
 </head>
 <body>
@@ -203,9 +206,7 @@ ${motif.css}
     <div class="grid-2">
       <div class="panel frame"><span class="bl"></span><span class="br"></span>
         <div class="mapbox">
-          <div class="sweep"></div>
-          <div class="rings"></div>
-          <div class="ping"></div>
+          ${locationMotif.html}
         </div>
       </div>
       <div class="panel frame"><span class="bl"></span><span class="br"></span>
@@ -336,13 +337,10 @@ const BASE_CSS = `
   .kv{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:11.5px;}
   .kv span:first-child{color:var(--text); opacity:.5; letter-spacing:1px;}
   .kv span:last-child{color:var(--accent-a);}
-  .mapbox{height:220px; position:relative; overflow:hidden; background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.04), rgba(0,0,0,.2) 70%); display:flex; align-items:center; justify-content:center;}
-  .mapbox .rings{position:absolute; width:180px; height:180px; border-radius:50%; border:1px solid rgba(255,255,255,.15);}
-  .mapbox .rings::before,.mapbox .rings::after{content:''; position:absolute; inset:20px; border:1px solid rgba(255,255,255,.15); border-radius:50%;}
-  .mapbox .ping{width:10px; height:10px; border-radius:50%; background:var(--accent-b); box-shadow:0 0 0 0 var(--accent-b); animation:ping 2s ease-out infinite;}
-  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,79,174,.6)}70%{box-shadow:0 0 0 26px rgba(255,79,174,0)}100%{box-shadow:0 0 0 0 rgba(255,79,174,0)}}
-  .mapbox .sweep{position:absolute; inset:0; background:conic-gradient(from 0deg, transparent 0deg, var(--accent-a) 8deg, transparent 40deg); animation:sweep 4s linear infinite; opacity:.5; mix-blend-mode:screen;}
-  @keyframes sweep{to{transform:rotate(360deg)}}
+  /* Container only — background + moving parts are genre-driven, see
+     templates/locationMotifs.js (injected into the page style block
+     right after BASE_CSS, near the top of renderDossierPage's markup). */
+  .mapbox{height:220px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;}
   .feed{aspect-ratio:16/8; position:relative; overflow:hidden; background:linear-gradient(135deg,rgba(0,0,0,.3),rgba(255,255,255,.03)); display:flex; align-items:center; justify-content:center;}
   .feed .feedlabel{position:absolute; top:12px; left:12px; font-family:var(--font-mono); font-size:10px; letter-spacing:2px; color:var(--accent-a); display:flex; align-items:center; gap:6px; z-index:2;}
   .feed .feedlabel .rec{width:7px; height:7px; border-radius:50%; background:#ff4f6a; animation:blink 1.1s steps(2) infinite;}
