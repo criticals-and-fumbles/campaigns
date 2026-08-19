@@ -21,13 +21,25 @@ compatibility_flags = ["nodejs_compat"]
 # No [[kv_namespaces]] or [[d1_databases]] — nothing in this app needs them
 # at scaffold time. Add only if a real use case needs one later.
 
-# Secrets/vars (never declared here — set via the dashboard or
-# `wrangler secret put <NAME>`). Names deliberately match the main
-# criticalsandfumbles.com site's convention (same Sanity project/dataset,
-# settings kept aligned across both repos):
-#   NEXT_PUBLIC_SANITY_PROJECT_ID
-#   NEXT_PUBLIC_SANITY_DATASET
-#   NEXT_PUBLIC_SANITY_API_VERSION
+# Non-secret Sanity identifiers — pinned here (not dashboard-only) after a
+# 2026-08-19 incident: a routine Git-triggered redeploy silently dropped the
+# dashboard-set "Runtime" plain-text variables (they aren't tied to a wrangler
+# config, so nothing recreated them on the new version), leaving apiBase() in
+# src/lib/sanity.js building ".../vundefined/..." — which Sanity's API answers
+# with the same generic "no Route matched with those values" 404 a bad version
+# string always produces, making it look like a routing bug rather than a
+# missing binding. None of these three values are sensitive, so declaring them
+# in version control removes the failure mode entirely instead of just fixing
+# it once. Names deliberately match the main criticalsandfumbles.com site's
+# convention (same Sanity project/dataset, settings kept aligned across both
+# repos).
+[vars]
+NEXT_PUBLIC_SANITY_PROJECT_ID = "grfq47ig"
+NEXT_PUBLIC_SANITY_DATASET = "production"
+NEXT_PUBLIC_SANITY_API_VERSION = "2026-06-01"
+
+# Secrets only — set via the dashboard (Runtime settings) or
+# `wrangler secret put <NAME>`, never declared here:
 #   SANITY_API_READ_TOKEN    (Viewer role — used for every query)
 #   SANITY_API_WRITE_TOKEN   (Editor role — used only for mutations;
 #                              should be set as a Secret, not a plain
