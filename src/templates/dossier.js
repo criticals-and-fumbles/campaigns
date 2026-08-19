@@ -324,6 +324,11 @@ const BASE_CSS = `
   nav.tabs{position:sticky; top:0; z-index:40; display:flex; gap:2px; flex-wrap:wrap; justify-content:center; margin:0 -24px 40px; padding:12px 24px; background:linear-gradient(180deg, var(--bg) 60%, transparent); backdrop-filter:blur(8px);}
   nav.tabs a{font-family:var(--font-mono); font-size:10.5px; letter-spacing:2px; color:var(--text); opacity:.6; text-decoration:none; padding:8px 14px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.02); text-transform:uppercase; transition:.25s;}
   nav.tabs a:hover{opacity:1; color:var(--bg); background:var(--accent-a); border-color:var(--accent-a);}
+  /* On narrow viewports (phones, or this page embedded in the session
+     browser's constrained iframe) the sticky section nav eats screen
+     real estate the whole time you're reading — let it scroll past
+     with the rest of the content instead of staying pinned. */
+  @media(max-width:820px){nav.tabs{position:static; backdrop-filter:none;}}
   section{margin-bottom:56px; opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
   section.in{opacity:1; transform:translateY(0);}
   .sechead{display:flex; align-items:baseline; gap:14px; margin-bottom:18px;}
@@ -602,17 +607,21 @@ body{background:var(--bg); color:var(--text); font-family:var(--font-body); over
 .session-item.active .s-meta{color:var(--accent-a);}
 .empty{padding:16px; opacity:.6; font-family:var(--font-mono); font-size:.75rem;}
 
-.detail-pane{flex:1; min-width:0; overflow-y:auto; padding:clamp(20px,3vw,44px);}
-.detail-inner{max-width:920px; margin:0 auto;}
+/* flex column, not overflow:auto — the iframe fills all remaining
+   vertical space itself (flex:1 below) and scrolls its own content
+   internally, rather than being capped at a fixed height that leaves
+   empty space beneath it on tall/widescreen viewports. */
+.detail-pane{flex:1; min-width:0; overflow:hidden; padding:clamp(20px,3vw,44px); display:flex; flex-direction:column;}
+.detail-inner{max-width:920px; width:100%; margin:0 auto; display:flex; flex-direction:column; flex:1; min-height:0;}
 
-.detail-title{font-family:var(--font-display); font-size:clamp(1.3rem,2.4vw,1.9rem); letter-spacing:1px; margin-bottom:6px;}
-.detail-meta{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-dim); margin-bottom:22px; display:flex; gap:18px; flex-wrap:wrap;}
+.detail-title{font-family:var(--font-display); font-size:clamp(1.3rem,2.4vw,1.9rem); letter-spacing:1px; margin-bottom:6px; flex-shrink:0;}
+.detail-meta{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-dim); margin-bottom:22px; display:flex; gap:18px; flex-wrap:wrap; flex-shrink:0;}
 .detail-meta b{color:var(--accent-a);}
 
-.detail-frame{width:100%; height:min(82vh, 900px); border:1px solid var(--line); background:var(--panel); display:block;}
+.detail-frame{width:100%; flex:1; min-height:0; border:1px solid var(--line); background:var(--panel); display:block;}
 
 .empty-state{
-  aspect-ratio:16/10; width:100%; border:1px dashed var(--line-strong);
+  flex:1; min-height:0; width:100%; border:1px dashed var(--line-strong);
   background:var(--panel); display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:8px; color:var(--text-dim); font-family:var(--font-mono); font-size:11px; letter-spacing:1px;
   text-align:center; padding:20px;
