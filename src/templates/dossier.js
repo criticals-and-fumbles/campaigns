@@ -484,29 +484,44 @@ const BASE_JS = `
  * the console are main-site-styled; this page and the dossier page below
  * it are genre-themed).
  *
- * Two-pane layout: left is the session list (already sorted most-recent-
- * first by the caller's GROQ query), right is an <iframe> that loads the
- * selected dossier's own full page unchanged — reusing renderDossierPage
- * as-is rather than re-implementing dossier rendering inline, so the two
- * never drift apart. The most recent session auto-selects on load so the
- * right pane isn't empty by default.
+ * Ported from concepts/session-browser-concept-C-command-deck.html
+ * ("Concept C: Command Deck") — structure, class names, and breakpoints
+ * kept as close to that file as possible; only the mock session data and
+ * the .iframe-mock placeholder were swapped for real data and a real
+ * <iframe> (loading the selected dossier's own unchanged page — reusing
+ * renderDossierPage as-is rather than re-implementing dossier rendering
+ * inline, so the two never drift apart). Two structural additions beyond
+ * the concept, both necessary for this being a real site rather than an
+ * isolated mockup: a "← All Campaigns" link in the topbar (the concept
+ * had no surrounding site to link back to), and the derived color-mix()
+ * tokens block (the concept defined its 7 base tokens directly in :root;
+ * here they come from themeToCssVars(theme) instead, so the derived
+ * tokens are computed from whichever genre's tokens that resolves to,
+ * not redefined per page).
+ *
+ * Desktop/tablet-landscape: fixed two-column layout, centered "stage"
+ * capped at 1760px (1900px above 1600px) so it doesn't stretch full-
+ * bleed on ultrawide monitors. Below ~1000px portrait / 760px: the list
+ * becomes an off-canvas drawer opened via "☰ Sessions". Below 640px: the
+ * same drawer presents as a bottom sheet instead of a full-height side
+ * panel. The most recent session (dossiers is already sorted
+ * most-recent-first by the caller's GROQ query) auto-selects on load.
  */
 export function renderCampaignIndexPage({ campaign, dossiers, theme }) {
   const labels = resolveLabels(theme);
   const themeVars = themeToCssVars(theme);
   const slugJson = JSON.stringify(campaign.slug?.current || "");
+  const list = dossiers || [];
 
-  const items = (dossiers || [])
+  const items = list
     .map((d, i) => {
       const date = d._createdAt ? new Date(d._createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "";
-      return `<button type="button" class="session-item${i === 0 ? " active" : ""}" data-code="${esc(d.code)}">
-  <span class="s-title">${esc(d.sessionLabel || d.code)} — ${esc(d.title)}</span>
-  <span class="s-meta"><span>${esc(d.code)}</span>${date ? `<span>${esc(date)}</span>` : ""}</span>
+      return `<button type="button" class="session-item${i === 0 ? " active" : ""}" data-code="${esc(d.code)}" data-title="${esc(d.title)}" data-date="${esc(date)}">
+  <div class="s-title">${esc(d.title)}</div>
+  <div class="s-meta"><span>${esc(d.code)}</span><span>${esc(date)}</span></div>
 </button>`;
     })
     .join("\n");
-
-  const firstCode = dossiers && dossiers[0] ? dossiers[0].code : null;
 
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -515,62 +530,214 @@ export function renderCampaignIndexPage({ campaign, dossiers, theme }) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(campaign.title)} — ${esc(labels.dossier || "Sessions")}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share%20Tech%20Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(theme?.fonts?.display || "Orbitron")}:wght@600;700&family=${encodeURIComponent(theme?.fonts?.body || "Rajdhani")}:wght@400;500;600&family=${encodeURIComponent(theme?.fonts?.mono || "Share Tech Mono")}&display=swap" rel="stylesheet">
 <style>
 ${themeVars}
+:root{
+  /* derived tokens -- never set these directly, they read from the 7 above
+     (see themeToCssVars in lib/theme.js for --bg/--accent-a/--accent-b/
+     --text/--font-display/--font-body/--font-mono) */
+  --panel: color-mix(in srgb, var(--bg) 88%, var(--accent-a) 12%);
+  --panel-2: color-mix(in srgb, var(--bg) 94%, var(--accent-a) 6%);
+  --line: color-mix(in srgb, var(--accent-a) 22%, transparent);
+  --line-strong: color-mix(in srgb, var(--accent-a) 45%, transparent);
+  --text-dim: color-mix(in srgb, var(--text) 62%, var(--bg) 38%);
+  --overlay: color-mix(in srgb, var(--bg) 70%, transparent);
+}
 *{box-sizing:border-box; margin:0; padding:0;}
 html,body{height:100%;}
 body{background:var(--bg); color:var(--text); font-family:var(--font-body); overflow:hidden;}
-.shell{display:grid; grid-template-columns:340px 1fr; height:100vh;}
-@media(max-width:820px){.shell{grid-template-columns:1fr; height:auto;}
-  .detail-pane{height:70vh;}}
-.list-pane{border-right:1px solid rgba(255,255,255,.12); padding:22px 18px; overflow-y:auto;}
-.back-link{display:inline-block; font-family:var(--font-mono); font-size:.75rem; color:var(--text); opacity:.6; text-decoration:none; margin-bottom:14px;}
-.back-link:hover{opacity:1; color:var(--accent-a);}
-.list-pane h1{font-family:var(--font-display); font-size:1.6rem; letter-spacing:.02em; margin-bottom:.35rem;}
-.hook{opacity:.75; font-size:.9rem; margin-bottom:.5rem;}
-.meta-line{display:flex; gap:10px; font-family:var(--font-mono); font-size:.7rem; opacity:.6; margin-bottom:18px; text-transform:uppercase; letter-spacing:.05em;}
-.session-item{display:block; width:100%; text-align:left; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.12); border-radius:6px; padding:12px 14px; margin-bottom:10px; color:var(--text); cursor:pointer; font-family:var(--font-body); transition:border-color .15s ease, background .15s ease;}
-.session-item:hover{border-color:var(--accent-a);}
-.session-item.active{border-color:var(--accent-a); background:rgba(255,255,255,.06);}
-.s-title{display:block; font-size:.95rem; margin-bottom:6px;}
-.s-meta{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:.65rem; opacity:.55; letter-spacing:.03em;}
-.empty{opacity:.5; font-family:var(--font-mono); font-size:.8rem;}
-.detail-pane{position:relative; height:100%;}
-.detail-pane iframe{width:100%; height:100%; border:none; display:none;}
-.empty-state{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:.85rem; opacity:.4; text-align:center; padding:2rem;}
+
+.app{height:100vh; height:100dvh; display:flex; flex-direction:column;}
+
+/* ---------- TOPBAR ---------- */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:12px 18px; background:var(--panel-2); border-bottom:1px solid var(--line);
+  flex-shrink:0;
+}
+.topbar-left{display:flex; align-items:center; gap:14px; min-width:0;}
+.back-link{flex-shrink:0; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-dim); text-decoration:none;}
+.back-link:hover{color:var(--accent-a);}
+.topbar h1{font-family:var(--font-display); font-size:.95rem; letter-spacing:2px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.topbar h1 span{color:var(--accent-a);}
+.deck-btn{
+  display:none; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11px;
+  letter-spacing:1px; text-transform:uppercase; color:var(--bg); background:var(--accent-a);
+  border:1px solid var(--accent-a); padding:8px 14px; cursor:pointer; flex-shrink:0;
+}
+.deck-btn b{font-family:var(--font-display); font-size:12px;}
+
+/* ---------- PANES (desktop/tablet default: fixed two-column, centered stage) ---------- */
+.stage{flex:1; min-height:0; max-width:1760px; width:100%; margin:0 auto; display:flex; position:relative;}
+
+.panes{flex:1; min-height:0; display:flex; width:100%;}
+
+.list-pane{
+  width:clamp(260px, 24vw, 360px); flex-shrink:0;
+  display:flex; flex-direction:column; min-height:0;
+  border-right:1px solid var(--line); background:var(--panel);
+}
+.list-head{
+  padding:14px 16px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:2px;
+  color:var(--text-dim); border-bottom:1px solid var(--line); flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.list-head .close-deck{display:none; background:none; border:none; color:var(--text-dim); font-family:var(--font-mono); font-size:16px; cursor:pointer;}
+.list-scroll{overflow-y:auto; flex:1; min-height:0;}
+
+.session-item{
+  width:100%; display:block; text-align:left; background:none; border:none;
+  border-bottom:1px solid var(--line); border-left:3px solid transparent;
+  padding:12px 16px; cursor:pointer; color:var(--text); font-family:var(--font-body);
+  transition:.15s;
+}
+.session-item:hover{background:var(--panel-2);}
+.session-item.active{border-left-color:var(--accent-a); background:var(--panel-2);}
+.session-item .s-title{font-weight:600; font-size:.95rem; margin-bottom:4px;}
+.session-item .s-meta{
+  display:flex; justify-content:space-between; gap:8px;
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.5px; color:var(--text-dim);
+}
+.session-item.active .s-meta{color:var(--accent-a);}
+.empty{padding:16px; opacity:.6; font-family:var(--font-mono); font-size:.75rem;}
+
+.detail-pane{flex:1; min-width:0; overflow-y:auto; padding:clamp(20px,3vw,44px);}
+.detail-inner{max-width:920px; margin:0 auto;}
+
+.detail-title{font-family:var(--font-display); font-size:clamp(1.3rem,2.4vw,1.9rem); letter-spacing:1px; margin-bottom:6px;}
+.detail-meta{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-dim); margin-bottom:22px; display:flex; gap:18px; flex-wrap:wrap;}
+.detail-meta b{color:var(--accent-a);}
+
+.detail-frame{width:100%; height:min(82vh, 900px); border:1px solid var(--line); background:var(--panel); display:block;}
+
+.empty-state{
+  aspect-ratio:16/10; width:100%; border:1px dashed var(--line-strong);
+  background:var(--panel); display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:8px; color:var(--text-dim); font-family:var(--font-mono); font-size:11px; letter-spacing:1px;
+  text-align:center; padding:20px;
+}
+
+/* Scrim used by the drawer/bottom-sheet on phone and the slide-out on tablet portrait */
+.scrim{
+  display:none; position:fixed; inset:0; background:var(--overlay);
+  backdrop-filter:blur(2px); z-index:20;
+}
+.app[data-deck="open"] .scrim{display:block;}
+
+/* ---------- RESPONSIVE ---------- */
+
+/* Tablet portrait: list becomes a slide-out drawer from the left, full detail behind it */
+@media (max-width:1000px) and (orientation:portrait), (max-width:760px){
+  .deck-btn{display:inline-flex;}
+  .stage{max-width:none;}
+  .list-pane{
+    position:fixed; top:0; bottom:0; left:0; width:min(340px, 82vw);
+    z-index:21; transform:translateX(-100%); transition:transform .22s ease;
+    border-right:1px solid var(--line-strong);
+  }
+  .list-head .close-deck{display:block;}
+  .app[data-deck="open"] .list-pane{transform:translateX(0);}
+  .detail-pane{width:100%;}
+}
+
+/* Phone: same slide-out drawer, but presented as a bottom sheet (feels closer to a
+   thumb-reachable action on a small screen) instead of a full-height side drawer */
+@media (max-width:640px){
+  .topbar h1{font-size:.8rem;}
+  .list-pane{
+    top:auto; left:0; right:0; bottom:0; width:100%; height:78vh; height:78dvh;
+    border-right:none; border-top:1px solid var(--line-strong);
+    transform:translateY(100%); border-radius:14px 14px 0 0;
+  }
+  .app[data-deck="open"] .list-pane{transform:translateY(0);}
+  .list-head{position:relative;}
+  .list-head::before{
+    content:''; position:absolute; top:8px; left:50%; transform:translateX(-50%);
+    width:36px; height:4px; border-radius:2px; background:var(--line-strong);
+  }
+  .list-head{padding-top:20px;}
+  .detail-pane{padding:18px;}
+}
+
+/* Large desktop / 1440p+: keep the stage from thinning out into a sea of empty
+   side-gutters -- widen the cap and give the detail column more breathing room
+   rather than letting either pane stretch full-bleed */
+@media (min-width:1600px){
+  .stage{max-width:1900px;}
+  .list-pane{width:clamp(300px, 18vw, 380px);}
+  .detail-pane{padding:56px;}
+  .detail-inner{max-width:1040px;}
+}
 </style>
 </head>
 <body>
-<div class="shell">
-  <aside class="list-pane">
-    <a class="back-link" href="/">&larr; All Campaigns</a>
-    <h1>${esc(campaign.title)}</h1>
-    ${campaign.hook ? `<p class="hook">${esc(campaign.hook)}</p>` : ""}
-    <div class="meta-line"><span>${esc(campaign.system || "")}</span><span>${esc(campaign.status || "")}</span></div>
-    ${items || `<p class="empty">No sessions published yet.</p>`}
-  </aside>
-  <main class="detail-pane">
-    <iframe id="dossierFrame" title="Session detail"></iframe>
-    <div class="empty-state" id="emptyState">Select a session to view its dossier.</div>
-  </main>
+
+<div class="app" id="app" data-deck="closed">
+  <header class="topbar">
+    <div class="topbar-left">
+      <a class="back-link" href="/">&larr; All Campaigns</a>
+      <h1><span>//</span> ${esc(campaign.title)}</h1>
+    </div>
+    <button class="deck-btn" id="openDeck"><b>&#9776;</b> Sessions</button>
+  </header>
+
+  <div class="stage">
+    <div class="panes">
+      <aside class="list-pane">
+        <div class="list-head">
+          SESSION LOG — ${list.length} ENTR${list.length === 1 ? "Y" : "IES"}
+          <button class="close-deck" id="closeDeck">&#10005;</button>
+        </div>
+        <div class="list-scroll" id="listScroll">${items || `<p class="empty">No sessions published yet.</p>`}</div>
+      </aside>
+
+      <section class="detail-pane">
+        <div class="detail-inner" id="detailInner"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
 </div>
+
 <script>
   const SLUG = ${slugJson};
-  const frame = document.getElementById('dossierFrame');
-  const empty = document.getElementById('emptyState');
-  const items = document.querySelectorAll('.session-item');
+  const listScroll = document.getElementById('listScroll');
+  const detailInner = document.getElementById('detailInner');
+  const appEl = document.getElementById('app');
 
-  function select(code){
-    items.forEach(i=>i.classList.toggle('active', i.dataset.code===code));
-    frame.src = '/' + encodeURIComponent(SLUG) + '/' + encodeURIComponent(code);
-    frame.style.display = 'block';
-    empty.style.display = 'none';
+  function openDeck(){ appEl.setAttribute('data-deck', 'open'); }
+  function closeDeck(){ appEl.setAttribute('data-deck', 'closed'); }
+
+  function renderDetail(item){
+    if(!item){
+      detailInner.innerHTML = '<div class="empty-state"><strong>NO SESSIONS YET</strong><span>Sessions published to this campaign will appear here.</span></div>';
+      return;
+    }
+    const code = item.dataset.code, title = item.dataset.title, date = item.dataset.date;
+    detailInner.innerHTML =
+      '<div class="detail-title">' + title + '</div>' +
+      '<div class="detail-meta"><span>CODE <b>' + code + '</b></span>' + (date ? '<span>DATE <b>' + date + '</b></span>' : '') + '</div>' +
+      '<iframe class="detail-frame" title="Session detail" src="/' + encodeURIComponent(SLUG) + '/' + encodeURIComponent(code) + '"></iframe>';
   }
-  items.forEach(item=>{
-    item.addEventListener('click', ()=> select(item.dataset.code));
+
+  function selectItem(item){
+    listScroll.querySelectorAll('.session-item').forEach(i=> i.classList.remove('active'));
+    item.classList.add('active');
+    renderDetail(item);
+    closeDeck();
+  }
+
+  listScroll.querySelectorAll('.session-item').forEach(item=>{
+    item.addEventListener('click', ()=> selectItem(item));
   });
-  ${firstCode ? `select(${JSON.stringify(firstCode)});` : ""}
+
+  document.getElementById('openDeck').addEventListener('click', openDeck);
+  document.getElementById('closeDeck').addEventListener('click', closeDeck);
+  document.getElementById('scrim').addEventListener('click', closeDeck);
+
+  renderDetail(listScroll.querySelector('.session-item.active'));
 </script>
 </body>
 </html>`;
