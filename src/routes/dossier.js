@@ -225,7 +225,8 @@ function pageShell(title, bodyInner, siteLinks) {
      deliberately don't get this chrome, it would clash with their
      immersive full-bleed design. */
   .site-nav{position:sticky; top:0; z-index:50; border-bottom:1px solid var(--border); background:rgba(17,17,17,.95); backdrop-filter:blur(8px);}
-  .site-nav-inner{max-width:1400px; margin:0 auto; padding:0 1.5rem; height:64px; display:flex; align-items:center; justify-content:space-between; gap:1rem;}
+  .site-nav-inner{max-width:1400px; margin:0 auto; padding:0 1.5rem; height:64px; display:flex; align-items:center; gap:1.5rem;}
+  .site-nav-right{display:flex; align-items:center; gap:1rem; margin-left:auto; flex-shrink:0;}
   .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.9rem; flex-shrink:0;}
   .site-nav-brand img{height:32px; width:auto; display:block;}
   .site-nav-links{display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; row-gap:.5rem; padding:.75rem 0;}
@@ -288,14 +289,16 @@ function pageShell(title, bodyInner, siteLinks) {
       <span>Criticals &amp; Fumbles</span>
     </a>
     <div class="site-nav-links" id="siteNavLinks">${nav}</div>
-    ${socialIconsBlock(siteLinks)}
-    <button class="theme-toggle-btn" id="siteThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
-      <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-    </button>
-    <button class="hamburger-btn" id="navHamburger" aria-label="Toggle menu" title="Toggle menu">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
+    <div class="site-nav-right">
+      ${socialIconsBlock(siteLinks)}
+      <button class="theme-toggle-btn" id="siteThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button class="hamburger-btn" id="navHamburger" aria-label="Toggle menu" title="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
   </nav>
 </header>
 <div class="nav-scrim" id="navScrim"></div>
