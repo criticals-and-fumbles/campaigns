@@ -79,13 +79,17 @@ export async function mutate(env, mutations, transactionId) {
 
 /** Uploads a raw file/image straight into Sanity's asset pipeline.
  * `kind` is "image" or "file" — Sanity has separate asset endpoints for
- * each. Returns the created asset document; the caller then PATCHes the
- * relevant dossier field with a reference to it. Always uses the write
- * token — asset creation is a mutation. */
+ * each, under /assets/, not directly under the version segment (e.g.
+ * /assets/images/<dataset>, not /images/<dataset> — omitting /assets/
+ * gives the same generic "no Route matched with those values" 404 as
+ * the missing-"v"-prefix bug did; confirmed by testing both forms
+ * directly against Sanity's API). Returns the created asset document;
+ * the caller then PATCHes the relevant dossier field with a reference
+ * to it. Always uses the write token — asset creation is a mutation. */
 export async function uploadAsset(env, bytes, contentType, filename, kind) {
   const endpoint = kind === "image" ? "images" : "files";
   const res = await fetch(
-    `${apiBase(env)}/${endpoint}/${env.NEXT_PUBLIC_SANITY_DATASET}?filename=${encodeURIComponent(filename || "upload")}`,
+    `${apiBase(env)}/assets/${endpoint}/${env.NEXT_PUBLIC_SANITY_DATASET}?filename=${encodeURIComponent(filename || "upload")}`,
     {
       method: "POST",
       headers: {

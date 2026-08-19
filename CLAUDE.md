@@ -276,3 +276,22 @@ adds another panel that reuses the `.editor` class's open/close pattern,
 copy `editorPanel`'s bare `<div class="editor" id="...">` — no inline
 `style` attribute — not a version with `style="display:none;"` baked
 in.**
+
+**Sanity's asset upload endpoints live under `/assets/`, not directly
+under the version segment — fixed 2026-08-19.** `src/lib/sanity.js`'s
+`uploadAsset()` built `.../v<version>/images/<dataset>` (or `/files/`)
+— the real endpoint is `.../v<version>/assets/images/<dataset>` (or
+`/assets/files/<dataset>`). Same generic `{"message":"no Route matched
+with those values"}` 404 the missing-`v`-prefix bug produced, for the
+same underlying reason (Sanity's router doesn't distinguish "wrong
+version" from "wrong path" — anything that doesn't match a known route
+shape gets this one message). Confirmed by testing both URL forms
+directly against Sanity's API with a raw POST body — the without-
+`/assets/` form 404s, the with-`/assets/` form actually processes the
+upload. This bug had been live since the scaffold's first version of
+`uploadAsset()` — image upload had apparently never worked in the
+console until this fix; nothing before this exercised that code path
+against real Sanity, only against mocked/local responses. If a future
+session touches asset upload URLs, double-check them against a live
+`curl` test the same way, not just by re-reading the code — the error
+message alone doesn't distinguish the two failure modes.
