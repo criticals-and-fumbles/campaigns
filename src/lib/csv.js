@@ -3,7 +3,7 @@
  * across all dossiers at a time (e.g. every objective, for fast bulk
  * spreadsheet edits) — not a full-dossier format like XML. Only
  * "objectives" is implemented at scaffold time (the only collection the
- * reference admin-console-concept.html actually exercises); add another
+ * reference concepts/admin-console-concept.html actually exercises); add another
  * `case` in both functions below if a second collection needs this
  * later, following the same shape.
  */

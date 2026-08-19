@@ -1,5 +1,5 @@
 /**
- * Port of admin-console-concept.html, rewired to call the real Worker API
+ * Port of concepts/admin-console-concept.html, rewired to call the real Worker API
  * routes instead of mutating an in-memory mock array. Server-rendered
  * shell + initial campaign/dossier/genreTheme data injected as JSON (so
  * every view paints immediately without a client-side fetch round-trip);

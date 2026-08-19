@@ -14,11 +14,11 @@ A Cloudflare Worker application that serves `campaigns.criticalsandfumbles.com`,
 
 Treat these as the source of truth for visual design and interaction behavior — port their logic into the real application rather than redesigning from scratch:
 
-- `campaign-dossier-concept.html` — the single dossier template all campaigns use (glitch/signal-corruption title, scan-line overlay, animated meters, media feed, audio-log player, dark/light toggle). This exact color/font/copy set is Bureau Noir's (sci-fi) look; other genres reskin the same structure via their `genreTheme` — see `campaign-dossier-fantasy-concept.html`, `campaign-dossier-horror-concept.html`, and `campaign-dossier-modern-concept.html` for worked examples of that reskinning in practice.
-- `campaign-dossier-fantasy-concept.html` — the same template reskinned for a Fantasy (D&D 5e / Pathfinder-style) campaign: blue/orange palette, Cinzel/Crimson Pro fonts, quest-oriented section labels, a magic-circle sweep in place of the radar sweep, an added Party Status panel.
-- `campaign-dossier-horror-concept.html` — the same template reskinned for a Horror (Call of Cthulhu / Zombicide-style) campaign: black/red palette, Special Elite/Courier Prime fonts, incident-report section labels, signal-corruption title distortion, an added Survivor Status panel.
-- `campaign-dossier-modern-concept.html` — the same template reskinned for a Modern investigative campaign (Shattered Tales): a colder ice-blue/slate-grey palette (deliberately more restrained/clinical than the other three — no second vivid accent color), Space Grotesk/Inter/JetBrains Mono fonts, case-file section labels, a padlock-unlock boot motif, an added Case Status panel.
-- `admin-console-concept.html` — the GM-facing admin console: a bulk spreadsheet-style grid of all dossiers with inline-editable cells, a per-dossier detail editor, and working XML/CSV export-import (currently wired to in-memory mock data — needs to be rewired to call the real Worker API routes below).
+- `concepts/campaign-dossier-concept.html` — the single dossier template all campaigns use (glitch/signal-corruption title, scan-line overlay, animated meters, media feed, audio-log player, dark/light toggle). This exact color/font/copy set is Bureau Noir's (sci-fi) look; other genres reskin the same structure via their `genreTheme` — see `concepts/campaign-dossier-fantasy-concept.html`, `concepts/campaign-dossier-horror-concept.html`, and `concepts/campaign-dossier-modern-concept.html` for worked examples of that reskinning in practice.
+- `concepts/campaign-dossier-fantasy-concept.html` — the same template reskinned for a Fantasy (D&D 5e / Pathfinder-style) campaign: blue/orange palette, Cinzel/Crimson Pro fonts, quest-oriented section labels, a magic-circle sweep in place of the radar sweep, an added Party Status panel.
+- `concepts/campaign-dossier-horror-concept.html` — the same template reskinned for a Horror (Call of Cthulhu / Zombicide-style) campaign: black/red palette, Special Elite/Courier Prime fonts, incident-report section labels, signal-corruption title distortion, an added Survivor Status panel.
+- `concepts/campaign-dossier-modern-concept.html` — the same template reskinned for a Modern investigative campaign (Shattered Tales): a colder ice-blue/slate-grey palette (deliberately more restrained/clinical than the other three — no second vivid accent color), Space Grotesk/Inter/JetBrains Mono fonts, case-file section labels, a padlock-unlock boot motif, an added Case Status panel.
+- `concepts/admin-console-concept.html` — the GM-facing admin console: a bulk spreadsheet-style grid of all dossiers with inline-editable cells, a per-dossier detail editor, and working XML/CSV export-import (currently wired to in-memory mock data — needs to be rewired to call the real Worker API routes below).
 - `sanity-proxy-worker.js` — a real (not mock) Worker source implementing the API routes this app needs: field-level Sanity PATCH mutations, asset upload with a 500KB cap, XML export, XML bulk import. Use this as the starting point for `src/worker.js` / `src/routes/*`, adjusting as needed for the data model below.
 - `genre-theme-examples.json` — example theme documents (colors, fonts, section-label dictionaries) for each genre. Use this shape for the `genreTheme` schema and as seed/fixture data.
 
@@ -125,7 +125,7 @@ Seed the project with the six example theme documents from `genre-theme-examples
 - `GET /:campaignSlug` — optional campaign landing/session-index page.
 
 **Console (behind Cloudflare Access):**
-- `GET /console` — the admin console (bulk grid + inline editor), ported from `admin-console-concept.html`, wired to real data instead of the mock array.
+- `GET /console` — the admin console (bulk grid + inline editor), ported from `concepts/admin-console-concept.html`, wired to real data instead of the mock array.
 - `PATCH /api/dossier/:id` — body `{ field, value, ifRevisionId? }`; single-field Sanity mutation. Include the optimistic-concurrency `ifRevisionID` guard when provided.
 - `POST /api/dossier` — create a new dossier document.
 - `POST /api/upload` — multipart upload, `kind: "image"|"file"`; 500KB hard cap on `kind: "image"`; pushes to Sanity's asset API; returns the asset reference for the client to PATCH onto a dossier field.
@@ -160,11 +160,11 @@ Every route under `/api/*` and `/console*` must reject requests missing `Cf-Acce
       csv.js
       theme.js                   # resolves a campaign's genreTheme into CSS vars + labels
     templates/
-      dossier.js                   # port of campaign-dossier-concept.html, theme-parameterized
-                                    #   (see campaign-dossier-fantasy-concept.html and
-                                    #   campaign-dossier-horror-concept.html for how the same
+      dossier.js                   # port of concepts/campaign-dossier-concept.html, theme-parameterized
+                                    #   (see concepts/campaign-dossier-fantasy-concept.html and
+                                    #   concepts/campaign-dossier-horror-concept.html for how the same
                                     #   structure should reskin per genreTheme)
-      console.js                   # port of admin-console-concept.html
+      console.js                   # port of concepts/admin-console-concept.html
   schema/
     genreTheme.js               # Sanity schema definitions to hand off to the main
     campaign.js                  # site's Studio config (this repo doesn't run Studio,

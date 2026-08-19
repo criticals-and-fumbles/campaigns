@@ -1,5 +1,5 @@
 /**
- * Port of campaign-dossier-concept.html (+ its fantasy/horror/modern
+ * Port of concepts/campaign-dossier-concept.html (+ its fantasy/horror/modern
  * reskins) into ONE theme-parameterized template. There is no
  * layout-mode switch — every campaign renders through this same
  * function; only `theme` (colors/fonts/labels/motif) and the dossier's

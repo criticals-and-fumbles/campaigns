@@ -2,7 +2,7 @@
  * Cloudflare Worker — Sanity proxy for the campaign dossier admin console.
  *
  * Purpose: lets GMs update Sanity content and upload media WITHOUT touching
- * Sanity Studio. The browser (admin-console-concept.html, wired up for real)
+ * Sanity Studio. The browser (concepts/admin-console-concept.html, wired up for real)
  * talks only to this Worker; the Worker holds the Sanity write token as a
  * secret and is the only thing that ever calls Sanity's API directly.
  *

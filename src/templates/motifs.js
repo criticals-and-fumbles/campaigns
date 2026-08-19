@@ -2,10 +2,10 @@
  * Loading-screen boot motifs — 4 reusable animation modules, selected by
  * `theme.loadingScreen.motif`, NOT hardcoded per genre/campaign name. Each
  * ports the exact animation from its respective concept HTML:
- *   terminal-decrypt — campaign-dossier-concept.html (sci-fi/Bureau Noir)
- *   wax-seal         — campaign-dossier-fantasy-concept.html
- *   vhs-tracking     — campaign-dossier-horror-concept.html
- *   file-unlock      — campaign-dossier-modern-concept.html
+ *   terminal-decrypt — concepts/campaign-dossier-concept.html (sci-fi/Bureau Noir)
+ *   wax-seal         — concepts/campaign-dossier-fantasy-concept.html
+ *   vhs-tracking     — concepts/campaign-dossier-horror-concept.html
+ *   file-unlock      — concepts/campaign-dossier-modern-concept.html
  *
  * Each entry provides `html` (the #boot inner markup), `css` (motif-only
  * rules — shared #boot chrome lives in dossier.js's base stylesheet), and
