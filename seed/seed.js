@@ -26,7 +26,8 @@ const {
 } = process.env;
 
 function apiBase() {
-  return `https://${NEXT_PUBLIC_SANITY_PROJECT_ID}.api.sanity.io/${NEXT_PUBLIC_SANITY_API_VERSION}`;
+  // See src/lib/sanity.js's apiBase() for why the "v" prefix is required.
+  return `https://${NEXT_PUBLIC_SANITY_PROJECT_ID}.api.sanity.io/v${NEXT_PUBLIC_SANITY_API_VERSION}`;
 }
 
 async function sanityFetch(path, init = {}) {

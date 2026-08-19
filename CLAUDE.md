@@ -142,3 +142,35 @@ layout-mode switch keyed on genre/campaign name directly.
 site's actual registered schema during scaffolding (same Claude Code
 session had it in context) — the real type name is `world`. Used the
 verified name, not the brief's placeholder guess.
+
+## Lessons learned
+
+**Sanity's REST API version segment needs a `v` prefix — fixed
+2026-08-19, first-deploy bug.** `src/lib/sanity.js`'s `apiBase()` (and
+`seed/seed.js`'s copy of the same logic) originally built
+`https://<project>.api.sanity.io/<version>/...` — missing the required
+`v` before the date, e.g. `/2026-06-01/` instead of `/v2026-06-01/`.
+Sanity doesn't return a clear "bad version" error for this; it returns a
+generic `{"message":"no Route matched with those values"}` 404, which
+looked identical to a routing problem and took real live-debugging to
+isolate (confirmed by testing both URL forms directly against Sanity's
+API with curl — the unprefixed form 404s, the `v`-prefixed form returns
+real data). If a future session ever touches the API-base URL
+construction in either file, keep the `v` prefix; there's no client
+library here to get this right automatically (deliberately hand-rolled,
+see Bundle size budget above), so it has to stay correct by hand.
+
+**Cloudflare's "Build" vs "Runtime" variable panels are genuinely
+separate — fixed 2026-08-19.** Workers Builds (Git-integration) has two
+distinct "Variables and secrets" panels in the dashboard: one under
+Settings → **Build** (used only during the CI build step), one under
+Settings → **Runtime** (actually bound to `env` for live requests). The
+Worker's first live deploy had all 5 Sanity values set correctly, but
+under Build, not Runtime — `env.NEXT_PUBLIC_SANITY_PROJECT_ID` etc. were
+all `undefined` at request time despite looking fully configured in the
+dashboard. Confirmed via the Cloudflare API
+(`GET /accounts/:id/workers/scripts/campaigns/settings`) showing an
+empty `bindings` array even though the dashboard showed values — that
+API call is the reliable way to check what's actually bound, since the
+dashboard UI doesn't make the Build/Runtime distinction obvious at a
+glance.

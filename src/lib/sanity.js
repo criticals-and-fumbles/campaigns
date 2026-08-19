@@ -15,7 +15,11 @@
  */
 
 function apiBase(env) {
-  return `https://${env.NEXT_PUBLIC_SANITY_PROJECT_ID}.api.sanity.io/${env.NEXT_PUBLIC_SANITY_API_VERSION}`;
+  // Sanity's API requires a "v" prefix on the version segment
+  // (/v2026-06-01/, not /2026-06-01/) — omitting it returns a generic
+  // "no Route matched with those values" 404 from Sanity itself, not a
+  // clear "bad version" error, which is what made this bug hard to spot.
+  return `https://${env.NEXT_PUBLIC_SANITY_PROJECT_ID}.api.sanity.io/v${env.NEXT_PUBLIC_SANITY_API_VERSION}`;
 }
 
 async function request(env, path, token, init = {}) {
