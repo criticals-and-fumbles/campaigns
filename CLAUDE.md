@@ -143,6 +143,22 @@ site's actual registered schema during scaffolding (same Claude Code
 session had it in context) — the real type name is `world`. Used the
 verified name, not the brief's placeholder guess.
 
+## Visual design — matches the main site, not invented here
+
+The public campaign directory (`GET /`, `src/routes/dossier.js`) is styled
+to match criticalsandfumbles.com's actual design system — dark-mode-default
+palette, Bebas Neue/Crimson Pro/Space Mono fonts, the three-color brand
+title treatment, card/badge shapes — because this page launches *from*
+that site (2026-08-19 decision), not as a standalone-looking subsite.
+Values were copied by hand from that repo's `app/(site)/globals.css` and
+`components/content/ArticleCard.tsx` (see its `docs/design-system.md` for
+the source of truth) — there's no shared package/token file between the
+two repos, so if the main site's palette or fonts change, this page's
+inline `<style>` block has to be updated to match by hand; nothing keeps
+them in sync automatically. Nav/header is deliberately absent here — the
+main site will link into this page directly once that's built, this repo
+doesn't own that navigation.
+
 ## Lessons learned
 
 **Sanity's REST API version segment needs a `v` prefix — fixed
