@@ -1,0 +1,29 @@
+name = "campaigns"
+main = "src/worker.js"
+compatibility_date = "2026-05-03"
+compatibility_flags = ["nodejs_compat"]
+
+# Pinned to match the main criticalsandfumbles.com site's wrangler version —
+# see CLAUDE.md "Pinned versions" section. Every wrangler version from
+# 4.87.0 on requires Node >=22; this project targets Node 20 LTS.
+
+# Custom domain (campaigns.criticalsandfumbles.com) is attached manually via
+# the Cloudflare dashboard (Workers & Pages -> Settings -> Domains & Routes),
+# not declared here — see README.md "Manual setup" step 2. No [[routes]] or
+# custom_domain block needed for that; Cloudflare manages the binding once
+# attached in the dashboard, same pattern the main site's *.workers.dev vs.
+# custom domain setup uses.
+
+# No [[r2_buckets]] — this project deliberately has no R2/object storage;
+# all media goes through Sanity's asset pipeline instead (see
+# SCAFFOLD_PROMPT.md "Explicit non-goals").
+
+# No [[kv_namespaces]] or [[d1_databases]] — nothing in this app needs them
+# at scaffold time. Add only if a real use case needs one later.
+
+# Secrets (never declared here — set via `wrangler secret put <NAME>`):
+#   SANITY_PROJECT_ID
+#   SANITY_DATASET
+#   SANITY_API_VERSION
+#   SANITY_WRITE_TOKEN
+# See README.md "Manual setup" step 4.

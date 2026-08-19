@@ -1,0 +1,168 @@
+[
+  {
+    "_id": "genreTheme.site-default",
+    "_type": "genreTheme",
+    "genre": "Site",
+    "campaignOverride": false,
+    "colors": {
+      "dark": { "bg": "#050708", "accentA": "#17e9a0", "accentB": "#ff4fae", "text": "#dfeee9" },
+      "light": { "bg": "#efe6d2", "accentA": "#0d8f63", "accentB": "#c22e83", "text": "#231f18" }
+    },
+    "fonts": { "display": "Space Grotesk", "body": "Inter", "mono": "JetBrains Mono" },
+    "loadingScreen": {
+      "motif": "terminal-decrypt",
+      "bootTitle": "ESTABLISHING SECURE UPLINK",
+      "bootSubtitle": "DECRYPTING TRANSMISSION"
+    }
+  },
+  {
+    "_id": "genreTheme.scifi-default",
+    "_type": "genreTheme",
+    "genre": "Sci-Fi",
+    "campaignOverride": false,
+    "colors": {
+      "dark": { "bg": "#050a06", "accentA": "#39d353", "accentB": "#e3372f", "text": "#dcefe0" },
+      "light": { "bg": "#e9efe0", "accentA": "#1f8f3a", "accentB": "#b8271f", "text": "#1a2418" }
+    },
+    "fonts": { "display": "Orbitron", "body": "Rajdhani", "mono": "Share Tech Mono" },
+    "labels": {
+      "dossier": "Mission Brief",
+      "overview": "Situation Overview",
+      "location": "Location",
+      "meterSection": "Threat Assessment",
+      "meterItem": "Threat",
+      "objectives": "Mission Objectives",
+      "objectivePriorityHigh": "Primary",
+      "objectivePriorityMid": "Secondary",
+      "objectivePriorityLow": "Tertiary",
+      "log": "Session Log",
+      "media": "Media Feed",
+      "statPanel": "Squad Status"
+    },
+    "loadingScreen": {
+      "motif": "terminal-decrypt",
+      "bootTitle": "ESTABLISHING SECURE UPLINK — BUREAU NOIR",
+      "bootSubtitle": "DECRYPTING TRANSMISSION"
+    }
+  },
+  {
+    "_id": "genreTheme.scifi-bureau-noir",
+    "_type": "genreTheme",
+    "genre": "Sci-Fi",
+    "campaignOverride": true,
+    "colors": {
+      "dark": { "bg": "#050708", "accentA": "#17e9a0", "accentB": "#ff4fae", "text": "#dfeee9" },
+      "light": { "bg": "#efe6d2", "accentA": "#0d8f63", "accentB": "#c22e83", "text": "#231f18" }
+    },
+    "fonts": { "display": "Orbitron", "body": "Rajdhani", "mono": "Share Tech Mono" },
+    "labels": {
+      "dossier": "Mission Brief",
+      "overview": "Situation Overview",
+      "location": "Location",
+      "meterSection": "Threat Assessment",
+      "meterItem": "Threat",
+      "objectives": "Mission Objectives",
+      "objectivePriorityHigh": "Primary",
+      "objectivePriorityMid": "Secondary",
+      "objectivePriorityLow": "Tertiary",
+      "log": "Session Log",
+      "media": "Media Feed",
+      "statPanel": "Squad Status"
+    },
+    "loadingScreen": {
+      "motif": "terminal-decrypt",
+      "bootTitle": "ESTABLISHING SECURE UPLINK — BUREAU NOIR",
+      "bootSubtitle": "DECRYPTING TRANSMISSION"
+    }
+  },
+  {
+    "_id": "genreTheme.fantasy-default",
+    "_type": "genreTheme",
+    "genre": "Fantasy",
+    "campaignOverride": false,
+    "colors": {
+      "dark": { "bg": "#0e0f14", "accentA": "#3f7fd9", "accentB": "#e08a2e", "text": "#e4e9f2" },
+      "light": { "bg": "#f0ede2", "accentA": "#2b5aa0", "accentB": "#b8641c", "text": "#1c1f28" }
+    },
+    "fonts": { "display": "Cinzel", "body": "Crimson Pro", "mono": "IM Fell English" },
+    "labels": {
+      "dossier": "Chronicle Entry",
+      "overview": "The Tale So Far",
+      "location": "The Realm",
+      "meterSection": "Encounter Standing",
+      "meterItem": "Threat",
+      "objectives": "Quest Objectives",
+      "objectivePriorityHigh": "Main Quest",
+      "objectivePriorityMid": "Side Quest",
+      "objectivePriorityLow": "Rumor",
+      "log": "Chronicle Log",
+      "media": "Illustrations & Handouts",
+      "statPanel": "Party Status"
+    },
+    "loadingScreen": {
+      "motif": "wax-seal",
+      "bootTitle": "unsealing the chronicle — the guild archive",
+      "bootSubtitle": "breaking the wax seal"
+    }
+  },
+  {
+    "_id": "genreTheme.horror-default",
+    "_type": "genreTheme",
+    "genre": "Horror",
+    "campaignOverride": false,
+    "colors": {
+      "dark": { "bg": "#070505", "accentA": "#b3161c", "accentB": "#5c0d10", "text": "#d8cfc9" },
+      "light": { "bg": "#e3ddd8", "accentA": "#8c1015", "accentB": "#1a1414", "text": "#1a1414" }
+    },
+    "fonts": { "display": "Special Elite", "body": "Courier Prime", "mono": "Courier Prime" },
+    "labels": {
+      "dossier": "Case File",
+      "overview": "Incident Report",
+      "location": "Zone Map",
+      "meterSection": "Dread Level",
+      "meterItem": "Threat",
+      "objectives": "Survival Priorities",
+      "objectivePriorityHigh": "Critical",
+      "objectivePriorityMid": "Urgent",
+      "objectivePriorityLow": "If Possible",
+      "log": "Timeline",
+      "media": "Evidence",
+      "statPanel": "Survivor Status"
+    },
+    "loadingScreen": {
+      "motif": "vhs-tracking",
+      "bootTitle": "re-establishing uplink — signal degraded",
+      "bootSubtitle": "recovering last known transmission"
+    }
+  },
+  {
+    "_id": "genreTheme.modern-default",
+    "_type": "genreTheme",
+    "genre": "Modern",
+    "campaignOverride": false,
+    "colors": {
+      "dark": { "bg": "#0c0e10", "accentA": "#4c7fb3", "accentB": "#8a8f99", "text": "#dde2e6" },
+      "light": { "bg": "#e9ebed", "accentA": "#2f5b82", "accentB": "#5c6169", "text": "#15171a" }
+    },
+    "fonts": { "display": "Space Grotesk", "body": "Inter", "mono": "JetBrains Mono" },
+    "labels": {
+      "dossier": "Case Brief",
+      "overview": "Background",
+      "location": "Field Map",
+      "meterSection": "Risk Assessment",
+      "meterItem": "Risk",
+      "objectives": "Leads",
+      "objectivePriorityHigh": "Priority Lead",
+      "objectivePriorityMid": "Secondary Lead",
+      "objectivePriorityLow": "Loose Thread",
+      "log": "Case Timeline",
+      "media": "Files & Photos",
+      "statPanel": "Case Status"
+    },
+    "loadingScreen": {
+      "motif": "file-unlock",
+      "bootTitle": "OPENING CASE FILE",
+      "bootSubtitle": "verifying clearance"
+    }
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "name": "campaigns-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloudflare Worker serving campaigns.criticalsandfumbles.com — campaign dossier subsite for Criticals & Fumbles.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "seed": "node --env-file=.env seed/seed.js",
+    "seed:dry": "DRY_RUN=true node --env-file=.env seed/seed.js"
+  },
+  "dependencies": {
+    "hono": "^4.6.0",
+    "fast-xml-parser": "^4.5.0"
+  },
+  "devDependencies": {
+    "wrangler": "4.86.0",
+    "sanity": "^3.62.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
