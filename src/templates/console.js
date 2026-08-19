@@ -87,7 +87,7 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
       </table>
     </div>
 
-    <div class="editor" id="createCampaignView" style="display:none;">
+    <div class="editor" id="createCampaignView">
       <h2>NEW CAMPAIGN</h2>
       <div class="field"><label>Title *</label><input type="text" id="ccTitle" placeholder="e.g. Bureau Noir: Dawn Protocol"></div>
       <div class="field"><label>Genre * (matches a Genre Theme below)</label><input type="text" id="ccGenre" placeholder="e.g. Sci-Fi, Fantasy, Horror, Modern"></div>
@@ -116,7 +116,7 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
       <p class="hint">New campaigns start hidden (not Visible) — publish it from "My Campaigns" once it's ready.</p>
     </div>
 
-    <div class="editor" id="createDossierView" style="display:none;">
+    <div class="editor" id="createDossierView">
       <h2>NEW SESSION / DOSSIER</h2>
       <div class="field">
         <label>Campaign *</label>
