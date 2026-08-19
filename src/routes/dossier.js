@@ -168,14 +168,14 @@ function pageShell(title, bodyInner, siteLinks) {
   .container{max-width:1400px; margin:0 auto; padding:4rem 1.5rem;}
   .back-link{display:inline-block; font-family:var(--font-ui); font-size:.8rem; color:var(--text-muted); text-decoration:none; margin-bottom:1.5rem;}
   .back-link:hover{color:var(--emerald);}
-  h1{font-family:var(--font-display); letter-spacing:.02em; font-size:2.75rem; margin:0 0 .5rem;}
+  h1{font-family:var(--font-display); letter-spacing:.02em; font-size:3rem; margin:0 0 .5rem;}
   h1 .emerald{color:var(--emerald);}
   h1 .amber{color:var(--amber);}
   h1 .magenta{color:var(--magenta);}
   .intro{color:var(--text-muted); max-width:65ch; margin:0 0 1.5rem;}
 
   .cta-row{display:flex; flex-wrap:wrap; gap:.75rem; margin:0 0 2.5rem;}
-  .cta-btn{display:inline-flex; align-items:center; font-family:var(--font-ui); font-size:.85rem; font-weight:700; padding:.65rem 1.25rem; border-radius:.4rem; text-decoration:none; transition:opacity .15s ease;}
+  .cta-btn{display:inline-flex; align-items:center; font-family:var(--font-ui); font-size:.875rem; font-weight:700; padding:.65rem 1.25rem; border-radius:.4rem; text-decoration:none; transition:opacity .15s ease;}
   .cta-btn:hover{opacity:.85;}
   .cta-discord{background:#5865F2; color:#fff;}
   .cta-whatsapp{background:#25D366; color:#04160c;}
@@ -194,18 +194,18 @@ function pageShell(title, bodyInner, siteLinks) {
   .card-image img{width:100%; height:100%; object-fit:cover;}
   .card-body{flex:1; min-width:0; display:flex; flex-direction:column; gap:.6rem; padding:1.25rem 1.5rem;}
   .badge-row{display:flex; flex-wrap:wrap; align-items:center; gap:.5rem;}
-  .badge{border:1px solid var(--emerald); color:var(--emerald); font-family:var(--font-ui); font-size:.75rem; padding:.25rem 1rem; border-radius:999px;}
+  .badge{border:1px solid var(--emerald); color:var(--emerald); font-family:var(--font-ui); font-size:.875rem; padding:.25rem 1rem; border-radius:999px;}
   /* Status is the one thing a visitor most needs to spot at a glance —
      "recruiting" campaigns are what the intro copy explicitly points
      people at, so it gets a solid fill instead of the genre badge's
      quieter outline treatment. */
-  .status-badge{font-family:var(--font-ui); font-size:.75rem; font-weight:700; padding:.25rem 1rem; border-radius:999px; text-transform:uppercase; letter-spacing:.03em;}
+  .status-badge{font-family:var(--font-ui); font-size:.875rem; font-weight:700; padding:.25rem 1rem; border-radius:999px; text-transform:uppercase; letter-spacing:.03em;}
   .status-badge.status-active{background:rgba(46,197,107,.15); color:var(--emerald); border:1px solid var(--emerald);}
   .status-badge.status-recruiting{background:var(--amber); color:#1a1000;}
   .status-badge.status-hiatus{background:transparent; color:var(--text-muted); border:1px solid var(--border);}
   .status-badge.status-concluded{background:transparent; color:var(--text-muted); border:1px solid var(--border); opacity:.7;}
   .card-body h2{font-family:var(--font-display); letter-spacing:.02em; font-size:1.5rem; margin:0; line-height:1.2;}
-  .hook{font-size:1.05rem; color:var(--text-muted); margin:0;}
+  .hook{font-size:1.1rem; color:var(--text-muted); margin:0;}
   .meta{display:flex; justify-content:space-between; gap:1rem; font-family:var(--font-ui); font-size:.75rem; color:var(--text-muted); margin-top:auto;}
   .empty{color:var(--text-muted);}
 
@@ -229,7 +229,7 @@ function pageShell(title, bodyInner, siteLinks) {
   .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.9rem; flex-shrink:0;}
   .site-nav-brand img{height:32px; width:auto; display:block;}
   .site-nav-links{display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; row-gap:.5rem; padding:.75rem 0;}
-  .site-nav-links a{font-family:var(--font-ui); font-size:.9rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
+  .site-nav-links a{font-family:var(--font-ui); font-size:1rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
   .site-nav-links a:hover{color:var(--emerald);}
   .site-nav-links a.current{color:var(--emerald);}
   .site-nav-social{display:flex; align-items:center; gap:1rem; flex-shrink:0;}
@@ -246,14 +246,30 @@ function pageShell(title, bodyInner, siteLinks) {
   html[data-theme="light"] .theme-toggle-btn .icon-moon{display:none;}
   html[data-theme="light"] .theme-toggle-btn .icon-sun{display:block;}
 
+  /* Mobile nav drawer — same data-attribute + transform + scrim technique
+     already used by the session browser's list-pane drawer
+     (templates/dossier.js's .list-pane/.deck-btn/.scrim), applied to
+     <html> here since the directory page has no app wrapper element. */
+  .hamburger-btn{display:none; align-items:center; justify-content:center; width:32px; height:32px; flex-shrink:0; background:none; border:1px solid var(--border); border-radius:.375rem; color:var(--text); cursor:pointer; padding:0;}
+  .hamburger-btn svg{width:20px; height:20px; display:block;}
+  .nav-scrim{display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:59;}
+  @media(max-width:768px){
+    .hamburger-btn{display:flex;}
+    .site-nav-social{display:none;}
+    .site-nav-links{position:fixed; top:0; right:0; bottom:0; z-index:60; width:min(280px,82vw); margin:0; padding:5rem 1.5rem 1.5rem; flex-direction:column; align-items:flex-start; gap:0; row-gap:0; background:var(--bg); border-left:1px solid var(--border); transform:translateX(100%); transition:transform .22s ease; overflow-y:auto;}
+    html[data-nav="open"] .site-nav-links{transform:translateX(0);}
+    html[data-nav="open"] .nav-scrim{display:block;}
+    .site-nav-links a{width:100%; padding:.75rem 0; font-family:var(--font-display); font-size:1.5rem; border-bottom:1px solid var(--border);}
+  }
+
   .site-footer{border-top:1px solid var(--border); padding:3rem 1.5rem;}
   .site-footer-grid{max-width:1400px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:2.5rem;}
   @media(min-width:768px){.site-footer-grid{grid-template-columns:repeat(3, 1fr);}}
-  .site-footer-desc{margin:1rem 0 0; max-width:30ch; font-size:.9rem; color:var(--text-muted);}
+  .site-footer-desc{margin:1rem 0 0; max-width:30ch; font-size:.875rem; color:var(--text-muted);}
   .site-footer-values{margin:1rem 0 0; font-family:var(--font-ui); font-size:.75rem;}
   .site-footer h3{margin:0 0 1rem; font-family:var(--font-ui); font-size:.85rem; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted);}
   .site-footer-nav{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem;}
-  .site-footer-nav a{font-size:.9rem; text-decoration:none; color:var(--text); transition:color .15s ease;}
+  .site-footer-nav a{font-size:.875rem; text-decoration:none; color:var(--text); transition:color .15s ease;}
   .site-footer-nav a:hover{color:var(--emerald);}
   .footer-discord-btn{display:inline-flex; align-items:center; margin-top:0; min-height:44px; padding:.5rem 1rem; border-radius:.375rem; background:var(--emerald); color:var(--bg); font-family:var(--font-ui); font-size:.85rem; text-decoration:none; transition:opacity .15s ease;}
   .footer-discord-btn:hover{opacity:.9;}
@@ -271,14 +287,18 @@ function pageShell(title, bodyInner, siteLinks) {
       <img src="${MAIN_SITE}/logo.png" alt="Criticals and Fumbles logo">
       <span>Criticals &amp; Fumbles</span>
     </a>
-    <div class="site-nav-links">${nav}</div>
+    <div class="site-nav-links" id="siteNavLinks">${nav}</div>
     ${socialIconsBlock(siteLinks)}
     <button class="theme-toggle-btn" id="siteThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
       <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
     </button>
+    <button class="hamburger-btn" id="navHamburger" aria-label="Toggle menu" title="Toggle menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
   </nav>
 </header>
+<div class="nav-scrim" id="navScrim"></div>
 
 <div class="container">
 ${bodyInner}
@@ -317,6 +337,21 @@ ${bodyInner}
     var isLight = html.getAttribute('data-theme') === 'light';
     html.setAttribute('data-theme', isLight ? 'dark' : 'light');
   });
+  (function(){
+    var html = document.documentElement;
+    var hamburger = document.getElementById('navHamburger');
+    var scrim = document.getElementById('navScrim');
+    var navLinks = document.getElementById('siteNavLinks');
+    function closeNav(){ html.setAttribute('data-nav', 'closed'); }
+    function openNav(){ html.setAttribute('data-nav', 'open'); }
+    hamburger.addEventListener('click', function(){
+      html.getAttribute('data-nav') === 'open' ? closeNav() : openNav();
+    });
+    scrim.addEventListener('click', closeNav);
+    navLinks.addEventListener('click', function(e){
+      if (e.target.tagName === 'A') closeNav();
+    });
+  })();
 </script>
 </body>
 </html>`;
