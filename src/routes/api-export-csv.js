@@ -13,7 +13,11 @@ app.get("/", async (c) => {
     return c.json({ error: `Unsupported collection "${collection}" — only "objectives" is implemented` }, 400);
   }
 
-  const dossiers = await query(c.env, `*[_type == "dossier"]{ _id, code, objectives }`);
+  const dossiers = await query(
+    c.env,
+    `*[_type == "dossier" && campaign->ownerEmail == $email]{ _id, code, objectives }`,
+    { email: c.get("gmEmail") },
+  );
   const csv = objectivesToCsv(dossiers);
 
   return c.body(csv, 200, {

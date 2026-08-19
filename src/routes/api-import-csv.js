@@ -21,9 +21,14 @@ app.post("/", async (c) => {
   const text = await file.text();
   const byDossierCode = parseObjectivesCsv(text);
 
-  const dossiers = await query(c.env, `*[_type == "dossier" && code in $codes]{ _id, code }`, {
-    codes: [...byDossierCode.keys()],
-  });
+  // Scoped to the caller's own dossiers — code isn't globally unique
+  // across campaigns/DMs, so without this an ambiguous code could patch
+  // another DM's dossier.
+  const dossiers = await query(
+    c.env,
+    `*[_type == "dossier" && code in $codes && campaign->ownerEmail == $email]{ _id, code }`,
+    { codes: [...byDossierCode.keys()], email: c.get("gmEmail") },
+  );
   const idByCode = new Map(dossiers.map((d) => [d.code, d._id]));
 
   const mutations = [];

@@ -109,6 +109,22 @@ export default defineType({
       description:
         "Optional — link to the main site's wiki world this campaign is set in, if any.",
     }),
+    defineField({
+      name: "ownerEmail",
+      title: "Owner (DM) Email",
+      type: "string",
+      description:
+        "The Cf-Access-Authenticated-User-Email of the DM who created this campaign. Set once, server-side, at creation (see src/routes/api-campaign.js) — never editable directly, here or through the console. Scopes console visibility/edit access: a DM only sees and can edit campaigns (and their dossiers) where this matches their own Access identity.",
+      readOnly: true,
+    }),
+    defineField({
+      name: "visible",
+      title: "Visible",
+      type: "boolean",
+      description:
+        'Whether this campaign (and its dossiers) appear on the public campaign directory and session-index pages at campaigns.criticalsandfumbles.com. Off by default so a DM can build out a campaign before publishing it — toggle on from the console when ready. Enforced on both the "/" directory listing and the "/:campaignSlug" / "/:campaignSlug/:dossierCode" pages themselves (a direct link to a non-visible campaign 404s, it is not merely unlisted).',
+      initialValue: false,
+    }),
   ],
   preview: {
     select: { title: "title", subtitle: "genre", media: "heroImage" },
