@@ -43,6 +43,7 @@ app.post("/", async (c) => {
     hook: body.hook || undefined,
     motto: body.motto || undefined,
     signOff: body.signOff || undefined,
+    heroImage: body.heroImage || undefined,
     ownerEmail: c.get("gmEmail"),
     visible: body.visible === true,
   };

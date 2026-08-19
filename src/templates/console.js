@@ -17,7 +17,7 @@
  * too (api-campaign.js / api-dossier.js) — client-side scoping here is a
  * UX convenience, not the security boundary.
  */
-export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail }) {
+export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail, sanityProjectId, sanityDataset }) {
   const initialCampaigns = JSON.stringify(campaigns).replace(/</g, "\\u003c");
   const initialDossiers = JSON.stringify(dossiers).replace(/</g, "\\u003c");
   const initialThemes = JSON.stringify(genreThemes).replace(/</g, "\\u003c");
@@ -27,7 +27,7 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>// CAMPAIGNS :: DOSSIER CONSOLE</title>
+<title>Criticals and Fumbles Campaign Log</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>${CONSOLE_CSS}</style>
@@ -35,7 +35,7 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
 <body>
 <div class="app">
   <aside class="side">
-    <div class="brand"><span class="dot"></span>DOSSIER CONSOLE</div>
+    <div class="brand"><span class="dot"></span>Criticals and Fumbles Campaign Log</div>
     <div class="navgroup">
       <div class="label">CAMPAIGNS</div>
       <div class="navitem" data-view="createCampaign">+ Create New Campaign</div>
@@ -120,6 +120,7 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
       <div class="field"><label>Hook (directory card blurb)</label><textarea id="ecHook" rows="2"></textarea></div>
       <div class="field"><label>Motto</label><input type="text" id="ecMotto"></div>
       <div class="field"><label>Sign-Off</label><input type="text" id="ecSignOff"></div>
+      ${heroImageFieldBlock("ec")}
       <div class="field">
         <label class="checkline"><input type="checkbox" id="ecVisible"> Visible on the public campaign directory</label>
       </div>
@@ -152,6 +153,7 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
       <div class="field"><label>Hook (directory card blurb)</label><textarea id="ccHook" rows="2"></textarea></div>
       <div class="field"><label>Motto</label><input type="text" id="ccMotto"></div>
       <div class="field"><label>Sign-Off</label><input type="text" id="ccSignOff"></div>
+      ${heroImageFieldBlock("cc")}
       <div class="field">
         <label class="checkline"><input type="checkbox" id="ccVisible"> Publish immediately (visible on the public campaign directory)</label>
       </div>
@@ -192,10 +194,21 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
   </main>
 </div>
 
+<datalist id="quickFactSuggestions">
+  <option value="STATUS"><option value="THREAT LEVEL"><option value="FACTION">
+  <option value="OBJECTIVE COUNT"><option value="RESOURCES"><option value="MORALE">
+</datalist>
+<datalist id="locationFactSuggestions">
+  <option value="REGION"><option value="POPULATION"><option value="GOVERNANCE">
+  <option value="CLIMATE"><option value="NOTABLE NPCS"><option value="DEFENSES">
+</datalist>
+
 <script>
   const INITIAL_CAMPAIGNS = ${initialCampaigns};
   const INITIAL_DOSSIERS = ${initialDossiers};
   const INITIAL_THEMES = ${initialThemes};
+  const SANITY_PROJECT_ID = ${JSON.stringify(sanityProjectId || "")};
+  const SANITY_DATASET = ${JSON.stringify(sanityDataset || "")};
   ${CONSOLE_JS}
 </script>
 </body>
@@ -221,13 +234,11 @@ function escapeHtml(s) {
  * create, `ed` for edit) so client-side JS can address either form
  * generically.
  */
-function dossierFieldsBlock(prefix) {
+// Shared by every form with a hero image (campaign create/edit, dossier
+// create/edit) — one upload/preview/replace widget, `prefix`-addressed so
+// wireImageUpload() (client-side) can hook up any of them generically.
+function heroImageFieldBlock(prefix) {
   return `
-      <div class="field"><label>Classification</label><input type="text" id="${prefix}Classification" placeholder="e.g. TOP SECRET"></div>
-      <div class="field"><label>Distribution</label><input type="text" id="${prefix}Distribution" placeholder="e.g. PLAYER-FACING"></div>
-      <div class="field"><label>Session Label</label><input type="text" id="${prefix}SessionLabel" placeholder="e.g. 8, Day 41"></div>
-      <div class="field"><label>Location</label><input type="text" id="${prefix}Location"></div>
-      <div class="field"><label>Overview</label><textarea id="${prefix}Overview" rows="3"></textarea></div>
       <div class="field">
         <label>Hero Image (max 500KB — auto-downscaled/recompressed to WebP before upload)</label>
         <div class="imgfield">
@@ -237,6 +248,17 @@ function dossierFieldsBlock(prefix) {
           <span class="sizewarn" id="${prefix}SizeWarn"></span>
         </div>
       </div>
+  `;
+}
+
+function dossierFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>Classification</label><input type="text" id="${prefix}Classification" placeholder="e.g. TOP SECRET"></div>
+      <div class="field"><label>Distribution</label><input type="text" id="${prefix}Distribution" placeholder="e.g. PLAYER-FACING"></div>
+      <div class="field"><label>Session Label</label><input type="text" id="${prefix}SessionLabel" placeholder="e.g. 8, Day 41"></div>
+      <div class="field"><label>Location</label><input type="text" id="${prefix}Location"></div>
+      <div class="field"><label>Overview</label><textarea id="${prefix}Overview" rows="3"></textarea></div>
+      ${heroImageFieldBlock(prefix)}
       <div class="field">
         <label>Quick Facts (kv panel beside Overview)</label>
         <div class="repeater" id="${prefix}QuickFacts"></div>
@@ -290,7 +312,8 @@ const CONSOLE_CSS = `
   .app{display:grid; grid-template-columns:220px 1fr; min-height:100vh;}
   @media(max-width:820px){.app{grid-template-columns:1fr;}}
   .side{background:var(--panel-2); border-right:1px solid var(--line); padding:20px 14px; display:flex; flex-direction:column; gap:18px;}
-  .brand{font-family:var(--font-display); font-size:.85rem; letter-spacing:2px; color:var(--emerald); display:flex; align-items:center; gap:8px;}
+  .brand{font-family:var(--font-display); font-size:1rem; line-height:1.3; letter-spacing:.5px; color:var(--emerald); display:flex; align-items:flex-start; gap:8px;}
+  .brand .dot{margin-top:6px; flex-shrink:0;}
   .brand .dot{width:8px; height:8px; border-radius:50%; background:var(--pink); box-shadow:0 0 8px var(--pink);}
   .navgroup .label{font-family:var(--font-mono); font-size:9.5px; letter-spacing:2px; color:var(--text-faint); margin:14px 0 8px;}
   .navitem{display:flex; align-items:center; justify-content:space-between; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; padding:9px 10px; color:var(--text-dim); cursor:pointer; border-left:2px solid transparent;}
@@ -568,6 +591,8 @@ const CONSOLE_JS = `
     document.getElementById('ecMotto').value = cmp.motto || '';
     document.getElementById('ecSignOff').value = cmp.signOff || '';
     document.getElementById('ecVisible').checked = !!cmp.visible;
+    renderExistingThumb('ec', cmp.heroImage);
+    document.getElementById('ecSizeWarn').textContent = '';
     document.getElementById('ecFlag').className = 'savedflag';
     switchView('editCampaign');
   }
@@ -639,6 +664,9 @@ const CONSOLE_JS = `
       signOff: document.getElementById('ccSignOff').value.trim(),
       visible: document.getElementById('ccVisible').checked,
     };
+    if(ccHeroImageAsset){
+      body.heroImage = { _type: 'image', asset: { _type: 'reference', _ref: ccHeroImageAsset } };
+    }
     if(!body.title || !body.genre || !body.theme){
       flag.textContent = 'Title, Genre, and Genre Theme are required.';
       flag.className = 'savedflag show err';
@@ -652,11 +680,14 @@ const CONSOLE_JS = `
       });
       const result = await res.json();
       if(!res.ok) throw new Error(result.error || res.statusText);
-      campaigns.push({ _id: result.id, title: body.title, genre: body.genre, status: body.status, visible: body.visible });
+      campaigns.push({ _id: result.id, title: body.title, genre: body.genre, status: body.status, visible: body.visible, heroImage: body.heroImage });
       flag.textContent = body.visible ? '✓ Created and published.' : '✓ Created — publish it from "My Campaigns" when ready.';
       flag.className = 'savedflag show';
       ['ccTitle','ccGenre','ccSystem','ccGmNames','ccHook','ccMotto','ccSignOff'].forEach(id=>document.getElementById(id).value='');
       document.getElementById('ccVisible').checked = false;
+      ccHeroImageAsset = null;
+      renderExistingThumb('cc', null);
+      document.getElementById('ccSizeWarn').textContent = '';
       setTimeout(()=>switchView('campaigns'), 900);
     }catch(err){
       flag.textContent = 'Failed: ' + err.message;
@@ -678,7 +709,7 @@ const CONSOLE_JS = `
     ],
     meterRow: [
       { key: 'label', ph: 'Label' },
-      { key: 'level', ph: 'Level (e.g. low / medium / high / very-high)' },
+      { key: 'level', ph: 'Level', type: 'select', options: ['low','medium','high','very-high'] },
     ],
     objective: [
       { key: 'title', ph: 'Title' },
@@ -692,16 +723,29 @@ const CONSOLE_JS = `
     ],
   };
 
+  // Suggested labels for the free-form kv boxes (quickFacts/locationFacts
+  // both use the 'factRow' shape but mean different things — offered via
+  // <datalist> so the field stays free text, just with a native-browser
+  // autocomplete nudge instead of forcing a fixed list like the real
+  // enum fields (status/priority/level) get.
+  const KV_SUGGESTIONS = {
+    QuickFacts: 'quickFactSuggestions',
+    LocationFacts: 'locationFactSuggestions',
+  };
+
   function addRepeaterRow(containerId, shapeName){
     const container = document.getElementById(containerId);
     const shape = REPEATER_SHAPES[shapeName];
+    const suggestKey = Object.keys(KV_SUGGESTIONS).find(k=>containerId.endsWith(k));
+    const listId = suggestKey ? KV_SUGGESTIONS[suggestKey] : null;
     const row = document.createElement('div');
     row.className = 'repeater-row';
     row.dataset.shape = shapeName;
     row.innerHTML = shape.map(f=>{
       if(f.type === 'textarea') return \`<textarea data-key="\${f.key}" placeholder="\${f.ph}" rows="2"></textarea>\`;
       if(f.type === 'select') return \`<select data-key="\${f.key}">\${f.options.map(o=>\`<option value="\${o}">\${o}</option>\`).join('')}</select>\`;
-      return \`<input type="text" data-key="\${f.key}" placeholder="\${f.ph}">\`;
+      const listAttr = (listId && f.key === 'label') ? \` list="\${listId}"\` : '';
+      return \`<input type="text" data-key="\${f.key}" placeholder="\${f.ph}"\${listAttr}>\`;
     }).join('') + '<button type="button" class="rm">Remove</button>';
     row.querySelector('.rm').addEventListener('click', ()=> row.remove());
     container.appendChild(row);
@@ -775,7 +819,7 @@ const CONSOLE_JS = `
       ['cdCode','cdTitle','cdClassification','cdDistribution','cdSessionLabel','cdLocation','cdOverview'].forEach(id=>document.getElementById(id).value='');
       ['cdQuickFacts','cdLocationFacts','cdStatTiles','cdThreatAssessment','cdObjectives','cdLog'].forEach(clearRepeater);
       cdHeroImageAsset = null;
-      document.getElementById('cdThumbPreview').textContent = 'NONE';
+      renderExistingThumb('cd', null);
       document.getElementById('cdSizeWarn').textContent = '';
       setTimeout(()=>switchView('bulk'), 900);
     }catch(err){
@@ -833,7 +877,7 @@ const CONSOLE_JS = `
         populateRepeater(id, kind, d[field]);
       }
     });
-    document.getElementById('edThumbPreview').textContent = d.heroImage ? 'SET' : 'NONE';
+    renderExistingThumb('ed', d.heroImage);
     document.getElementById('edSizeWarn').textContent = '';
     navSingle.style.display = 'flex';
     navSingle.textContent = 'Editing: ' + (d.code||d._id);
@@ -867,14 +911,41 @@ const CONSOLE_JS = `
   });
 
   // ---------- IMAGE UPLOAD (client-side downscale + WebP recompress to <500KB) ----------
-  // Generic across any form using the dossierFieldsBlock(prefix) markup —
-  // both the single-dossier editor (prefix 'ed', PATCHes heroImage onto
-  // an existing dossier immediately since there's no reason to wait for
-  // "Save Session") and the create-dossier form (prefix 'cd', uploads the
-  // asset independently of dossier creation and stores the ref locally,
-  // included in the POST body when the dossier is actually created).
+  // Generic across every form with a heroImage field (campaign create/
+  // edit, dossier create/edit) — 'ed'/'ec' PATCH the live document
+  // immediately on upload since there's no reason to wait for the
+  // explicit Save button; 'cd'/'cc' store the asset ref locally and
+  // include it in the POST body when the document is actually created.
   const MAX_BYTES = 500 * 1024;
   const MAX_EDGE = 1920;
+
+  // Mirrors src/lib/sanity-image.js's regex-based URL builder (kept in
+  // sync by hand — this is browser JS embedded in a template string, it
+  // can't import that module) — used only to preview an EXISTING
+  // heroImage when opening an edit form; a freshly uploaded image is
+  // previewed straight from the local blob instead (see wireImageUpload).
+  function sanityImageUrl(image, w, h){
+    const ref = image && image.asset && image.asset._ref;
+    if(!ref || !SANITY_PROJECT_ID) return null;
+    const m = /^image-([a-f0-9]+)-(\d+x\d+)-(\w+)$/.exec(ref);
+    if(!m) return null;
+    const [, id, dims, format] = m;
+    return \`https://cdn.sanity.io/images/\${SANITY_PROJECT_ID}/\${SANITY_DATASET}/\${id}-\${dims}.\${format}?auto=format&w=\${w}&h=\${h}\`;
+  }
+
+  function setUploadBtnLabel(prefix, hasImage){
+    const btn = document.getElementById(prefix + 'UploadImageBtn');
+    if(btn) btn.textContent = hasImage ? 'Replace Image' : 'Upload Image';
+  }
+
+  // Prefill helper — call when opening an edit form with existing data.
+  function renderExistingThumb(prefix, image){
+    const thumb = document.getElementById(prefix + 'ThumbPreview');
+    const url = sanityImageUrl(image, 120, 120);
+    thumb.innerHTML = url ? \`<img src="\${url}" alt="">\` : '';
+    if(!url) thumb.textContent = 'NONE';
+    setUploadBtnLabel(prefix, !!url);
+  }
 
   async function downscaleToWebp(file){
     const bitmap = await createImageBitmap(file);
@@ -927,7 +998,8 @@ const CONSOLE_JS = `
       try{
         const { asset, webp } = await uploadImageAsset(file);
         await onUploaded(asset._id);
-        thumb.textContent = 'SET';
+        thumb.innerHTML = \`<img src="\${URL.createObjectURL(webp)}" alt="">\`;
+        setUploadBtnLabel(prefix, true);
         sizeWarn.textContent = '✓ Uploaded (' + Math.round(webp.size/1024) + 'KB)';
       }catch(err){
         sizeWarn.textContent = 'Upload failed: ' + err.message;
@@ -936,16 +1008,34 @@ const CONSOLE_JS = `
     });
   }
 
+  // Dossier editor — PATCHes heroImage onto the live document immediately.
   wireImageUpload('ed', async (assetId)=>{
     if(!activeId) return;
     await patchDossierField(activeId, 'heroImage', { _type: 'image', asset: { _type: 'reference', _ref: assetId } });
   });
 
-  // Create-dossier form's own hero image upload — same flow, but stores
-  // the reference locally (cdHeroImageAsset) since the dossier doesn't
-  // exist yet to PATCH.
+  // Create-dossier form — stores the reference locally (cdHeroImageAsset)
+  // since the dossier doesn't exist yet to PATCH; included in the POST
+  // body when it's actually created.
   let cdHeroImageAsset = null;
   wireImageUpload('cd', async (assetId)=>{ cdHeroImageAsset = assetId; });
+
+  // Edit-campaign form — same immediate-PATCH pattern as 'ed'.
+  wireImageUpload('ec', async (assetId)=>{
+    if(!activeCampaignEditId) return;
+    const res = await fetch('/api/campaign/' + encodeURIComponent(activeCampaignEditId), {
+      method: 'PATCH',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify({ field: 'heroImage', value: { _type: 'image', asset: { _type: 'reference', _ref: assetId } } }),
+    });
+    if(!res.ok) throw new Error((await res.json()).error || res.statusText);
+    const cmp = campaigns.find(x=>x._id===activeCampaignEditId);
+    if(cmp) cmp.heroImage = { asset: { _ref: assetId } };
+  });
+
+  // Create-campaign form — same locally-stored-ref pattern as 'cd'.
+  let ccHeroImageAsset = null;
+  wireImageUpload('cc', async (assetId)=>{ ccHeroImageAsset = assetId; });
 
   // ---------- THEME ----------
   document.getElementById('themeToggle').addEventListener('click', ()=>{

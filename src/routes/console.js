@@ -11,7 +11,7 @@ const app = new Hono();
 // every field it can PATCH, not just what the read-only table displays.
 const MY_CAMPAIGNS_QUERY = `*[_type == "campaign" && ownerEmail == $email] | order(title asc){
   _id, title, slug, genre, system, status, gmNames, hook, motto, signOff,
-  visible, "theme": theme._ref
+  visible, heroImage, "theme": theme._ref
 }`;
 
 // Same reasoning — the single dossier editor edits every schema field
@@ -34,7 +34,14 @@ app.get("/", async (c) => {
     query(c.env, MY_DOSSIERS_QUERY, { email }),
     query(c.env, GENRE_THEMES_QUERY),
   ]);
-  const html = renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail: email });
+  const html = renderConsolePage({
+    campaigns,
+    dossiers,
+    genreThemes,
+    gmEmail: email,
+    sanityProjectId: c.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
+    sanityDataset: c.env.NEXT_PUBLIC_SANITY_DATASET,
+  });
   return c.html(html);
 });
 
