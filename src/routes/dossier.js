@@ -20,8 +20,24 @@ const CAMPAIGN_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->slug.current 
   _id, code, title, sessionLabel, location, _createdAt
 }`;
 
-const ALL_CAMPAIGNS_QUERY = `*[_type == "campaign" && visible == true] | order(status asc, title asc){
-  _id, title, slug, genre, system, status, hook, heroImage
+// "Most recently updated" means actual campaign activity — a new or
+// edited session bumps the campaign to the top, not just edits to the
+// campaign document itself (which is what plain _updatedAt would give:
+// a GM adding a session without ever re-touching the campaign's own
+// fields would otherwise never move it). lastActivity is the newest of
+// (a) any of its dossiers' _updatedAt, or (b) the campaign's own
+// _updatedAt if it has no dossiers yet — see references(^._id), which
+// resolves to the campaign document being projected.
+const ALL_CAMPAIGNS_QUERY = `*[_type == "campaign" && visible == true]{
+  _id, title, slug, genre, system, status, hook, heroImage,
+  "lastActivity": coalesce(*[_type == "dossier" && references(^._id)] | order(_updatedAt desc)[0]._updatedAt, _updatedAt)
+} | order(lastActivity desc)`;
+
+// Sidebar activity feed — the most recently updated dossiers across every
+// visible campaign, newest first, capped at 10.
+const RECENT_ACTIVITY_QUERY = `*[_type == "dossier" && campaign->visible == true] | order(_updatedAt desc)[0...10]{
+  code, title, sessionLabel, _updatedAt,
+  "campaignSlug": campaign->slug.current, "campaignTitle": campaign->title
 }`;
 
 const STATUS_LABEL = {
@@ -61,7 +77,7 @@ function pageShell(title, bodyInner) {
   html{font-size:18px;}
   body{margin:0; background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:1.125rem;}
   a{color:inherit;}
-  .container{max-width:1280px; margin:0 auto; padding:4rem 1.5rem;}
+  .container{max-width:1400px; margin:0 auto; padding:4rem 1.5rem;}
   .back-link{display:inline-block; font-family:var(--font-ui); font-size:.8rem; color:var(--text-muted); text-decoration:none; margin-bottom:1.5rem;}
   .back-link:hover{color:var(--emerald);}
   h1{font-family:var(--font-display); letter-spacing:.02em; font-size:2.75rem; margin:0 0 .5rem;}
@@ -69,17 +85,34 @@ function pageShell(title, bodyInner) {
   h1 .amber{color:var(--amber);}
   h1 .magenta{color:var(--magenta);}
   .intro{color:var(--text-muted); max-width:65ch; margin:0 0 2.5rem;}
-  ul{list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1.5rem;}
-  .card a{display:flex; flex-direction:column; height:100%; overflow:hidden; border:1px solid var(--border); border-radius:.5rem; background:var(--surface); text-decoration:none; transition:border-color .2s ease;}
+
+  /* Directory layout: wide list on the left, a narrower sticky "recent
+     activity" feed on the right — stacks to a single column on mobile. */
+  .directory-layout{display:grid; grid-template-columns:1fr 320px; gap:2.5rem; align-items:start;}
+  @media(max-width:860px){.directory-layout{grid-template-columns:1fr;}}
+
+  ul.campaign-list{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:1rem;}
+  .card a{display:flex; flex-direction:row; align-items:stretch; overflow:hidden; border:1px solid var(--border); border-radius:.5rem; background:var(--surface); text-decoration:none; transition:border-color .2s ease;}
   .card a:hover{border-color:var(--emerald);}
-  .card-image{aspect-ratio:16/9; background:#0c1a10; overflow:hidden;}
+  /* "not more than a quarter of the card" — capped at 25% width, with a
+     sane minimum so it doesn't collapse to nothing on a narrow card. */
+  .card-image{flex:0 0 25%; max-width:25%; min-width:120px; aspect-ratio:4/3; background:#0c1a10; overflow:hidden;}
   .card-image img{width:100%; height:100%; object-fit:cover;}
-  .card-body{display:flex; flex-direction:column; gap:.75rem; padding:1.25rem;}
+  .card-body{flex:1; min-width:0; display:flex; flex-direction:column; gap:.6rem; padding:1.25rem 1.5rem;}
   .badge{align-self:flex-start; border:1px solid var(--emerald); color:var(--emerald); font-family:var(--font-ui); font-size:.75rem; padding:.25rem 1rem; border-radius:999px;}
   .card-body h2{font-family:var(--font-display); letter-spacing:.02em; font-size:1.5rem; margin:0; line-height:1.2;}
-  .hook{font-size:1.1rem; color:var(--text-muted); margin:0; flex:1;}
-  .meta{display:flex; justify-content:space-between; font-family:var(--font-ui); font-size:.75rem; color:var(--text-muted);}
+  .hook{font-size:1.05rem; color:var(--text-muted); margin:0;}
+  .meta{display:flex; justify-content:space-between; gap:1rem; font-family:var(--font-ui); font-size:.75rem; color:var(--text-muted); margin-top:auto;}
   .empty{color:var(--text-muted);}
+
+  .sidebar{position:sticky; top:2rem; border:1px solid var(--border); border-radius:.5rem; background:var(--surface); padding:1.25rem;}
+  .sidebar h3{font-family:var(--font-display); letter-spacing:.02em; font-size:1.15rem; margin:0 0 1rem; color:var(--emerald);}
+  .activity-list{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.9rem;}
+  .activity-item a{display:block; text-decoration:none; color:inherit; padding-bottom:.9rem; border-bottom:1px solid var(--border);}
+  .activity-item:last-child a{border-bottom:none; padding-bottom:0;}
+  .activity-item a:hover .activity-title{color:var(--emerald);}
+  .activity-title{display:block; font-size:.95rem; margin-bottom:.25rem; transition:color .15s ease;}
+  .activity-meta{display:flex; justify-content:space-between; gap:.5rem; font-family:var(--font-ui); font-size:.68rem; color:var(--text-muted);}
 </style>
 </head>
 <body>
@@ -96,12 +129,19 @@ function brandTitle() {
 
 // GET / — public campaign directory. Only campaigns the owning DM has
 // marked visible show up here — see schema/campaign.js § visible.
+// Sorted by actual recent activity (see ALL_CAMPAIGNS_QUERY's lastActivity
+// projection), full-width list rows rather than a card grid, with a
+// sidebar feed of the most recently updated sessions across every
+// visible campaign.
 app.get("/", async (c) => {
-  const campaigns = await query(c.env, ALL_CAMPAIGNS_QUERY);
+  const [campaigns, recent] = await Promise.all([
+    query(c.env, ALL_CAMPAIGNS_QUERY),
+    query(c.env, RECENT_ACTIVITY_QUERY),
+  ]);
 
   const cards = (campaigns || [])
     .map((camp) => {
-      const imageUrl = urlFor(camp.heroImage).width(600).height(340).url();
+      const imageUrl = urlFor(camp.heroImage).width(400).height(300).url();
       const status = STATUS_LABEL[camp.status] || camp.status;
       return `<li class="card">
   <a href="/${encodeURIComponent(camp.slug?.current || "")}">
@@ -111,8 +151,8 @@ app.get("/", async (c) => {
       <h2>${escapeHtml(camp.title)}</h2>
       ${camp.hook ? `<p class="hook">${escapeHtml(camp.hook)}</p>` : ""}
       <div class="meta">
-        <span>${escapeHtml(camp.system || "")}</span>
-        <span>${escapeHtml(status || "")}</span>
+        <span>${escapeHtml(camp.system || "")}${camp.system && status ? " · " : ""}${escapeHtml(status || "")}</span>
+        <span>Updated ${timeAgo(camp.lastActivity)}</span>
       </div>
     </div>
   </a>
@@ -120,9 +160,26 @@ app.get("/", async (c) => {
     })
     .join("\n");
 
+  const activity = (recent || [])
+    .map(
+      (d) => `<li class="activity-item">
+  <a href="/${encodeURIComponent(d.campaignSlug)}/${encodeURIComponent(d.code)}">
+    <span class="activity-title">${escapeHtml(d.sessionLabel || d.code)} — ${escapeHtml(d.title)}</span>
+    <span class="activity-meta"><span>${escapeHtml(d.campaignTitle)}</span><span>${timeAgo(d._updatedAt)}</span></span>
+  </a>
+</li>`,
+    )
+    .join("\n");
+
   const body = `${brandTitle()}
   <p class="intro">Ongoing campaigns run by our GMs — browse session dossiers as they're published.</p>
-  <ul>${cards || `<p class="empty">No campaigns published yet.</p>`}</ul>`;
+  <div class="directory-layout">
+    <ul class="campaign-list">${cards || `<p class="empty">No campaigns published yet.</p>`}</ul>
+    <aside class="sidebar">
+      <h3>Recent Updates</h3>
+      <ul class="activity-list">${activity || `<p class="empty">No sessions published yet.</p>`}</ul>
+    </aside>
+  </div>`;
 
   return c.html(pageShell("Campaigns — Criticals & Fumbles", body));
 });
@@ -156,6 +213,24 @@ app.get("/:campaignSlug", async (c) => {
 
   return c.html(renderCampaignIndexPage({ campaign, dossiers, theme: campaign.theme }));
 });
+
+// Coarse relative-time label ("2 hours ago", "3 days ago") for the
+// directory list and the recent-activity sidebar — no need for a date
+// library over a handful of buckets.
+function timeAgo(iso) {
+  if (!iso) return "";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day}d ago`;
+  const month = Math.floor(day / 30);
+  if (month < 12) return `${month}mo ago`;
+  return `${Math.floor(month / 12)}y ago`;
+}
 
 function escapeHtml(s) {
   return String(s ?? "")
