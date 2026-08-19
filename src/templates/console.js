@@ -338,6 +338,7 @@ const CONSOLE_CSS = `
   html[data-theme="light"]{--bg:#fbf0e0; --panel:#f0e8d8; --panel-2:#e8dcc4; --line:rgba(26,122,69,.25); --line-strong:rgba(26,122,69,.55);
     --emerald:#1a7a45; --pink:#c4306a; --text:#1a1208; --text-dim:#6b6045; --text-faint:#8a7055; --warn:#b36a1a; --danger:#c23a4e;}
   *{box-sizing:border-box; margin:0; padding:0;}
+  html{font-size:18px;}
   body{background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh;}
   .app{display:grid; grid-template-columns:220px 1fr; min-height:100vh;}
   @media(max-width:820px){.app{grid-template-columns:1fr;}}
