@@ -137,7 +137,7 @@ function pageShell(title, bodyInner, siteLinks) {
     .join("\n");
 
   return `<!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -152,6 +152,14 @@ function pageShell(title, bodyInner, siteLinks) {
     --font-display:'Bebas Neue', sans-serif;
     --font-body:'Crimson Pro', serif;
     --font-ui:'Space Mono', monospace;
+  }
+  /* Light mode — same palette cnf-website's own light theme uses, see
+     that repo's app/(site)/globals.css. This page never had a light
+     variant before; added alongside the nav toggle below. */
+  html[data-theme="light"]{
+    --bg:#fbf0e0; --surface:#f0e8d8; --border:#e0d4c0;
+    --text:#1a1208; --text-muted:#8a7055;
+    --emerald:#1a7a45; --amber:#b36a1a; --magenta:#c4306a;
   }
   *{box-sizing:border-box;}
   html{font-size:18px;}
@@ -228,6 +236,15 @@ function pageShell(title, bodyInner, siteLinks) {
   .site-nav-social a{display:block; width:18px; height:18px; color:var(--text-muted); transition:color .15s ease;}
   .site-nav-social a:hover{color:var(--emerald);}
   .site-nav-social svg{width:100%; height:100%; display:block;}
+  /* Same icon-toggle pattern as the session browser/dossier pages
+     (templates/dossier.js) — duplicated here since this is a separate
+     template function with its own <style> block, not shared markup. */
+  .theme-toggle-btn{display:flex; align-items:center; justify-content:center; width:32px; height:32px; flex-shrink:0; background:none; border:1px solid var(--border); border-radius:999px; color:var(--text-muted); cursor:pointer; padding:0; transition:.15s;}
+  .theme-toggle-btn:hover{color:var(--emerald); border-color:var(--emerald);}
+  .theme-toggle-btn svg{width:16px; height:16px; display:block;}
+  .theme-toggle-btn .icon-sun{display:none;}
+  html[data-theme="light"] .theme-toggle-btn .icon-moon{display:none;}
+  html[data-theme="light"] .theme-toggle-btn .icon-sun{display:block;}
 
   .site-footer{border-top:1px solid var(--border); padding:3rem 1.5rem;}
   .site-footer-grid{max-width:1400px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:2.5rem;}
@@ -256,6 +273,10 @@ function pageShell(title, bodyInner, siteLinks) {
     </a>
     <div class="site-nav-links">${nav}</div>
     ${socialIconsBlock(siteLinks)}
+    <button class="theme-toggle-btn" id="siteThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </button>
   </nav>
 </header>
 
@@ -290,6 +311,13 @@ ${bodyInner}
     <span>Built with 🎲 by C&amp;F</span>
   </div>
 </footer>
+<script>
+  document.getElementById('siteThemeToggle').addEventListener('click', function(){
+    var html = document.documentElement;
+    var isLight = html.getAttribute('data-theme') === 'light';
+    html.setAttribute('data-theme', isLight ? 'dark' : 'light');
+  });
+</script>
 </body>
 </html>`;
 }
