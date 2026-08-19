@@ -225,10 +225,13 @@ function pageShell(title, bodyInner, siteLinks) {
      deliberately don't get this chrome, it would clash with their
      immersive full-bleed design. */
   .site-nav{position:sticky; top:0; z-index:50; border-bottom:1px solid var(--border); background:rgba(17,17,17,.95); backdrop-filter:blur(8px);}
-  .site-nav-inner{max-width:1400px; margin:0 auto; padding:0 1.5rem; height:64px; display:flex; align-items:center; justify-content:space-between;}
+  .site-nav-inner{max-width:1400px; margin:0 auto; padding:0 1rem; height:4rem; display:flex; align-items:center; justify-content:space-between;}
+  @media(min-width:768px){.site-nav-inner{padding:0 2rem;}}
   .site-nav-right{display:flex; align-items:center; gap:1.5rem; flex-shrink:0;}
-  .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.9rem; flex-shrink:0;}
-  .site-nav-brand img{height:32px; width:auto; display:block;}
+  .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.875rem; flex-shrink:0;}
+  .site-nav-brand img{width:auto; display:block;}
+  .site-nav .site-nav-brand img{height:2.25rem;}
+  .site-footer .site-nav-brand img{height:2rem;}
   .site-nav .site-nav-brand span{display:none;}
   @media(min-width:768px){.site-nav .site-nav-brand span{display:inline;}}
   .site-nav-links{display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; row-gap:.5rem; padding:.75rem 0;}
