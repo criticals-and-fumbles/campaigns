@@ -250,9 +250,9 @@ function pageShell(title, bodyInner, siteLinks) {
   .theme-toggle-btn{display:flex; align-items:center; justify-content:center; width:40px; height:40px; flex-shrink:0; background:none; border:1px solid var(--border); border-radius:999px; color:var(--text); cursor:pointer; padding:0; transition:.15s;}
   .theme-toggle-btn:hover{border-color:var(--emerald);}
   .theme-toggle-btn svg{width:20px; height:20px; display:block;}
-  .theme-toggle-btn .icon-sun{display:none;}
-  html[data-theme="light"] .theme-toggle-btn .icon-moon{display:none;}
-  html[data-theme="light"] .theme-toggle-btn .icon-sun{display:block;}
+  .theme-toggle-btn .icon-moon{display:none;}
+  html[data-theme="light"] .theme-toggle-btn .icon-sun{display:none;}
+  html[data-theme="light"] .theme-toggle-btn .icon-moon{display:block;}
 
   /* Mobile nav drawer — a fully separate, self-contained element from
      .site-nav-links (see the HTML comment above .mobile-drawer for why:

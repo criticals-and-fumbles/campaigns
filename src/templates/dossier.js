@@ -610,9 +610,9 @@ body{background:var(--bg); color:var(--text); font-family:var(--font-body); over
 .icon-btn{display:flex; align-items:center; justify-content:center; width:26px; height:26px; flex-shrink:0; background:none; border:1px solid var(--line); border-radius:4px; color:var(--text-dim); cursor:pointer; padding:0; transition:.15s;}
 .icon-btn:hover{color:var(--accent-a); border-color:var(--accent-a);}
 .icon-btn svg{width:14px; height:14px; display:block;}
-.icon-btn .icon-sun{display:none;}
-html[data-theme="light"] .icon-btn .icon-moon{display:none;}
-html[data-theme="light"] .icon-btn .icon-sun{display:block;}
+.icon-btn .icon-moon{display:none;}
+html[data-theme="light"] .icon-btn .icon-sun{display:none;}
+html[data-theme="light"] .icon-btn .icon-moon{display:block;}
 .list-scroll{overflow-y:auto; flex:1; min-height:0;}
 
 .session-item{
