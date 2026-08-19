@@ -16,11 +16,19 @@ session, not reinvented from scratch. If the main site's guardrails
 change later, this file should be updated to match; it isn't
 auto-synced.
 
-**This repo hasn't been split into `docs/*.md` modules yet** — unlike the
-main site (see its `docs/` directory and module index), this repo is
-small enough at scaffold time that one file is still manageable. Split it
-the same way once it grows past a comfortable single-file read — same
-threshold judgement call the main site made, not a fixed line count.
+**TODO — deferred, not forgotten: split this file into `docs/*.md`
+modules once it's grown enough to justify it.** Checked 2026-08-19: this
+file is 130 lines vs. the ~1300 lines cnf-website's root `CLAUDE.md` had
+when it was split (see that repo's `docs/release-history.md` v0.1.14
+entry region for the modularization session). Splitting now would
+produce mostly-empty module files (no release history yet, no wiki/
+architecture docs beyond what's here) — working against the actual goal,
+which is keeping per-session token usage low, not structural symmetry
+with the main site for its own sake. A single small file a session reads
+in full costs less than several files a session has to figure out which
+of are relevant. **Revisit once this file's own length starts costing
+more tokens per session than a lean-root-plus-modules split would** — a
+few hundred lines is a reasonable point to re-check, not a hard trigger.
 
 **Site purpose — read this before making priority calls.** This is a
 GM-facing publishing tool first, a public browsing surface second. Flow:
