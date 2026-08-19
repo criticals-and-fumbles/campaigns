@@ -40,6 +40,42 @@ specifically so a GM can fix a typo from their phone between sessions
 without touching Sanity Studio at all (which they never get access to,
 by design — see Schema Safety Protocol below).
 
+## Ownership model — campaigns are DM-scoped, not shared
+
+Added 2026-08-19. A campaign's `ownerEmail` (`schema/campaign.js`) is set
+once, server-side, from the creating DM's `Cf-Access-Authenticated-User-
+Email` (see `src/routes/api-campaign.js`'s POST handler) — never
+client-supplied, never patchable afterward (`PATCH /api/campaign/:id`
+explicitly rejects `field: "ownerEmail"`, same pattern dossier's
+`lastEditedBy` already used). Dossiers have no owner field of their own —
+they inherit access from their parent campaign via `campaign->ownerEmail`,
+checked with a query at the top of every dossier PATCH/POST handler.
+
+**This is enforced server-side on every mutating route, not just hidden
+in the console UI** — `console.js`'s scoped queries (campaigns/dossiers
+`WHERE ownerEmail == $email`) are a UX convenience, not the security
+boundary. A DM's own browser calling `/api/campaign/:id` or
+`/api/dossier/:id` for a document they don't own gets a 403 regardless of
+what the console UI shows them. The bulk XML/CSV export/import routes
+(`api-export-xml.js`, `api-import-xml.js`, `api-export-csv.js`,
+`api-import-csv.js`) are scoped the same way — an XML row or CSV code
+targeting another DM's campaign fails per-row rather than silently
+touching it.
+
+`visible` (also on `campaign`) is a separate, unrelated concern — public
+publish/unpublish, not ownership. Defaults to `false` (new campaigns
+start hidden) so a DM can build one out before it appears on the public
+directory. It's a real access gate, not just a listing filter: a direct
+link to `/:campaignSlug` or `/:campaignSlug/:dossierCode` under a
+non-visible campaign 404s (see `src/routes/dossier.js`), it doesn't just
+disappear from `/`.
+
+**What is NOT scoped by ownership:** `genreTheme` documents are shared
+reference data across all DMs (the console's "Create Campaign" theme
+picker lists every genreTheme, not just the caller's) — there is no
+per-theme owner, by design; themes are a shared palette, not a DM's
+private content.
+
 ## Schema Safety Protocol
 
 Applies to any session that creates, modifies, or touches a Sanity

@@ -4,6 +4,7 @@ import { configureSanityImage } from "./lib/sanity-image.js";
 import dossierRoutes from "./routes/dossier.js";
 import consoleRoutes from "./routes/console.js";
 import apiDossierRoutes from "./routes/api-dossier.js";
+import apiCampaignRoutes from "./routes/api-campaign.js";
 import apiUploadRoutes from "./routes/api-upload.js";
 import apiExportXmlRoutes from "./routes/api-export-xml.js";
 import apiImportXmlRoutes from "./routes/api-import-xml.js";
@@ -31,6 +32,7 @@ app.use("/api/*", requireAccessIdentity);
 
 app.route("/console", consoleRoutes);
 app.route("/api/dossier", apiDossierRoutes);
+app.route("/api/campaign", apiCampaignRoutes);
 app.route("/api/upload", apiUploadRoutes);
 app.route("/api/export.xml", apiExportXmlRoutes);
 app.route("/api/import", apiImportXmlRoutes);

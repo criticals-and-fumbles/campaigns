@@ -1,17 +1,26 @@
 /**
  * Port of admin-console-concept.html, rewired to call the real Worker API
  * routes instead of mutating an in-memory mock array. Server-rendered
- * shell + initial dossier data injected as JSON (so the bulk grid paints
- * immediately without a client-side fetch round-trip); all edits/uploads/
- * import-export go through fetch() calls to /api/* from here on.
+ * shell + initial campaign/dossier/genreTheme data injected as JSON (so
+ * every view paints immediately without a client-side fetch round-trip);
+ * all edits/creates/uploads/import-export go through fetch() calls to
+ * /api/* from here on.
  *
  * No localStorage/sessionStorage anywhere in this file, per the hard
  * constraint in SCAFFOLD_PROMPT.md — GM identity comes from the
  * Cf-Access-Authenticated-User-Email header (server-injected below, read
  * once at render time), nothing persisted client-side across reloads.
+ *
+ * campaigns/dossiers are already scoped server-side to this GM's own
+ * campaigns (ownerEmail == gmEmail) — see src/routes/console.js. Every
+ * write the client makes is re-checked against that ownership server-side
+ * too (api-campaign.js / api-dossier.js) — client-side scoping here is a
+ * UX convenience, not the security boundary.
  */
-export function renderConsolePage({ dossiers, gmEmail }) {
-  const initialData = JSON.stringify(dossiers).replace(/</g, "\\u003c");
+export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail }) {
+  const initialCampaigns = JSON.stringify(campaigns).replace(/</g, "\\u003c");
+  const initialDossiers = JSON.stringify(dossiers).replace(/</g, "\\u003c");
+  const initialThemes = JSON.stringify(genreThemes).replace(/</g, "\\u003c");
 
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -28,6 +37,12 @@ export function renderConsolePage({ dossiers, gmEmail }) {
   <aside class="side">
     <div class="brand"><span class="dot"></span>DOSSIER CONSOLE</div>
     <div class="navgroup">
+      <div class="label">CAMPAIGNS</div>
+      <div class="navitem" data-view="createCampaign">+ Create New Campaign</div>
+      <div class="navitem sub" data-view="createDossier">+ Create Session / Dossier</div>
+      <div class="navitem" data-view="campaigns">My Campaigns <span class="n" id="campaignCountTag">0</span></div>
+    </div>
+    <div class="navgroup">
       <div class="label">VIEWS</div>
       <div class="navitem active" data-view="bulk">Bulk Editor <span class="n" id="countTag">0</span></div>
       <div class="navitem" data-view="single" id="navSingle" style="display:none;">Editing Dossier</div>
@@ -42,7 +57,7 @@ export function renderConsolePage({ dossiers, gmEmail }) {
   <main class="main">
     <div class="topbar">
       <h1 id="viewTitle">Bulk Dossier Editor</h1>
-      <div class="toolbar">
+      <div class="toolbar" id="bulkToolbar">
         <button class="btn" id="exportXml">Export XML</button>
         <button class="btn" id="importXmlBtn">Import XML</button>
         <input type="file" id="importXml" accept=".xml">
@@ -57,10 +72,68 @@ export function renderConsolePage({ dossiers, gmEmail }) {
     <div id="bulkView">
       <table>
         <thead>
-          <tr><th>Code</th><th>Title</th><th>Location</th><th>Objectives</th><th></th></tr>
+          <tr><th>Code</th><th>Title</th><th>Campaign</th><th>Location</th><th>Objectives</th><th></th></tr>
         </thead>
         <tbody id="gridBody"></tbody>
       </table>
+    </div>
+
+    <div id="campaignsView" style="display:none;">
+      <table>
+        <thead>
+          <tr><th>Title</th><th>Genre</th><th>Status</th><th>Visible</th></tr>
+        </thead>
+        <tbody id="campaignGridBody"></tbody>
+      </table>
+    </div>
+
+    <div class="editor" id="createCampaignView" style="display:none;">
+      <h2>NEW CAMPAIGN</h2>
+      <div class="field"><label>Title *</label><input type="text" id="ccTitle" placeholder="e.g. Bureau Noir: Dawn Protocol"></div>
+      <div class="field"><label>Genre * (matches a Genre Theme below)</label><input type="text" id="ccGenre" placeholder="e.g. Sci-Fi, Fantasy, Horror, Modern"></div>
+      <div class="field"><label>System</label><input type="text" id="ccSystem" placeholder="e.g. D&D 5e, Call of Cthulhu 7e"></div>
+      <div class="field">
+        <label>Status</label>
+        <select id="ccStatus">
+          <option value="active">Active</option>
+          <option value="recruiting">Recruiting</option>
+          <option value="hiatus">Hiatus</option>
+          <option value="concluded">Concluded</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Genre Theme *</label>
+        <select id="ccTheme"></select>
+      </div>
+      <div class="field"><label>GM Name(s) (comma-separated)</label><input type="text" id="ccGmNames" placeholder="e.g. Alex, Sam"></div>
+      <div class="field"><label>Hook (directory card blurb)</label><textarea id="ccHook" rows="2"></textarea></div>
+      <div class="field"><label>Motto</label><input type="text" id="ccMotto"></div>
+      <div class="field"><label>Sign-Off</label><input type="text" id="ccSignOff"></div>
+      <div class="savebar">
+        <button class="btn primary" id="ccSubmit">Create Campaign</button>
+        <span class="savedflag" id="ccFlag"></span>
+      </div>
+      <p class="hint">New campaigns start hidden (not Visible) — publish it from "My Campaigns" once it's ready.</p>
+    </div>
+
+    <div class="editor" id="createDossierView" style="display:none;">
+      <h2>NEW SESSION / DOSSIER</h2>
+      <div class="field">
+        <label>Campaign *</label>
+        <select id="cdCampaign"></select>
+      </div>
+      <div class="field"><label>Code *</label><input type="text" id="cdCode" placeholder="e.g. BN-DAWN-119-08"></div>
+      <div class="field"><label>Title *</label><input type="text" id="cdTitle"></div>
+      <div class="field"><label>Classification</label><input type="text" id="cdClassification" placeholder="e.g. TOP SECRET"></div>
+      <div class="field"><label>Distribution</label><input type="text" id="cdDistribution" placeholder="e.g. PLAYER-FACING"></div>
+      <div class="field"><label>Session Label</label><input type="text" id="cdSessionLabel" placeholder="e.g. 8, Day 41"></div>
+      <div class="field"><label>Location</label><input type="text" id="cdLocation"></div>
+      <div class="field"><label>Overview</label><textarea id="cdOverview" rows="3"></textarea></div>
+      <div class="savebar">
+        <button class="btn primary" id="cdSubmit">Create Dossier</button>
+        <span class="savedflag" id="cdFlag"></span>
+      </div>
+      <p class="hint">Quick facts, objectives, media, and the log can be filled in afterward from the Bulk Editor.</p>
     </div>
 
     <div class="editor" id="editorPanel">
@@ -95,7 +168,9 @@ export function renderConsolePage({ dossiers, gmEmail }) {
 </div>
 
 <script>
-  const INITIAL_DOSSIERS = ${initialData};
+  const INITIAL_CAMPAIGNS = ${initialCampaigns};
+  const INITIAL_DOSSIERS = ${initialDossiers};
+  const INITIAL_THEMES = ${initialThemes};
   ${CONSOLE_JS}
 </script>
 </body>
@@ -125,6 +200,7 @@ const CONSOLE_CSS = `
   .brand .dot{width:8px; height:8px; border-radius:50%; background:var(--pink); box-shadow:0 0 8px var(--pink);}
   .navgroup .label{font-family:var(--font-mono); font-size:9.5px; letter-spacing:2px; color:var(--text-faint); margin:14px 0 8px;}
   .navitem{display:flex; align-items:center; justify-content:space-between; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; padding:9px 10px; color:var(--text-dim); cursor:pointer; border-left:2px solid transparent;}
+  .navitem.sub{padding-left:22px; font-size:10px;}
   .navitem.active{color:var(--emerald); border-left-color:var(--emerald); background:var(--panel);}
   .navitem .n{font-size:9px; color:var(--text-faint); border:1px solid var(--line); padding:1px 6px;}
   #themeToggle{margin-top:auto; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; background:var(--panel); border:1px solid var(--line); color:var(--text-dim); padding:9px; cursor:pointer;}
@@ -153,28 +229,82 @@ const CONSOLE_CSS = `
   .field label{display:block; font-family:var(--font-mono); font-size:9.5px; letter-spacing:1.5px; color:var(--text-faint); margin-bottom:6px;}
   .field [contenteditable="true"]{background:var(--panel-2); border:1px solid var(--line); padding:10px 12px; font-size:.92rem; line-height:1.6; outline:none;}
   .field [contenteditable="true"]:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
+  .field input[type=text], .field select, .field textarea{width:100%; max-width:420px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 12px; font-family:var(--font-body); font-size:.92rem; outline:none;}
+  .field input[type=text]:focus, .field select:focus, .field textarea:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
+  .hint{font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); margin-top:14px;}
   .savebar{display:flex; align-items:center; gap:10px; margin-top:10px;}
   .savebar .savedflag{font-family:var(--font-mono); font-size:9.5px; color:var(--emerald); opacity:0; transition:.3s;}
   .savebar .savedflag.show{opacity:1;}
+  .savebar .savedflag.err{color:var(--danger);}
   .imgfield{display:flex; align-items:center; gap:12px;}
   .imgfield .thumb{width:60px; height:60px; background:var(--panel-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:.65rem; color:var(--text-faint); flex-shrink:0; overflow:hidden;}
   .imgfield .thumb img{width:100%; height:100%; object-fit:cover;}
   .imgfield .sizewarn{font-family:var(--font-mono); font-size:9px; color:var(--danger);}
+  .toggle{position:relative; display:inline-block; width:36px; height:20px;}
+  .toggle input{opacity:0; width:0; height:0;}
+  .toggle .slider{position:absolute; inset:0; background:var(--panel-2); border:1px solid var(--line-strong); border-radius:20px; cursor:pointer; transition:.2s;}
+  .toggle .slider:before{content:""; position:absolute; width:14px; height:14px; left:2px; top:2px; background:var(--text-dim); border-radius:50%; transition:.2s;}
+  .toggle input:checked + .slider{border-color:var(--emerald);}
+  .toggle input:checked + .slider:before{transform:translateX(16px); background:var(--emerald);}
 `;
 
 const CONSOLE_JS = `
+  let campaigns = INITIAL_CAMPAIGNS;
   let dossiers = INITIAL_DOSSIERS;
+  const themes = INITIAL_THEMES;
   let activeId = null;
 
   const gridBody = document.getElementById('gridBody');
+  const campaignGridBody = document.getElementById('campaignGridBody');
   const countTag = document.getElementById('countTag');
+  const campaignCountTag = document.getElementById('campaignCountTag');
   const statusLine = document.getElementById('statusLine');
+  const viewTitle = document.getElementById('viewTitle');
+  const bulkToolbar = document.getElementById('bulkToolbar');
 
   function flashStatus(msg, cls){
     statusLine.textContent = msg;
     statusLine.className = 'status ' + (cls||'');
   }
 
+  function campaignTitleFor(id){
+    const c = campaigns.find(x=>x._id===id);
+    return c ? c.title : '(unknown)';
+  }
+
+  // ---------- VIEW SWITCHING ----------
+  const VIEWS = {
+    bulk: { panel: 'bulkView', title: 'Bulk Dossier Editor', toolbar: true },
+    campaigns: { panel: 'campaignsView', title: 'My Campaigns', toolbar: false },
+    createCampaign: { panel: 'createCampaignView', title: 'Create New Campaign', toolbar: false },
+    createDossier: { panel: 'createDossierView', title: 'Create Session / Dossier', toolbar: false },
+    single: { panel: 'editorPanel', title: 'Dossier Detail', toolbar: false },
+  };
+
+  function switchView(view){
+    Object.values(VIEWS).forEach(v=>{
+      const el = document.getElementById(v.panel);
+      if(!el) return;
+      if(v.panel === 'editorPanel') el.classList.remove('open');
+      else el.style.display = 'none';
+    });
+    const target = VIEWS[view];
+    const el = document.getElementById(target.panel);
+    if(target.panel === 'editorPanel') el.classList.add('open');
+    else el.style.display = '';
+    viewTitle.textContent = target.title;
+    bulkToolbar.style.display = target.toolbar ? '' : 'none';
+    document.querySelectorAll('.navitem[data-view]').forEach(n=>n.classList.toggle('active', n.dataset.view===view));
+    if(view === 'campaigns') renderCampaignGrid();
+    if(view === 'createCampaign') populateThemeSelect();
+    if(view === 'createDossier') populateCampaignSelect();
+  }
+
+  document.querySelectorAll('.navitem[data-view]').forEach(item=>{
+    item.addEventListener('click', ()=> switchView(item.dataset.view));
+  });
+
+  // ---------- BULK DOSSIER GRID ----------
   function renderGrid(){
     gridBody.innerHTML = '';
     dossiers.forEach(d=>{
@@ -184,6 +314,7 @@ const CONSOLE_JS = `
       tr.innerHTML = \`
         <td style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">\${d.code||''}</td>
         <td contenteditable="true" data-id="\${d._id}" data-field="title">\${d.title||''}</td>
+        <td style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">\${campaignTitleFor(d.campaignId)}</td>
         <td contenteditable="true" data-id="\${d._id}" data-field="location">\${d.location||''}</td>
         <td style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">\${done} / \${total} done</td>
         <td><button class="rowbtn" data-open="\${d._id}">OPEN →</button></td>
@@ -192,14 +323,14 @@ const CONSOLE_JS = `
     });
     countTag.textContent = dossiers.length;
     gridBody.querySelectorAll('td[contenteditable]').forEach(td=>{
-      td.addEventListener('blur', ()=> patchField(td.dataset.id, td.dataset.field, td.textContent.trim()));
+      td.addEventListener('blur', ()=> patchDossierField(td.dataset.id, td.dataset.field, td.textContent.trim()));
     });
     gridBody.querySelectorAll('[data-open]').forEach(btn=>{
       btn.addEventListener('click', ()=>openEditor(btn.dataset.open));
     });
   }
 
-  async function patchField(id, field, value){
+  async function patchDossierField(id, field, value){
     try{
       const res = await fetch('/api/dossier/' + encodeURIComponent(id), {
         method: 'PATCH',
@@ -215,10 +346,141 @@ const CONSOLE_JS = `
     }
   }
 
+  // ---------- MY CAMPAIGNS (list + visible toggle) ----------
+  function renderCampaignGrid(){
+    campaignGridBody.innerHTML = '';
+    campaigns.forEach(cmp=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = \`
+        <td>\${cmp.title||''}</td>
+        <td style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">\${cmp.genre||''}</td>
+        <td style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">\${cmp.status||''}</td>
+        <td>
+          <label class="toggle">
+            <input type="checkbox" data-id="\${cmp._id}" \${cmp.visible ? 'checked' : ''}>
+            <span class="slider"></span>
+          </label>
+        </td>
+      \`;
+      campaignGridBody.appendChild(tr);
+    });
+    campaignCountTag.textContent = campaigns.length;
+    campaignGridBody.querySelectorAll('input[type=checkbox]').forEach(input=>{
+      input.addEventListener('change', async ()=>{
+        const id = input.dataset.id;
+        const value = input.checked;
+        try{
+          const res = await fetch('/api/campaign/' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {'content-type':'application/json'},
+            body: JSON.stringify({ field: 'visible', value }),
+          });
+          if(!res.ok) throw new Error((await res.json()).error || res.statusText);
+          const cmp = campaigns.find(x=>x._id===id);
+          if(cmp) cmp.visible = value;
+          flashStatus((value ? 'Published' : 'Unpublished') + ' "' + campaignTitleFor(id) + '"', 'ok');
+        }catch(err){
+          input.checked = !value;
+          flashStatus('Toggle failed: ' + err.message, 'err');
+        }
+      });
+    });
+  }
+
+  // ---------- CREATE CAMPAIGN ----------
+  function populateThemeSelect(){
+    const sel = document.getElementById('ccTheme');
+    sel.innerHTML = themes.map(t=>
+      \`<option value="\${t._id}">\${t.genre}\${t.campaignOverride ? ' (override)' : ''}</option>\`
+    ).join('');
+  }
+
+  document.getElementById('ccSubmit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('ccFlag');
+    const body = {
+      title: document.getElementById('ccTitle').value.trim(),
+      genre: document.getElementById('ccGenre').value.trim(),
+      system: document.getElementById('ccSystem').value.trim(),
+      status: document.getElementById('ccStatus').value,
+      theme: document.getElementById('ccTheme').value,
+      gmNames: document.getElementById('ccGmNames').value.split(',').map(s=>s.trim()).filter(Boolean),
+      hook: document.getElementById('ccHook').value.trim(),
+      motto: document.getElementById('ccMotto').value.trim(),
+      signOff: document.getElementById('ccSignOff').value.trim(),
+    };
+    if(!body.title || !body.genre || !body.theme){
+      flag.textContent = 'Title, Genre, and Genre Theme are required.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    try{
+      const res = await fetch('/api/campaign', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      campaigns.push({ _id: result.id, title: body.title, genre: body.genre, status: body.status, visible: false });
+      flag.textContent = '✓ Created — publish it from "My Campaigns" when ready.';
+      flag.className = 'savedflag show';
+      ['ccTitle','ccGenre','ccSystem','ccGmNames','ccHook','ccMotto','ccSignOff'].forEach(id=>document.getElementById(id).value='');
+      setTimeout(()=>switchView('campaigns'), 900);
+    }catch(err){
+      flag.textContent = 'Failed: ' + err.message;
+      flag.className = 'savedflag show err';
+    }
+  });
+
+  // ---------- CREATE DOSSIER ----------
+  function populateCampaignSelect(){
+    const sel = document.getElementById('cdCampaign');
+    if(campaigns.length === 0){
+      sel.innerHTML = '<option value="">— Create a campaign first —</option>';
+      return;
+    }
+    sel.innerHTML = campaigns.map(c=> \`<option value="\${c._id}">\${c.title}</option>\`).join('');
+  }
+
+  document.getElementById('cdSubmit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('cdFlag');
+    const body = {
+      campaign: document.getElementById('cdCampaign').value,
+      code: document.getElementById('cdCode').value.trim(),
+      title: document.getElementById('cdTitle').value.trim(),
+      classification: document.getElementById('cdClassification').value.trim(),
+      distribution: document.getElementById('cdDistribution').value.trim(),
+      sessionLabel: document.getElementById('cdSessionLabel').value.trim(),
+      location: document.getElementById('cdLocation').value.trim(),
+      overview: document.getElementById('cdOverview').value.trim(),
+    };
+    if(!body.campaign || !body.code || !body.title){
+      flag.textContent = 'Campaign, Code, and Title are required.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    try{
+      const res = await fetch('/api/dossier', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      dossiers.unshift({ _id: result.id, code: body.code, title: body.title, location: body.location, overview: body.overview, objectives: [], campaignId: body.campaign });
+      flag.textContent = '✓ Created.';
+      flag.className = 'savedflag show';
+      ['cdCode','cdTitle','cdClassification','cdDistribution','cdSessionLabel','cdLocation','cdOverview'].forEach(id=>document.getElementById(id).value='');
+      setTimeout(()=>switchView('bulk'), 900);
+    }catch(err){
+      flag.textContent = 'Failed: ' + err.message;
+      flag.className = 'savedflag show err';
+    }
+  });
+
   // ---------- SINGLE EDITOR ----------
   const editorPanel = document.getElementById('editorPanel');
   const navSingle = document.getElementById('navSingle');
-  const viewTitle = document.getElementById('viewTitle');
   const thumbPreview = document.getElementById('thumbPreview');
 
   function openEditor(id){
@@ -229,23 +491,18 @@ const CONSOLE_JS = `
     document.querySelector('[data-bind="location"]').textContent = d.location||'';
     document.querySelector('[data-bind="overview"]').textContent = d.overview||'';
     thumbPreview.textContent = d.heroImage ? 'SET' : 'NONE';
-    editorPanel.classList.add('open');
     navSingle.style.display = 'flex';
     navSingle.textContent = 'Editing: ' + (d.code||d._id);
-    viewTitle.textContent = 'Dossier Detail';
-    document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));
-    navSingle.classList.add('active');
+    switchView('single');
   }
   document.getElementById('closeEditor').addEventListener('click', ()=>{
-    editorPanel.classList.remove('open');
     navSingle.style.display = 'none';
-    viewTitle.textContent = 'Bulk Dossier Editor';
-    document.querySelector('[data-view="bulk"]').classList.add('active');
+    switchView('bulk');
   });
   document.querySelectorAll('.editor [contenteditable]').forEach(el=>{
     el.addEventListener('blur', async ()=>{
       if(!activeId) return;
-      await patchField(activeId, el.dataset.bind, el.textContent.trim());
+      await patchDossierField(activeId, el.dataset.bind, el.textContent.trim());
       const flag = document.getElementById('savedFlag');
       flag.classList.add('show');
       setTimeout(()=>flag.classList.remove('show'), 1600);
@@ -294,7 +551,7 @@ const CONSOLE_JS = `
       const res = await fetch('/api/upload', { method: 'POST', body: form });
       const body = await res.json();
       if(!res.ok) throw new Error(body.error || res.statusText);
-      await patchField(activeId, 'heroImage', { _type: 'image', asset: { _type: 'reference', _ref: body.asset._id } });
+      await patchDossierField(activeId, 'heroImage', { _type: 'image', asset: { _type: 'reference', _ref: body.asset._id } });
       thumbPreview.textContent = 'SET';
       sizeWarn.textContent = '✓ Uploaded (' + Math.round(webp.size/1024) + 'KB)';
     }catch(err){
