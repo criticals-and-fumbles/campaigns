@@ -87,6 +87,37 @@ const SITE_NAV_LINKS = [
   { label: "Resources", href: `${MAIN_SITE}/resources` },
 ];
 
+// Same inline SVG paths as cnf-website's components/icons/SocialIcons.tsx
+// — hand-copied since this Worker can't import that React component
+// (separate app). Keep these in sync by hand if the source ever changes.
+const SOCIAL_ICON_SVG = {
+  Facebook: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12a10 10 0 1 0-11.6 9.87v-6.98H7.9V12h2.5V9.8c0-2.47 1.47-3.84 3.72-3.84 1.08 0 2.21.19 2.21.19v2.43h-1.24c-1.23 0-1.61.76-1.61 1.54V12h2.74l-.44 2.89h-2.3v6.98A10 10 0 0 0 22 12Z"/></svg>`,
+  Instagram: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>`,
+  WhatsApp: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.7-.84-1.97-.93-.26-.1-.46-.15-.65.15-.2.29-.75.93-.92 1.12-.17.2-.34.22-.63.08-.29-.15-1.22-.45-2.33-1.44-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.08-.15-.65-1.58-.9-2.16-.24-.57-.48-.49-.65-.5h-.56c-.2 0-.51.07-.78.37-.26.29-1.02 1-1.02 2.43s1.04 2.82 1.19 3.01c.15.2 2.05 3.14 4.98 4.4.69.3 1.24.48 1.66.61.7.22 1.33.19 1.84.12.56-.08 1.7-.7 1.95-1.37.24-.68.24-1.26.17-1.38-.07-.12-.26-.2-.55-.35Z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.83.5 3.6 1.42 5.15L2 22l4.98-1.36A9.98 9.98 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2Zm0 18.13c-1.6 0-3.16-.43-4.52-1.24l-.32-.19-3.09.84.83-3.01-.21-.32A8.13 8.13 0 1 1 20.14 12a8.12 8.12 0 0 1-8.12 8.13Z"/></svg>`,
+  Discord: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.27 5.33A18.27 18.27 0 0 0 14.85 4c-.2.36-.43.84-.59 1.23a16.9 16.9 0 0 0-4.52 0C9.58 4.84 9.34 4.36 9.14 4a18.2 18.2 0 0 0-4.42 1.33C2.05 8.9 1.38 12.36 1.7 15.77a18.4 18.4 0 0 0 5.51 2.75c.44-.6.84-1.24 1.18-1.92-.65-.24-1.27-.53-1.86-.88.16-.11.31-.23.46-.35a13.1 13.1 0 0 0 11 0c.15.13.3.24.46.35-.59.35-1.21.64-1.86.88.34.68.74 1.32 1.18 1.92a18.35 18.35 0 0 0 5.51-2.75c.38-3.94-.65-7.37-2.73-10.44ZM8.68 13.7c-.83 0-1.5-.75-1.5-1.68 0-.92.66-1.68 1.5-1.68s1.52.76 1.5 1.68c0 .93-.66 1.68-1.5 1.68Zm6.64 0c-.83 0-1.5-.75-1.5-1.68 0-.92.66-1.68 1.5-1.68s1.52.76 1.5 1.68c0 .93-.66 1.68-1.5 1.68Z"/></svg>`,
+};
+
+// Same set/order as cnf-website's Nav.tsx SocialLinks (facebook,
+// instagram, discord, whatsapp) — built from the same siteLinks data the
+// footer already uses, so no extra query needed.
+function socialIconsBlock(siteLinks) {
+  const bySocial = (platform) => (siteLinks?.socialLinks || []).find((l) => l.platform === platform)?.url;
+  const links = [
+    { label: "Facebook", url: bySocial("Facebook") },
+    { label: "Instagram", url: bySocial("Instagram") },
+    { label: "Discord", url: siteLinks?.discordUrl },
+    { label: "WhatsApp Community", url: bySocial("WhatsApp") },
+  ].filter((l) => l.url);
+
+  if (links.length === 0) return "";
+
+  return `<div class="site-nav-social">${links
+    .map(
+      (l) => `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(l.label)}">${SOCIAL_ICON_SVG[l.label.startsWith("WhatsApp") ? "WhatsApp" : l.label]}</a>`,
+    )
+    .join("\n")}</div>`;
+}
+
 // Page chrome for the public campaign DIRECTORY ONLY ("/") — styled to
 // match the main criticalsandfumbles.com site's design system (see that
 // repo's docs/design-system.md) since this page is meant to be launched
@@ -193,6 +224,10 @@ function pageShell(title, bodyInner, siteLinks) {
   .site-nav-links a{font-family:var(--font-ui); font-size:.9rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
   .site-nav-links a:hover{color:var(--emerald);}
   .site-nav-links a.current{color:var(--emerald);}
+  .site-nav-social{display:flex; align-items:center; gap:1rem; flex-shrink:0;}
+  .site-nav-social a{display:block; width:18px; height:18px; color:var(--text-muted); transition:color .15s ease;}
+  .site-nav-social a:hover{color:var(--emerald);}
+  .site-nav-social svg{width:100%; height:100%; display:block;}
 
   .site-footer{border-top:1px solid var(--border); padding:3rem 1.5rem;}
   .site-footer-grid{max-width:1400px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:2.5rem;}
@@ -220,6 +255,7 @@ function pageShell(title, bodyInner, siteLinks) {
       <span>Criticals &amp; Fumbles</span>
     </a>
     <div class="site-nav-links">${nav}</div>
+    ${socialIconsBlock(siteLinks)}
   </nav>
 </header>
 
