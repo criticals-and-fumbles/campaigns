@@ -47,6 +47,28 @@ const STATUS_LABEL = {
   concluded: "Concluded",
 };
 
+// CSS class per status — see .status-badge.* rules in pageShell for the
+// actual colors. "recruiting" gets the loudest treatment (solid amber
+// fill) since the directory's intro copy specifically points visitors at
+// recruiting campaigns.
+const STATUS_CLASS = {
+  active: "status-active",
+  recruiting: "status-recruiting",
+  hiatus: "status-hiatus",
+  concluded: "status-concluded",
+};
+
+// siteSettings is a main-site document (cnf-website/sanity/schemas/
+// siteSettings.ts) — but it lives in the same Sanity project/dataset as
+// this Worker, so querying it directly (rather than hardcoding the
+// Discord/WhatsApp URLs here) keeps this page's CTAs in sync with
+// whatever the main site's Studio has, same principle as that repo's own
+// "never hardcode the Discord invite string" rule (see its CLAUDE.md).
+const SITE_LINKS_QUERY = `*[_type == "siteSettings"][0]{
+  discordUrl,
+  "whatsappUrl": socialLinks[platform == "WhatsApp"][0].url
+}`;
+
 // Page chrome for the public campaign DIRECTORY ONLY ("/") — styled to
 // match the main criticalsandfumbles.com site's design system (see that
 // repo's docs/design-system.md) since this page is meant to be launched
@@ -84,7 +106,13 @@ function pageShell(title, bodyInner) {
   h1 .emerald{color:var(--emerald);}
   h1 .amber{color:var(--amber);}
   h1 .magenta{color:var(--magenta);}
-  .intro{color:var(--text-muted); max-width:65ch; margin:0 0 2.5rem;}
+  .intro{color:var(--text-muted); max-width:65ch; margin:0 0 1.5rem;}
+
+  .cta-row{display:flex; flex-wrap:wrap; gap:.75rem; margin:0 0 2.5rem;}
+  .cta-btn{display:inline-flex; align-items:center; font-family:var(--font-ui); font-size:.85rem; font-weight:700; padding:.65rem 1.25rem; border-radius:.4rem; text-decoration:none; transition:opacity .15s ease;}
+  .cta-btn:hover{opacity:.85;}
+  .cta-discord{background:#5865F2; color:#fff;}
+  .cta-whatsapp{background:#25D366; color:#04160c;}
 
   /* Directory layout: wide list on the left, a narrower sticky "recent
      activity" feed on the right — stacks to a single column on mobile. */
@@ -99,7 +127,17 @@ function pageShell(title, bodyInner) {
   .card-image{flex:0 0 25%; max-width:25%; min-width:120px; aspect-ratio:4/3; background:#0c1a10; overflow:hidden;}
   .card-image img{width:100%; height:100%; object-fit:cover;}
   .card-body{flex:1; min-width:0; display:flex; flex-direction:column; gap:.6rem; padding:1.25rem 1.5rem;}
-  .badge{align-self:flex-start; border:1px solid var(--emerald); color:var(--emerald); font-family:var(--font-ui); font-size:.75rem; padding:.25rem 1rem; border-radius:999px;}
+  .badge-row{display:flex; flex-wrap:wrap; align-items:center; gap:.5rem;}
+  .badge{border:1px solid var(--emerald); color:var(--emerald); font-family:var(--font-ui); font-size:.75rem; padding:.25rem 1rem; border-radius:999px;}
+  /* Status is the one thing a visitor most needs to spot at a glance —
+     "recruiting" campaigns are what the intro copy explicitly points
+     people at, so it gets a solid fill instead of the genre badge's
+     quieter outline treatment. */
+  .status-badge{font-family:var(--font-ui); font-size:.75rem; font-weight:700; padding:.25rem 1rem; border-radius:999px; text-transform:uppercase; letter-spacing:.03em;}
+  .status-badge.status-active{background:rgba(46,197,107,.15); color:var(--emerald); border:1px solid var(--emerald);}
+  .status-badge.status-recruiting{background:var(--amber); color:#1a1000;}
+  .status-badge.status-hiatus{background:transparent; color:var(--text-muted); border:1px solid var(--border);}
+  .status-badge.status-concluded{background:transparent; color:var(--text-muted); border:1px solid var(--border); opacity:.7;}
   .card-body h2{font-family:var(--font-display); letter-spacing:.02em; font-size:1.5rem; margin:0; line-height:1.2;}
   .hook{font-size:1.05rem; color:var(--text-muted); margin:0;}
   .meta{display:flex; justify-content:space-between; gap:1rem; font-family:var(--font-ui); font-size:.75rem; color:var(--text-muted); margin-top:auto;}
@@ -134,24 +172,29 @@ function brandTitle() {
 // sidebar feed of the most recently updated sessions across every
 // visible campaign.
 app.get("/", async (c) => {
-  const [campaigns, recent] = await Promise.all([
+  const [campaigns, recent, siteLinks] = await Promise.all([
     query(c.env, ALL_CAMPAIGNS_QUERY),
     query(c.env, RECENT_ACTIVITY_QUERY),
+    query(c.env, SITE_LINKS_QUERY),
   ]);
 
   const cards = (campaigns || [])
     .map((camp) => {
       const imageUrl = urlFor(camp.heroImage).width(400).height(300).url();
       const status = STATUS_LABEL[camp.status] || camp.status;
+      const statusClass = STATUS_CLASS[camp.status] || "";
       return `<li class="card">
   <a href="/${encodeURIComponent(camp.slug?.current || "")}">
     <div class="card-image">${imageUrl ? `<img src="${imageUrl}" alt="" loading="lazy">` : ""}</div>
     <div class="card-body">
-      ${camp.genre ? `<span class="badge">${escapeHtml(camp.genre)}</span>` : ""}
+      <div class="badge-row">
+        ${camp.genre ? `<span class="badge">${escapeHtml(camp.genre)}</span>` : ""}
+        ${status ? `<span class="status-badge ${statusClass}">${escapeHtml(status)}</span>` : ""}
+      </div>
       <h2>${escapeHtml(camp.title)}</h2>
       ${camp.hook ? `<p class="hook">${escapeHtml(camp.hook)}</p>` : ""}
       <div class="meta">
-        <span>${escapeHtml(camp.system || "")}${camp.system && status ? " · " : ""}${escapeHtml(status || "")}</span>
+        <span>${escapeHtml(camp.system || "")}</span>
         <span>Updated ${timeAgo(camp.lastActivity)}</span>
       </div>
     </div>
@@ -171,8 +214,14 @@ app.get("/", async (c) => {
     )
     .join("\n");
 
+  const ctas = [
+    siteLinks?.discordUrl ? `<a class="cta-btn cta-discord" href="${escapeHtml(siteLinks.discordUrl)}" target="_blank" rel="noopener noreferrer">Join us on Discord</a>` : "",
+    siteLinks?.whatsappUrl ? `<a class="cta-btn cta-whatsapp" href="${escapeHtml(siteLinks.whatsappUrl)}" target="_blank" rel="noopener noreferrer">Join our WhatsApp Community</a>` : "",
+  ].join("\n");
+
   const body = `${brandTitle()}
-  <p class="intro">Ongoing campaigns run by our GMs — browse session dossiers as they're published.</p>
+  <p class="intro">Catch up on our games here. Please reach out to us if you are interested in any games that are still recruiting.</p>
+  ${ctas ? `<div class="cta-row">${ctas}</div>` : ""}
   <div class="directory-layout">
     <ul class="campaign-list">${cards || `<p class="empty">No campaigns published yet.</p>`}</ul>
     <aside class="sidebar">
