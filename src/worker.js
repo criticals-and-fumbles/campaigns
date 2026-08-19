@@ -15,7 +15,10 @@ const app = new Hono();
 // Binds project ID/dataset once per request so templates can build Sanity
 // CDN image URLs without threading env through every render call.
 app.use("*", async (c, next) => {
-  configureSanityImage({ projectId: c.env.SANITY_PROJECT_ID, dataset: c.env.SANITY_DATASET });
+  configureSanityImage({
+    projectId: c.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
+    dataset: c.env.NEXT_PUBLIC_SANITY_DATASET,
+  });
   await next();
 });
 
@@ -36,5 +39,17 @@ app.route("/api/import/csv", apiImportCsvRoutes);
 
 // Public dossier/campaign routes last — most permissive matcher.
 app.route("/", dossierRoutes);
+
+// Catches anything a route didn't handle itself (e.g. a Sanity API call
+// throwing because a required env var is missing/misnamed — the exact
+// failure mode that first surfaced this gap) so a misconfiguration shows
+// up as a clear message instead of Cloudflare's raw crash page. Route
+// handlers should still catch and report *expected* failure modes
+// themselves (see api-upload.js's 413, api-dossier.js's 400s) — this is
+// the backstop for everything else.
+app.onError((err, c) => {
+  console.error(err);
+  return c.json({ error: err.message || "Internal error" }, 500);
+});
 
 export default app;

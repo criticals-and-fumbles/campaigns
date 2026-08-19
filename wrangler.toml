@@ -21,9 +21,15 @@ compatibility_flags = ["nodejs_compat"]
 # No [[kv_namespaces]] or [[d1_databases]] — nothing in this app needs them
 # at scaffold time. Add only if a real use case needs one later.
 
-# Secrets (never declared here — set via `wrangler secret put <NAME>`):
-#   SANITY_PROJECT_ID
-#   SANITY_DATASET
-#   SANITY_API_VERSION
-#   SANITY_WRITE_TOKEN
+# Secrets/vars (never declared here — set via the dashboard or
+# `wrangler secret put <NAME>`). Names deliberately match the main
+# criticalsandfumbles.com site's convention (same Sanity project/dataset,
+# settings kept aligned across both repos):
+#   NEXT_PUBLIC_SANITY_PROJECT_ID
+#   NEXT_PUBLIC_SANITY_DATASET
+#   NEXT_PUBLIC_SANITY_API_VERSION
+#   SANITY_API_READ_TOKEN    (Viewer role — used for every query)
+#   SANITY_API_WRITE_TOKEN   (Editor role — used only for mutations;
+#                              should be set as a Secret, not a plain
+#                              Variable, since it has write access)
 # See README.md "Manual setup" step 4.

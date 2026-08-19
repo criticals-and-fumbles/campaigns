@@ -45,8 +45,8 @@ shipped without a migration step.
 
 1. **Verify before touching.** Before editing any existing schema, query
    the actual current data in Sanity Vision (or an equivalent script
-   using `SANITY_API_VERSION`/`SANITY_PROJECT_ID` — see
-   `seed/seed.js` for the pattern) and show the real current state.
+   using `NEXT_PUBLIC_SANITY_API_VERSION`/`NEXT_PUBLIC_SANITY_PROJECT_ID`
+   — see `seed/seed.js` for the pattern) and show the real current state.
    Never assume schema/data state from memory or from what a prompt
    describes — confirm it live first.
 2. **Additive by default.** New fields, new schema types, and new enum
@@ -105,9 +105,15 @@ constraints for why.
 
 Cloudflare Worker (Wrangler, not Pages) + Hono for routing + server-
 rendered template literals (`src/templates/`) + Sanity CMS (same
-project/dataset as criticalsandfumbles.com, this Worker holds the only
-write token) + Cloudflare Access for auth (no app-level login/session
-system — see `src/lib/auth.js`). No R2, no KV, no D1 at scaffold time.
+project/dataset as criticalsandfumbles.com — same env var names too,
+`NEXT_PUBLIC_SANITY_PROJECT_ID` etc., see `src/lib/sanity.js`; reads use
+`SANITY_API_READ_TOKEN`, mutations use `SANITY_API_WRITE_TOKEN`, both
+currently the **same token values as the main site's**, not a dedicated
+token for this Worker — a deliberate choice made 2026-08-19 given the
+goal of eventually linking documents/schema between the two repos, at
+the cost of shared blast radius if either codebase is compromised) +
+Cloudflare Access for auth (no app-level login/session system — see
+`src/lib/auth.js`). No R2, no KV, no D1 at scaffold time.
 
 ## Data model
 

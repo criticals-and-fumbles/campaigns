@@ -18,29 +18,34 @@ import { dirname, join } from "node:path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const themes = JSON.parse(readFileSync(join(__dirname, "genre-themes.json"), "utf-8"));
 
-const { SANITY_PROJECT_ID, SANITY_DATASET, SANITY_API_VERSION, SANITY_WRITE_TOKEN } = process.env;
+const {
+  NEXT_PUBLIC_SANITY_PROJECT_ID,
+  NEXT_PUBLIC_SANITY_DATASET,
+  NEXT_PUBLIC_SANITY_API_VERSION,
+  SANITY_API_WRITE_TOKEN,
+} = process.env;
 
 function apiBase() {
-  return `https://${SANITY_PROJECT_ID}.api.sanity.io/${SANITY_API_VERSION}`;
+  return `https://${NEXT_PUBLIC_SANITY_PROJECT_ID}.api.sanity.io/${NEXT_PUBLIC_SANITY_API_VERSION}`;
 }
 
 async function sanityFetch(path, init = {}) {
   const res = await fetch(`${apiBase()}${path}`, {
     ...init,
-    headers: { Authorization: `Bearer ${SANITY_WRITE_TOKEN}`, ...(init.headers || {}) },
+    headers: { Authorization: `Bearer ${SANITY_API_WRITE_TOKEN}`, ...(init.headers || {}) },
   });
   if (!res.ok) throw new Error(`Sanity API ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
 async function seedThemes(dryRun) {
-  if (!SANITY_PROJECT_ID || !SANITY_WRITE_TOKEN) {
-    console.log("[SKIP] SANITY_PROJECT_ID / SANITY_WRITE_TOKEN not set — copy .env.example to .env and fill it in first.");
+  if (!NEXT_PUBLIC_SANITY_PROJECT_ID || !SANITY_API_WRITE_TOKEN) {
+    console.log("[SKIP] NEXT_PUBLIC_SANITY_PROJECT_ID / SANITY_API_WRITE_TOKEN not set — copy .env.example to .env and fill it in first.");
     return;
   }
 
   const existingQuery = encodeURIComponent(`*[_type == "genreTheme"]._id`);
-  const { result: existingIds } = await sanityFetch(`/data/query/${SANITY_DATASET}?query=${existingQuery}`);
+  const { result: existingIds } = await sanityFetch(`/data/query/${NEXT_PUBLIC_SANITY_DATASET}?query=${existingQuery}`);
   const existing = new Set(existingIds);
 
   console.log(`Found ${existing.size} existing genreTheme document(s)`);
@@ -53,7 +58,7 @@ async function seedThemes(dryRun) {
     }
     console.log(`${dryRun ? "[DRY]" : "[CREATE]"} ${theme._id} (genre: ${theme.genre}${theme.campaignOverride ? ", override" : ""})`);
     if (!dryRun) {
-      await sanityFetch(`/data/mutate/${SANITY_DATASET}`, {
+      await sanityFetch(`/data/mutate/${NEXT_PUBLIC_SANITY_DATASET}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ mutations: [{ createIfNotExists: theme }] }),

@@ -15,15 +15,17 @@ project) — see `CLAUDE.md` for the full guardrails this repo follows.
 Cloudflare Worker (Wrangler) + [Hono](https://hono.dev) for routing +
 server-rendered template literals (no frontend framework — see
 `CLAUDE.md`'s bundle-size budget for why). Content lives in Sanity, same
-project/dataset as the main site; this Worker is the only thing with
-write access, via `SANITY_WRITE_TOKEN`. Auth is Cloudflare Access, not
-app-level login.
+project/dataset as the main site — env var names deliberately match that
+site's convention (`NEXT_PUBLIC_SANITY_PROJECT_ID` etc.) rather than
+inventing new ones. Reads use `SANITY_API_READ_TOKEN`; only this Worker's
+mutation routes use `SANITY_API_WRITE_TOKEN`. Auth is Cloudflare Access,
+not app-level login.
 
 ## Local development
 
 ```bash
 npm install
-cp .env.example .env   # fill in SANITY_PROJECT_ID / SANITY_WRITE_TOKEN etc.
+cp .env.example .env   # fill in NEXT_PUBLIC_SANITY_PROJECT_ID / SANITY_API_WRITE_TOKEN etc.
 npm run dev             # wrangler dev
 ```
 
@@ -57,15 +59,20 @@ take it live, in order:
 2. **Attach the custom domain** `campaigns.criticalsandfumbles.com` to the
    Worker: Workers & Pages → Settings → Domains & Routes → Add Custom
    Domain.
-3. **Generate a Sanity API token** (Editor role), scoped to the main
-   site's existing Sanity project, for this Worker's exclusive use.
-4. **Set Worker secrets:**
+3. **Set the Sanity project/dataset/token values** — deliberately reusing
+   the same project/dataset as the main site (not a second Sanity
+   project), so these are the same values as that repo's `.env.local`:
    ```bash
-   wrangler secret put SANITY_PROJECT_ID
-   wrangler secret put SANITY_DATASET
-   wrangler secret put SANITY_API_VERSION
-   wrangler secret put SANITY_WRITE_TOKEN
+   wrangler secret put NEXT_PUBLIC_SANITY_PROJECT_ID
+   wrangler secret put NEXT_PUBLIC_SANITY_DATASET
+   wrangler secret put NEXT_PUBLIC_SANITY_API_VERSION
+   wrangler secret put SANITY_API_READ_TOKEN
+   wrangler secret put SANITY_API_WRITE_TOKEN
    ```
+   All 5 should be set as **Secret** type if using the dashboard UI
+   instead of the CLI above (Settings → Variables and secrets) — not
+   **Variable**, even the non-sensitive ones, for consistency and so the
+   write token in particular isn't stored in plaintext.
 5. **Add the `campaign` / `dossier` / `genreTheme` schema types**
    (`schema/*.js` in this repo) to the main site's Sanity Studio config so
    they validate and are visible there too — coordinate with whoever

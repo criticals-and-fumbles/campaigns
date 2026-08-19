@@ -1,18 +1,28 @@
 /**
- * Sanity fetch/mutate helpers. This Worker is the ONLY thing that ever
- * talks to Sanity directly — SANITY_WRITE_TOKEN never reaches the browser.
- * Same project/dataset as the main criticalsandfumbles.com site.
+ * Sanity fetch/mutate helpers. This Worker talks to Sanity directly —
+ * same project/dataset as the main criticalsandfumbles.com site (see
+ * CLAUDE.md). Env var names deliberately match that site's convention
+ * (NEXT_PUBLIC_SANITY_PROJECT_ID etc.) rather than inventing new ones,
+ * per an explicit decision to keep settings aligned across both repos
+ * since they share the same Sanity project and are meant to have their
+ * documents/schema linked later.
+ *
+ * Two tokens, like the main site: SANITY_API_READ_TOKEN (Viewer role) for
+ * every query, SANITY_API_WRITE_TOKEN (Editor role) only for mutations —
+ * public dossier rendering never needs write access, so it doesn't get
+ * that token's blast radius even though this Worker holds it for the
+ * console's edits.
  */
 
 function apiBase(env) {
-  return `https://${env.SANITY_PROJECT_ID}.api.sanity.io/${env.SANITY_API_VERSION}`;
+  return `https://${env.NEXT_PUBLIC_SANITY_PROJECT_ID}.api.sanity.io/${env.NEXT_PUBLIC_SANITY_API_VERSION}`;
 }
 
-async function request(env, path, init = {}) {
+async function request(env, path, token, init = {}) {
   const res = await fetch(`${apiBase(env)}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${env.SANITY_WRITE_TOKEN}`,
+      Authorization: `Bearer ${token}`,
       ...(init.headers || {}),
     },
   });
@@ -23,19 +33,18 @@ async function request(env, path, init = {}) {
   return res.json();
 }
 
-/** Read-only GROQ query. Uses the same write-token-bearing client — this
- * Worker has no separate read-only token, since every route already sits
- * behind Cloudflare Access or is intentionally public read access to
- * published content only (dossiers/campaigns/themes have no private
- * fields). */
+/** Read-only GROQ query — uses SANITY_API_READ_TOKEN. */
 export async function query(env, groq, params = {}) {
   const qs = new URLSearchParams({ query: groq });
   for (const [key, value] of Object.entries(params)) {
     qs.set(`$${key}`, JSON.stringify(value));
   }
-  const data = await request(env, `/data/query/${env.SANITY_DATASET}?${qs.toString()}`, {
-    method: "GET",
-  });
+  const data = await request(
+    env,
+    `/data/query/${env.NEXT_PUBLIC_SANITY_DATASET}?${qs.toString()}`,
+    env.SANITY_API_READ_TOKEN,
+    { method: "GET" },
+  );
   return data.result;
 }
 
@@ -52,25 +61,31 @@ export async function createOrReplace(env, doc) {
 }
 
 export async function mutate(env, mutations, transactionId) {
-  return request(env, `/data/mutate/${env.SANITY_DATASET}`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ mutations, ...(transactionId ? { transactionId } : {}) }),
-  });
+  return request(
+    env,
+    `/data/mutate/${env.NEXT_PUBLIC_SANITY_DATASET}`,
+    env.SANITY_API_WRITE_TOKEN,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mutations, ...(transactionId ? { transactionId } : {}) }),
+    },
+  );
 }
 
 /** Uploads a raw file/image straight into Sanity's asset pipeline.
  * `kind` is "image" or "file" — Sanity has separate asset endpoints for
  * each. Returns the created asset document; the caller then PATCHes the
- * relevant dossier field with a reference to it. */
+ * relevant dossier field with a reference to it. Always uses the write
+ * token — asset creation is a mutation. */
 export async function uploadAsset(env, bytes, contentType, filename, kind) {
   const endpoint = kind === "image" ? "images" : "files";
   const res = await fetch(
-    `${apiBase(env)}/${endpoint}/${env.SANITY_DATASET}?filename=${encodeURIComponent(filename || "upload")}`,
+    `${apiBase(env)}/${endpoint}/${env.NEXT_PUBLIC_SANITY_DATASET}?filename=${encodeURIComponent(filename || "upload")}`,
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.SANITY_WRITE_TOKEN}`,
+        Authorization: `Bearer ${env.SANITY_API_WRITE_TOKEN}`,
         "content-type": contentType || "application/octet-stream",
       },
       body: bytes,
