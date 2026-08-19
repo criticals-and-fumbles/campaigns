@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Browser — Concept C: Command Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05070a;
+    --accent-a:#17e9a0;
+    --accent-b:#ff4fae;
+    --text:#dfeee9;
+    --font-display:'Orbitron', sans-serif;
+    --font-body:'Rajdhani', sans-serif;
+    --font-mono:'Share Tech Mono', monospace;
+
+    /* derived tokens -- never set these directly, they read from the 7 above */
+    --panel: color-mix(in srgb, var(--bg) 88%, var(--accent-a) 12%);
+    --panel-2: color-mix(in srgb, var(--bg) 94%, var(--accent-a) 6%);
+    --line: color-mix(in srgb, var(--accent-a) 22%, transparent);
+    --line-strong: color-mix(in srgb, var(--accent-a) 45%, transparent);
+    --text-dim: color-mix(in srgb, var(--text) 62%, var(--bg) 38%);
+    --overlay: color-mix(in srgb, var(--bg) 70%, transparent);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{background:var(--bg); color:var(--text); font-family:var(--font-body); overflow:hidden;}
+
+  .app{height:100vh; height:100dvh; display:flex; flex-direction:column;}
+
+  /* ---------- TOPBAR ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 18px; background:var(--panel-2); border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .topbar h1{font-family:var(--font-display); font-size:.95rem; letter-spacing:2px; text-transform:uppercase;}
+  .topbar h1 span{color:var(--accent-a);}
+  .deck-btn{
+    display:none; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11px;
+    letter-spacing:1px; text-transform:uppercase; color:var(--bg); background:var(--accent-a);
+    border:1px solid var(--accent-a); padding:8px 14px; cursor:pointer;
+  }
+  .deck-btn b{font-family:var(--font-display); font-size:12px;}
+
+  /* ---------- PANES (desktop/tablet default: fixed two-column, centered stage) ---------- */
+  .stage{flex:1; min-height:0; max-width:1760px; width:100%; margin:0 auto; display:flex; position:relative;}
+
+  .panes{flex:1; min-height:0; display:flex; width:100%;}
+
+  .list-pane{
+    width:clamp(260px, 24vw, 360px); flex-shrink:0;
+    display:flex; flex-direction:column; min-height:0;
+    border-right:1px solid var(--line); background:var(--panel);
+  }
+  .list-head{
+    padding:14px 16px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:2px;
+    color:var(--text-dim); border-bottom:1px solid var(--line); flex-shrink:0;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .list-head .close-deck{display:none; background:none; border:none; color:var(--text-dim); font-family:var(--font-mono); font-size:16px; cursor:pointer;}
+  .list-scroll{overflow-y:auto; flex:1; min-height:0;}
+
+  .session-item{
+    width:100%; display:block; text-align:left; background:none; border:none;
+    border-bottom:1px solid var(--line); border-left:3px solid transparent;
+    padding:12px 16px; cursor:pointer; color:var(--text); font-family:var(--font-body);
+    transition:.15s;
+  }
+  .session-item:hover{background:var(--panel-2);}
+  .session-item.active{border-left-color:var(--accent-a); background:var(--panel-2);}
+  .session-item .s-title{font-weight:600; font-size:.95rem; margin-bottom:4px;}
+  .session-item .s-meta{
+    display:flex; justify-content:space-between; gap:8px;
+    font-family:var(--font-mono); font-size:10px; letter-spacing:.5px; color:var(--text-dim);
+  }
+  .session-item.active .s-meta{color:var(--accent-a);}
+
+  .detail-pane{flex:1; min-width:0; overflow-y:auto; padding:clamp(20px,3vw,44px);}
+  .detail-inner{max-width:920px; margin:0 auto;}
+
+  .detail-title{font-family:var(--font-display); font-size:clamp(1.3rem,2.4vw,1.9rem); letter-spacing:1px; margin-bottom:6px;}
+  .detail-meta{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-dim); margin-bottom:22px; display:flex; gap:18px; flex-wrap:wrap;}
+  .detail-meta b{color:var(--accent-a);}
+
+  .iframe-mock{
+    aspect-ratio:16/10; width:100%; border:1px dashed var(--line-strong);
+    background:var(--panel); display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px; color:var(--text-dim); font-family:var(--font-mono); font-size:11px; letter-spacing:1px;
+    text-align:center; padding:20px;
+  }
+  .iframe-mock strong{color:var(--accent-b); font-size:12px; letter-spacing:2px;}
+
+  /* Scrim used by the drawer/bottom-sheet on phone and the slide-out on tablet portrait */
+  .scrim{
+    display:none; position:fixed; inset:0; background:var(--overlay);
+    backdrop-filter:blur(2px); z-index:20;
+  }
+  .app[data-deck="open"] .scrim{display:block;}
+
+  /* ---------- RESPONSIVE ---------- */
+
+  /* Tablet portrait: list becomes a slide-out drawer from the left, full detail behind it */
+  @media (max-width:1000px) and (orientation:portrait), (max-width:760px){
+    .deck-btn{display:inline-flex;}
+    .stage{max-width:none;}
+    .list-pane{
+      position:fixed; top:0; bottom:0; left:0; width:min(340px, 82vw);
+      z-index:21; transform:translateX(-100%); transition:transform .22s ease;
+      border-right:1px solid var(--line-strong);
+    }
+    .list-head .close-deck{display:block;}
+    .app[data-deck="open"] .list-pane{transform:translateX(0);}
+    .detail-pane{width:100%;}
+  }
+
+  /* Phone: same slide-out drawer, but presented as a bottom sheet (feels closer to a
+     thumb-reachable action on a small screen) instead of a full-height side drawer */
+  @media (max-width:640px){
+    .topbar h1{font-size:.8rem;}
+    .list-pane{
+      top:auto; left:0; right:0; bottom:0; width:100%; height:78vh; height:78dvh;
+      border-right:none; border-top:1px solid var(--line-strong);
+      transform:translateY(100%); border-radius:14px 14px 0 0;
+    }
+    .app[data-deck="open"] .list-pane{transform:translateY(0);}
+    .list-head{position:relative;}
+    .list-head::before{
+      content:''; position:absolute; top:8px; left:50%; transform:translateX(-50%);
+      width:36px; height:4px; border-radius:2px; background:var(--line-strong);
+    }
+    .list-head{padding-top:20px;}
+    .detail-pane{padding:18px;}
+  }
+
+  /* Large desktop / 1440p+: keep the stage from thinning out into a sea of empty
+     side-gutters -- widen the cap and give the detail column more breathing room
+     rather than letting either pane stretch full-bleed */
+  @media (min-width:1600px){
+    .stage{max-width:1900px;}
+    .list-pane{width:clamp(300px, 18vw, 380px);}
+    .detail-pane{padding:56px;}
+    .detail-inner{max-width:1040px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app" data-deck="closed">
+  <header class="topbar">
+    <h1><span>//</span> SESSION BROWSER — CONCEPT C</h1>
+    <button class="deck-btn" id="openDeck"><b>&#9776;</b> Sessions</button>
+  </header>
+
+  <div class="stage">
+    <div class="panes">
+      <aside class="list-pane">
+        <div class="list-head">
+          SESSION LOG — 11 ENTRIES
+          <button class="close-deck" id="closeDeck">&#10005;</button>
+        </div>
+        <div class="list-scroll" id="listScroll"></div>
+      </aside>
+
+      <section class="detail-pane">
+        <div class="detail-inner" id="detailInner"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+</div>
+
+<script>
+  var sessions = [
+    { title: "Operation: Dead Thread", code: "BN-DAWN-119-08", date: "28.06.119 IC" },
+    { title: "Cinder Station Convoy", code: "BN-CIND-119-05", date: "21.06.119 IC" },
+    { title: "Baraka Deep-7 Incident", code: "BN-BARK-118-11", date: "14.06.119 IC" },
+    { title: "The Pale Signal", code: "BN-DAWN-119-09", date: "05.07.119 IC" },
+    { title: "Docking Bay Standoff", code: "BN-DAWN-119-07", date: "22.06.119 IC" },
+    { title: "Arachne Blind Spot", code: "BN-DAWN-119-06", date: "15.06.119 IC" },
+    { title: "Nomad Relations Talks", code: "BN-DAWN-119-04", date: "08.06.119 IC" },
+    { title: "First Contact, Sable", code: "BN-DAWN-119-03", date: "01.06.119 IC" },
+    { title: "Interception at Cinder", code: "BN-CIND-119-02", date: "25.05.119 IC" },
+    { title: "Briefing: Dawn System", code: "BN-DAWN-119-01", date: "18.05.119 IC" },
+    { title: "Recruitment, Bureau Noir", code: "BN-ORIG-118-01", date: "02.05.119 IC" }
+  ];
+
+  var listScroll = document.getElementById("listScroll");
+  var detailInner = document.getElementById("detailInner");
+  var appEl = document.getElementById("app");
+  var activeIndex = 0;
+
+  function openDeck(){ appEl.setAttribute("data-deck", "open"); }
+  function closeDeck(){ appEl.setAttribute("data-deck", "closed"); }
+
+  function renderList(){
+    listScroll.innerHTML = "";
+    sessions.forEach(function(s, i){
+      var btn = document.createElement("button");
+      btn.className = "session-item" + (i === activeIndex ? " active" : "");
+      btn.innerHTML =
+        '<div class="s-title">' + s.title + '</div>' +
+        '<div class="s-meta"><span>' + s.code + '</span><span>' + s.date + '</span></div>';
+      btn.addEventListener("click", function(){
+        activeIndex = i;
+        renderList();
+        renderDetail();
+        closeDeck();
+      });
+      listScroll.appendChild(btn);
+    });
+  }
+
+  function renderDetail(){
+    var s = sessions[activeIndex];
+    detailInner.innerHTML =
+      '<div class="detail-title">' + s.title + '</div>' +
+      '<div class="detail-meta"><span>CODE <b>' + s.code + '</b></span><span>DATE <b>' + s.date + '</b></span></div>' +
+      '<div class="iframe-mock"><strong>IFRAME: SESSION DETAIL</strong>' +
+      '<span>Renders the selected session’s dossier page here in production.</span></div>';
+  }
+
+  document.getElementById("openDeck").addEventListener("click", openDeck);
+  document.getElementById("closeDeck").addEventListener("click", closeDeck);
+  document.getElementById("scrim").addEventListener("click", closeDeck);
+
+  renderList();
+  renderDetail();
+</script>
+</body>
+</html>
