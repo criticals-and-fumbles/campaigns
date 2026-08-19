@@ -266,7 +266,7 @@ function pageShell(title, bodyInner, siteLinks) {
   @media(max-width:768px){
     .hamburger-btn{display:flex;}
     .site-nav-right{display:none;}
-    .site-nav-links{position:fixed; top:0; right:0; bottom:0; z-index:60; width:280px; max-width:100vw; margin:0; padding:1.5rem; padding-top:4.5rem; flex-direction:column; align-items:flex-end; gap:1.5rem; row-gap:1.5rem; background:var(--bg); transform:translateX(100%); transition:transform .22s ease; overflow-y:auto;}
+    .site-nav-links{position:fixed; top:0; right:0; bottom:0; z-index:60; width:280px; max-width:100vw; margin:0; padding:1.5rem; padding-top:4.5rem; flex-direction:column; flex-wrap:nowrap; align-items:flex-end; gap:1.5rem; row-gap:1.5rem; background:var(--bg); transform:translateX(100%); transition:transform .22s ease; overflow-x:hidden; overflow-y:auto;}
     html[data-nav="open"] .site-nav-links{transform:translateX(0);}
     html[data-nav="open"] .nav-scrim{display:block;}
     .nav-close-btn{display:flex;}
