@@ -251,40 +251,68 @@ function heroImageFieldBlock(prefix) {
   `;
 }
 
+// Tip copy sits above each label, not below — a DM reads "what goes
+// here" before they start typing, not as an afterthought once the field
+// is already open. Quick Facts/Location Facts/Stat Tiles/Threat
+// Assessment text is verbatim from a direct request; the rest (session
+// metadata + Objectives/Log) follows the same "prompt with examples"
+// shape for consistency across every repeater/field a DM has to fill in.
 function dossierFieldsBlock(prefix) {
   return `
-      <div class="field"><label>Classification</label><input type="text" id="${prefix}Classification" placeholder="e.g. TOP SECRET"></div>
-      <div class="field"><label>Distribution</label><input type="text" id="${prefix}Distribution" placeholder="e.g. PLAYER-FACING"></div>
-      <div class="field"><label>Session Label</label><input type="text" id="${prefix}SessionLabel" placeholder="e.g. 8, Day 41"></div>
+      <div class="field">
+        <p class="field-tip">What's this session's overall classification/sensitivity? e.g. TOP SECRET, RESTRICTED, Party Eyes Only.</p>
+        <label>Classification</label>
+        <input type="text" id="${prefix}Classification" placeholder="e.g. TOP SECRET">
+      </div>
+      <div class="field">
+        <p class="field-tip">Who's this dossier actually for? e.g. PLAYER-FACING, GM Only, Survivor Cell Only.</p>
+        <label>Distribution</label>
+        <input type="text" id="${prefix}Distribution" placeholder="e.g. PLAYER-FACING">
+      </div>
+      <div class="field">
+        <p class="field-tip">However your table tracks sessions — a number, an in-world date, whatever the players would recognize.</p>
+        <label>Session Label</label>
+        <input type="text" id="${prefix}SessionLabel" placeholder="e.g. 8, Day 41">
+      </div>
       <div class="field"><label>Location</label><input type="text" id="${prefix}Location"></div>
-      <div class="field"><label>Overview</label><textarea id="${prefix}Overview" rows="3"></textarea></div>
+      <div class="field">
+        <p class="field-tip">The main recap — what actually happened this session, in a paragraph or two. This is what most players will read first.</p>
+        <label>Overview</label>
+        <textarea id="${prefix}Overview" rows="3"></textarea>
+      </div>
       ${heroImageFieldBlock(prefix)}
       <div class="field">
-        <label>Quick Facts (kv panel beside Overview)</label>
+        <p class="field-tip">Any highlights of this session? Loot, Key Moments, Implications, Aftermath facts, etc.</p>
+        <label>Quick Facts</label>
         <div class="repeater" id="${prefix}QuickFacts"></div>
         <button type="button" class="btn small" data-add-row="${prefix}QuickFacts:factRow">+ Add Fact</button>
       </div>
       <div class="field">
+        <p class="field-tip">In-world items, places, people, things — whatever's tied to this session's location specifically.</p>
         <label>Location Facts</label>
         <div class="repeater" id="${prefix}LocationFacts"></div>
         <button type="button" class="btn small" data-add-row="${prefix}LocationFacts:factRow">+ Add Fact</button>
       </div>
       <div class="field">
-        <label>Stat Tiles (optional status strip)</label>
+        <p class="field-tip">World conditions or news affecting this location. Complications, city feel, news, political or trade tensions or conflicts.</p>
+        <label>Stat Tiles</label>
         <div class="repeater" id="${prefix}StatTiles"></div>
         <button type="button" class="btn small" data-add-row="${prefix}StatTiles:statTile">+ Add Tile</button>
       </div>
       <div class="field">
+        <p class="field-tip">Risks that are pertinent to this session, scored from Low to Very High.</p>
         <label>Threat Assessment</label>
         <div class="repeater" id="${prefix}ThreatAssessment"></div>
         <button type="button" class="btn small" data-add-row="${prefix}ThreatAssessment:meterRow">+ Add Row</button>
       </div>
       <div class="field">
+        <p class="field-tip">What is the party actively trying to achieve? Mark each Open or Done, and rank by priority so players see what matters most right now.</p>
         <label>Objectives</label>
         <div class="repeater" id="${prefix}Objectives"></div>
         <button type="button" class="btn small" data-add-row="${prefix}Objectives:objective">+ Add Objective</button>
       </div>
       <div class="field">
+        <p class="field-tip">A running record of what happened, in order — session log entries build up the campaign's timeline session over session.</p>
         <label>Log</label>
         <div class="repeater" id="${prefix}Log"></div>
         <button type="button" class="btn small" data-add-row="${prefix}Log:logEntry">+ Add Entry</button>
@@ -344,6 +372,7 @@ const CONSOLE_CSS = `
   .editor h2{font-family:var(--font-display); font-size:1rem; letter-spacing:2px; margin-bottom:16px; color:var(--emerald);}
   .field{margin-bottom:16px;}
   .field label{display:block; font-family:var(--font-mono); font-size:9.5px; letter-spacing:1.5px; color:var(--text-faint); margin-bottom:6px;}
+  .field-tip{font-family:var(--font-body); font-size:.82rem; font-style:italic; color:var(--text-dim); margin:0 0 6px; line-height:1.4;}
   .field [contenteditable="true"]{background:var(--panel-2); border:1px solid var(--line); padding:10px 12px; font-size:.92rem; line-height:1.6; outline:none;}
   .field [contenteditable="true"]:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
   .field input[type=text], .field select, .field textarea{width:100%; max-width:420px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 12px; font-family:var(--font-body); font-size:.92rem; outline:none;}
