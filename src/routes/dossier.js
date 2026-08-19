@@ -165,7 +165,8 @@ function pageShell(title, bodyInner, siteLinks) {
   html{font-size:18px;}
   body{margin:0; background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:1.125rem;}
   a{color:inherit;}
-  .container{max-width:1400px; margin:0 auto; padding:4rem 1.5rem;}
+  .container{max-width:1440px; margin:0 auto; padding:4rem 1rem;}
+  @media(min-width:768px){.container{padding-left:2rem; padding-right:2rem;}}
   .back-link{display:inline-block; font-family:var(--font-ui); font-size:.8rem; color:var(--text-muted); text-decoration:none; margin-bottom:1.5rem;}
   .back-link:hover{color:var(--emerald);}
   h1{font-family:var(--font-display); letter-spacing:.02em; font-size:3rem; margin:0 0 .5rem;}
@@ -225,7 +226,7 @@ function pageShell(title, bodyInner, siteLinks) {
      deliberately don't get this chrome, it would clash with their
      immersive full-bleed design. */
   .site-nav{position:sticky; top:0; z-index:50; border-bottom:1px solid var(--border); background:rgba(17,17,17,.95); backdrop-filter:blur(8px);}
-  .site-nav-inner{max-width:1400px; margin:0 auto; padding:0 1rem; height:4rem; display:flex; align-items:center; justify-content:space-between;}
+  .site-nav-inner{max-width:1440px; margin:0 auto; padding:0 1rem; height:4rem; display:flex; align-items:center; justify-content:space-between;}
   @media(min-width:768px){.site-nav-inner{padding:0 2rem;}}
   .site-nav-right{display:flex; align-items:center; gap:1.5rem; flex-shrink:0;}
   .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.875rem; flex-shrink:0;}
@@ -286,8 +287,9 @@ function pageShell(title, bodyInner, siteLinks) {
     .mobile-drawer, .nav-scrim{display:none !important;}
   }
 
-  .site-footer{border-top:1px solid var(--border); padding:3rem 1.5rem;}
-  .site-footer-grid{max-width:1400px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:2.5rem;}
+  .site-footer{border-top:1px solid var(--border); padding:3rem 1rem;}
+  @media(min-width:768px){.site-footer{padding-left:2rem; padding-right:2rem;}}
+  .site-footer-grid{max-width:1440px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:2.5rem;}
   @media(min-width:768px){.site-footer-grid{grid-template-columns:repeat(3, 1fr);}}
   .site-footer-desc{margin:1rem 0 0; max-width:30ch; font-size:.875rem; color:var(--text-muted);}
   .site-footer-values{margin:1rem 0 0; font-family:var(--font-ui); font-size:.75rem;}
@@ -300,7 +302,7 @@ function pageShell(title, bodyInner, siteLinks) {
   .footer-social-pills{display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1rem;}
   .footer-social-pills a{border:1px solid var(--border); border-radius:999px; padding:.25rem .75rem; font-family:var(--font-ui); font-size:.75rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease, border-color .15s ease;}
   .footer-social-pills a:hover{border-color:var(--emerald); color:var(--emerald);}
-  .site-footer-bottom{max-width:1400px; margin:2.5rem auto 0; padding-top:1.5rem; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:.5rem; font-size:.75rem; color:var(--text-muted);}
+  .site-footer-bottom{max-width:1440px; margin:2.5rem auto 0; padding-top:1.5rem; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:.5rem; font-size:.75rem; color:var(--text-muted);}
   @media(min-width:768px){.site-footer-bottom{flex-direction:row; justify-content:space-between;}}
 </style>
 </head>
