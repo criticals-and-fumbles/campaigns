@@ -225,7 +225,7 @@ function pageShell(title, bodyInner, siteLinks) {
      the "/" directory — the genre-themed session-index/dossier pages
      deliberately don't get this chrome, it would clash with their
      immersive full-bleed design. */
-  .site-nav{position:sticky; top:0; z-index:50; border-bottom:1px solid var(--border); background:rgba(17,17,17,.95); backdrop-filter:blur(8px);}
+  .site-nav{position:sticky; top:0; z-index:50; border-bottom:1px solid var(--border); background:color-mix(in srgb, var(--bg) 95%, transparent); backdrop-filter:blur(8px);}
   .site-nav-inner{max-width:1440px; margin:0 auto; padding:0 1rem; height:4rem; display:flex; align-items:center; justify-content:space-between;}
   @media(min-width:768px){.site-nav-inner{padding:0 2rem;}}
   .site-nav-right{display:flex; align-items:center; gap:1.5rem; flex-shrink:0;}
