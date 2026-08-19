@@ -19,6 +19,49 @@ const CAMPAIGN_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->slug.current 
   _id, code, title, sessionLabel, location
 }`;
 
+const ALL_CAMPAIGNS_QUERY = `*[_type == "campaign"] | order(status asc, title asc){
+  _id, title, slug, genre, system, status, hook
+}`;
+
+// GET / — public campaign directory, the site's landing page.
+app.get("/", async (c) => {
+  const campaigns = await query(c.env, ALL_CAMPAIGNS_QUERY);
+
+  const cards = (campaigns || [])
+    .map(
+      (camp) => `<li class="campaign-card">
+  <a href="/${encodeURIComponent(camp.slug?.current || "")}">
+    <h2>${escapeHtml(camp.title)}</h2>
+    <p class="meta">${escapeHtml(camp.genre || "")}${camp.system ? " · " + escapeHtml(camp.system) : ""} · ${escapeHtml(camp.status || "")}</p>
+    ${camp.hook ? `<p class="hook">${escapeHtml(camp.hook)}</p>` : ""}
+  </a>
+</li>`,
+    )
+    .join("\n");
+
+  return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaigns — Criticals &amp; Fumbles</title>
+  <style>
+    body{font-family:sans-serif; max-width:720px; margin:60px auto; padding:0 20px;}
+    ul{list-style:none; padding:0; display:grid; gap:16px;}
+    .campaign-card a{display:block; padding:16px 20px; border:1px solid #ddd; border-radius:8px; text-decoration:none; color:inherit;}
+    .campaign-card a:hover{border-color:#999;}
+    .campaign-card h2{margin:0 0 4px;}
+    .meta{color:#666; font-size:.9em; margin:0 0 6px;}
+    .hook{margin:0; color:#333;}
+  </style>
+</head>
+<body>
+  <h1>Campaigns</h1>
+  <ul>${cards || "<li>No campaigns published yet.</li>"}</ul>
+</body>
+</html>`);
+});
+
 // GET /:campaignSlug/:dossierCode — the dossier page itself.
 app.get("/:campaignSlug/:dossierCode", async (c) => {
   const { campaignSlug, dossierCode } = c.req.param();
