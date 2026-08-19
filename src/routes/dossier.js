@@ -61,13 +61,31 @@ const STATUS_CLASS = {
 // siteSettings is a main-site document (cnf-website/sanity/schemas/
 // siteSettings.ts) — but it lives in the same Sanity project/dataset as
 // this Worker, so querying it directly (rather than hardcoding the
-// Discord/WhatsApp URLs here) keeps this page's CTAs in sync with
-// whatever the main site's Studio has, same principle as that repo's own
-// "never hardcode the Discord invite string" rule (see its CLAUDE.md).
+// Discord/WhatsApp URLs, site title/description, or copyright line here)
+// keeps this page's CTAs AND its nav/footer chrome in sync with whatever
+// the main site's Studio has, same principle as that repo's own "never
+// hardcode the Discord invite string" rule (see its CLAUDE.md).
 const SITE_LINKS_QUERY = `*[_type == "siteSettings"][0]{
-  discordUrl,
-  "whatsappUrl": socialLinks[platform == "WhatsApp"][0].url
+  title, shortDescription, discordUrl, copyrightLine,
+  "whatsappUrl": socialLinks[platform == "WhatsApp"][0].url,
+  socialLinks
 }`;
+
+const MAIN_SITE = "https://www.criticalsandfumbles.com";
+
+// Mirrors cnf-website's NAV_LINKS (components/layout/Nav.tsx) with
+// "Campaigns" inserted — this Worker isn't a route in that Next.js app,
+// so it can't share that component, only match its shape by hand. If
+// that list changes there, update this one too; nothing keeps them in
+// sync automatically.
+const SITE_NAV_LINKS = [
+  { label: "About", href: `${MAIN_SITE}/about` },
+  { label: "Events", href: `${MAIN_SITE}/events` },
+  { label: "Campaigns", href: "/", current: true },
+  { label: "Wiki", href: `${MAIN_SITE}/wiki` },
+  { label: "Team", href: `${MAIN_SITE}/team` },
+  { label: "Resources", href: `${MAIN_SITE}/resources` },
+];
 
 // Page chrome for the public campaign DIRECTORY ONLY ("/") — styled to
 // match the main criticalsandfumbles.com site's design system (see that
@@ -77,7 +95,16 @@ const SITE_LINKS_QUERY = `*[_type == "siteSettings"][0]{
 // Everything downstream of a campaign — its session index and the
 // dossier page itself — is genre-themed instead (renderCampaignIndexPage/
 // renderDossierPage, via theme.js), NOT run through this shell.
-function pageShell(title, bodyInner) {
+function pageShell(title, bodyInner, siteLinks) {
+  const nav = SITE_NAV_LINKS.map(
+    (l) => `<a href="${escapeHtml(l.href)}"${l.current ? ' class="current"' : ""}>${escapeHtml(l.label)}</a>`,
+  ).join("\n");
+
+  const socialPills = (siteLinks?.socialLinks || [])
+    .filter((l) => l.url)
+    .map((l) => `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.platform)}</a>`)
+    .join("\n");
+
   return `<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -151,12 +178,82 @@ function pageShell(title, bodyInner) {
   .activity-item a:hover .activity-title{color:var(--emerald);}
   .activity-title{display:block; font-size:.95rem; margin-bottom:.25rem; transition:color .15s ease;}
   .activity-meta{display:flex; justify-content:space-between; gap:.5rem; font-family:var(--font-ui); font-size:.68rem; color:var(--text-muted);}
+
+  /* Site nav/footer — hand-matched to cnf-website's Nav.tsx/Footer.tsx
+     (can't share the actual React components, this is a separate app —
+     see CLAUDE.md § Visual design). Scoped to this pageShell only, i.e.
+     the "/" directory — the genre-themed session-index/dossier pages
+     deliberately don't get this chrome, it would clash with their
+     immersive full-bleed design. */
+  .site-nav{position:sticky; top:0; z-index:50; border-bottom:1px solid var(--border); background:rgba(17,17,17,.95); backdrop-filter:blur(8px);}
+  .site-nav-inner{max-width:1400px; margin:0 auto; padding:0 1.5rem; height:64px; display:flex; align-items:center; justify-content:space-between; gap:1rem;}
+  .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.9rem; flex-shrink:0;}
+  .site-nav-brand img{height:32px; width:auto; display:block;}
+  .site-nav-links{display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; row-gap:.5rem; padding:.75rem 0;}
+  .site-nav-links a{font-family:var(--font-ui); font-size:.9rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
+  .site-nav-links a:hover{color:var(--emerald);}
+  .site-nav-links a.current{color:var(--emerald);}
+
+  .site-footer{border-top:1px solid var(--border); padding:3rem 1.5rem;}
+  .site-footer-grid{max-width:1400px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:2.5rem;}
+  @media(min-width:768px){.site-footer-grid{grid-template-columns:repeat(3, 1fr);}}
+  .site-footer-desc{margin:1rem 0 0; max-width:30ch; font-size:.9rem; color:var(--text-muted);}
+  .site-footer-values{margin:1rem 0 0; font-family:var(--font-ui); font-size:.75rem;}
+  .site-footer h3{margin:0 0 1rem; font-family:var(--font-ui); font-size:.85rem; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted);}
+  .site-footer-nav{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem;}
+  .site-footer-nav a{font-size:.9rem; text-decoration:none; color:var(--text); transition:color .15s ease;}
+  .site-footer-nav a:hover{color:var(--emerald);}
+  .footer-discord-btn{display:inline-flex; align-items:center; margin-top:0; min-height:44px; padding:.5rem 1rem; border-radius:.375rem; background:var(--emerald); color:var(--bg); font-family:var(--font-ui); font-size:.85rem; text-decoration:none; transition:opacity .15s ease;}
+  .footer-discord-btn:hover{opacity:.9;}
+  .footer-social-pills{display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1rem;}
+  .footer-social-pills a{border:1px solid var(--border); border-radius:999px; padding:.25rem .75rem; font-family:var(--font-ui); font-size:.75rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease, border-color .15s ease;}
+  .footer-social-pills a:hover{border-color:var(--emerald); color:var(--emerald);}
+  .site-footer-bottom{max-width:1400px; margin:2.5rem auto 0; padding-top:1.5rem; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:.5rem; font-size:.75rem; color:var(--text-muted);}
+  @media(min-width:768px){.site-footer-bottom{flex-direction:row; justify-content:space-between;}}
 </style>
 </head>
 <body>
+<header class="site-nav">
+  <nav class="site-nav-inner">
+    <a class="site-nav-brand" href="${MAIN_SITE}/">
+      <img src="${MAIN_SITE}/logo.png" alt="Criticals and Fumbles logo">
+      <span>Criticals &amp; Fumbles</span>
+    </a>
+    <div class="site-nav-links">${nav}</div>
+  </nav>
+</header>
+
 <div class="container">
 ${bodyInner}
 </div>
+
+<footer class="site-footer">
+  <div class="site-footer-grid">
+    <div>
+      <a class="site-nav-brand" href="${MAIN_SITE}/">
+        <img src="${MAIN_SITE}/logo.png" alt="Criticals and Fumbles logo">
+        <span>${escapeHtml(siteLinks?.title || "Criticals and Fumbles")}</span>
+      </a>
+      ${siteLinks?.shortDescription ? `<p class="site-footer-desc">${escapeHtml(siteLinks.shortDescription)}</p>` : ""}
+      <p class="site-footer-values"><span class="emerald">Community</span> · <span class="amber">Collaboration</span> · <span class="magenta">Sincerity</span></p>
+    </div>
+    <div>
+      <h3>Quick Nav</h3>
+      <ul class="site-footer-nav">
+        ${SITE_NAV_LINKS.map((l) => `<li><a href="${escapeHtml(l.href)}">${escapeHtml(l.label)}</a></li>`).join("\n")}
+      </ul>
+    </div>
+    <div>
+      <h3>Connect</h3>
+      ${siteLinks?.discordUrl ? `<a class="footer-discord-btn" href="${escapeHtml(siteLinks.discordUrl)}" target="_blank" rel="noopener noreferrer">Join us on Discord</a>` : ""}
+      ${socialPills ? `<div class="footer-social-pills">${socialPills}</div>` : ""}
+    </div>
+  </div>
+  <div class="site-footer-bottom">
+    <span>${escapeHtml(siteLinks?.copyrightLine || `© ${new Date().getFullYear()} Criticals and Fumbles. All rights reserved.`)}</span>
+    <span>Built with 🎲 by C&amp;F</span>
+  </div>
+</footer>
 </body>
 </html>`;
 }
@@ -230,7 +327,7 @@ app.get("/", async (c) => {
     </aside>
   </div>`;
 
-  return c.html(pageShell("Campaigns — Criticals & Fumbles", body));
+  return c.html(pageShell("Campaigns — Criticals & Fumbles", body, siteLinks));
 });
 
 // GET /:campaignSlug/:dossierCode — the dossier page itself. A dossier
