@@ -100,6 +100,13 @@ export function parseDossiersXml(xmlText) {
     ignoreAttributes: false,
     attributeNamePrefix: "@_",
     cdataPropName: "__cdata",
+    // Every dossier field is a Sanity string, but fast-xml-parser
+    // auto-coerces numeric-looking element text (e.g. <sessionLabel>1</
+    // sessionLabel>) to a JS number by default — a real mismatch against
+    // the schema, not just a template artifact (session labels are
+    // commonly bare numbers). parseAttributeValue already defaults to
+    // false, so this only needed disabling for tag VALUES.
+    parseTagValue: false,
   });
   const parsed = parser.parse(xmlText);
   const nodes = asArray(parsed?.dossiers?.dossier);

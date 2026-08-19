@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { query } from "../lib/sanity.js";
 import { renderConsolePage } from "../templates/console.js";
+import { DOSSIER_XML_TEMPLATE, OBJECTIVES_CSV_TEMPLATE } from "../lib/import-templates.js";
 
 const app = new Hono();
 
@@ -44,5 +45,24 @@ app.get("/", async (c) => {
   });
   return c.html(html);
 });
+
+// Downloadable starter templates for the Bulk Import buttons — content
+// lives in lib/import-templates.js so it stays next to (and gets tested
+// against) the parsers it has to match. Behind Access same as the rest
+// of /console — not sensitive, just consistent with the surrounding
+// routes rather than carving out a public exception for two files.
+app.get("/templates/dossiers.xml", (c) =>
+  c.body(DOSSIER_XML_TEMPLATE, 200, {
+    "content-type": "application/xml",
+    "content-disposition": 'attachment; filename="dossier-import-template.xml"',
+  }),
+);
+
+app.get("/templates/objectives.csv", (c) =>
+  c.body(OBJECTIVES_CSV_TEMPLATE, 200, {
+    "content-type": "text/csv",
+    "content-disposition": 'attachment; filename="objectives-import-template.csv"',
+  }),
+);
 
 export default app;

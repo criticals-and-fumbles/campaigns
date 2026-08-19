@@ -61,9 +61,11 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail, s
         <button class="btn" id="exportXml">Export XML</button>
         <button class="btn" id="importXmlBtn">Import XML</button>
         <input type="file" id="importXml" accept=".xml">
+        <a class="btn" href="/console/templates/dossiers.xml">Download XML Template</a>
         <button class="btn" id="exportCsv">Export Objectives CSV</button>
         <button class="btn" id="importCsvBtn">Import Objectives CSV</button>
         <input type="file" id="importCsv" accept=".csv">
+        <a class="btn" href="/console/templates/objectives.csv">Download CSV Template</a>
       </div>
     </div>
 
@@ -353,7 +355,7 @@ const CONSOLE_CSS = `
   .topbar{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px;}
   .topbar h1{font-family:var(--font-display); font-size:1.1rem; letter-spacing:2px; text-transform:uppercase;}
   .toolbar{display:flex; gap:8px; flex-wrap:wrap;}
-  .btn{font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; padding:9px 14px; border:1px solid var(--line-strong); background:var(--panel); color:var(--text-dim); cursor:pointer;}
+  .btn{font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; padding:9px 14px; border:1px solid var(--line-strong); background:var(--panel); color:var(--text-dim); cursor:pointer; display:inline-block; text-decoration:none; box-sizing:border-box;}
   .btn:hover{border-color:var(--emerald); color:var(--emerald);}
   .btn.primary{border-color:var(--pink); color:var(--pink);}
   input[type=file]{display:none;}
