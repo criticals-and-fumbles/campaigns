@@ -226,3 +226,26 @@ empty `bindings` array even though the dashboard showed values — that
 API call is the reliable way to check what's actually bound, since the
 dashboard UI doesn't make the Build/Runtime distinction obvious at a
 glance.
+
+**Inline `style="display:none"` on a panel silently defeats a `.open`
+CSS class toggle — fixed 2026-08-19, see issue #2.** `templates/
+console.js`'s `createCampaignView`/`createDossierView` panels were
+copied from `editorPanel` (the single-dossier editor), which shows/hides
+purely via `.editor{display:none} .editor.open{display:block}` — but the
+two new panels' opening `<div>` tags also had a redundant hardcoded
+`style="display:none;"` baked into the markup. An inline `style`
+attribute always wins over any stylesheet rule regardless of selector
+specificity, so `classList.add('open')` was executing correctly (title
+and active-nav-item state updated) while the panel's actual computed
+`display` stayed `none` — from the outside this looked like "the click
+does nothing," which delayed diagnosis across two failed fix attempts.
+First fix attempt (switching `switchView()` from `style.display=''` to
+`classList` toggling) was necessary but not sufficient — it fixed the
+*logic* but not the pre-existing inline style already sitting on those
+two elements. Root cause only became clear by loading the actual
+rendered HTML into `jsdom` and inspecting live `computedStyle`/
+`className`, not from reading the CSS/JS source. **If a future session
+adds another panel that reuses the `.editor` class's open/close pattern,
+copy `editorPanel`'s bare `<div class="editor" id="...">` — no inline
+`style` attribute — not a version with `style="display:none;"` baked
+in.**
