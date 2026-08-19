@@ -281,16 +281,24 @@ const CONSOLE_JS = `
     single: { panel: 'editorPanel', title: 'Dossier Detail', toolbar: false },
   };
 
+  // createCampaignView/createDossierView/editorPanel all share the .editor
+  // CSS class, which defaults to display:none and only shows via the
+  // .open class (not inline style) — bulkView/campaignsView are plain
+  // divs toggled with inline style instead. Mixing the two up here was
+  // the bug: setting style.display='' on an .editor panel just falls
+  // back to its CSS default of none, since it never gets .open added.
+  const EDITOR_PANELS = new Set(['createCampaignView', 'createDossierView', 'editorPanel']);
+
   function switchView(view){
     Object.values(VIEWS).forEach(v=>{
       const el = document.getElementById(v.panel);
       if(!el) return;
-      if(v.panel === 'editorPanel') el.classList.remove('open');
+      if(EDITOR_PANELS.has(v.panel)) el.classList.remove('open');
       else el.style.display = 'none';
     });
     const target = VIEWS[view];
     const el = document.getElementById(target.panel);
-    if(target.panel === 'editorPanel') el.classList.add('open');
+    if(EDITOR_PANELS.has(target.panel)) el.classList.add('open');
     else el.style.display = '';
     viewTitle.textContent = target.title;
     bulkToolbar.style.display = target.toolbar ? '' : 'none';
