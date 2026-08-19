@@ -225,14 +225,16 @@ function pageShell(title, bodyInner, siteLinks) {
      deliberately don't get this chrome, it would clash with their
      immersive full-bleed design. */
   .site-nav{position:sticky; top:0; z-index:50; border-bottom:1px solid var(--border); background:rgba(17,17,17,.95); backdrop-filter:blur(8px);}
-  .site-nav-inner{max-width:1400px; margin:0 auto; padding:0 1.5rem; height:64px; display:flex; align-items:center; gap:1.5rem;}
-  .site-nav-right{display:flex; align-items:center; gap:1rem; margin-left:auto; flex-shrink:0;}
+  .site-nav-inner{max-width:1400px; margin:0 auto; padding:0 1.5rem; height:64px; display:flex; align-items:center; justify-content:space-between;}
+  .site-nav-right{display:flex; align-items:center; gap:1.5rem; flex-shrink:0;}
   .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.9rem; flex-shrink:0;}
   .site-nav-brand img{height:32px; width:auto; display:block;}
+  .site-nav .site-nav-brand span{display:none;}
+  @media(min-width:768px){.site-nav .site-nav-brand span{display:inline;}}
   .site-nav-links{display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; row-gap:.5rem; padding:.75rem 0;}
-  .site-nav-links a{font-family:var(--font-ui); font-size:1rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
-  .site-nav-links a:hover{color:var(--emerald);}
-  .site-nav-links a.current{color:var(--emerald);}
+  .site-nav-links > a{font-family:var(--font-ui); font-size:1rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
+  .site-nav-links > a:hover{color:var(--emerald);}
+  .site-nav-links > a.current{color:var(--emerald);}
   .site-nav-social{display:flex; align-items:center; gap:1rem; flex-shrink:0;}
   .site-nav-social a{display:block; width:18px; height:18px; color:var(--text-muted); transition:color .15s ease;}
   .site-nav-social a:hover{color:var(--emerald);}
@@ -240,27 +242,37 @@ function pageShell(title, bodyInner, siteLinks) {
   /* Same icon-toggle pattern as the session browser/dossier pages
      (templates/dossier.js) — duplicated here since this is a separate
      template function with its own <style> block, not shared markup. */
-  .theme-toggle-btn{display:flex; align-items:center; justify-content:center; width:32px; height:32px; flex-shrink:0; background:none; border:1px solid var(--border); border-radius:999px; color:var(--text-muted); cursor:pointer; padding:0; transition:.15s;}
-  .theme-toggle-btn:hover{color:var(--emerald); border-color:var(--emerald);}
-  .theme-toggle-btn svg{width:16px; height:16px; display:block;}
+  .theme-toggle-btn{display:flex; align-items:center; justify-content:center; width:40px; height:40px; flex-shrink:0; background:none; border:1px solid var(--border); border-radius:999px; color:var(--text); cursor:pointer; padding:0; transition:.15s;}
+  .theme-toggle-btn:hover{border-color:var(--emerald);}
+  .theme-toggle-btn svg{width:20px; height:20px; display:block;}
   .theme-toggle-btn .icon-sun{display:none;}
   html[data-theme="light"] .theme-toggle-btn .icon-moon{display:none;}
   html[data-theme="light"] .theme-toggle-btn .icon-sun{display:block;}
 
-  /* Mobile nav drawer — same data-attribute + transform + scrim technique
-     already used by the session browser's list-pane drawer
-     (templates/dossier.js's .list-pane/.deck-btn/.scrim), applied to
-     <html> here since the directory page has no app wrapper element. */
-  .hamburger-btn{display:none; align-items:center; justify-content:center; width:32px; height:32px; flex-shrink:0; background:none; border:1px solid var(--border); border-radius:.375rem; color:var(--text); cursor:pointer; padding:0;}
-  .hamburger-btn svg{width:20px; height:20px; display:block;}
-  .nav-scrim{display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:59;}
+  /* Mobile nav drawer — hand-matched to Nav.tsx's drawer (fixed 280px
+     panel, right-aligned text-3xl font-display links, social+toggle
+     moved into the drawer rather than staying in the top bar, X close
+     button, Escape key + body-scroll-lock — see JS below). Reuses the
+     same data-attribute + transform + scrim technique already proven by
+     the session browser's list-pane drawer (templates/dossier.js's
+     .list-pane/.deck-btn/.scrim), applied to <html> here since the
+     directory page has no app wrapper element. */
+  .hamburger-btn{display:none; align-items:center; justify-content:center; width:44px; height:44px; flex-shrink:0; background:none; border:none; color:var(--text); cursor:pointer; padding:0;}
+  .hamburger-btn svg{width:24px; height:24px; display:block;}
+  .nav-close-btn{display:none; position:absolute; top:1rem; right:1rem; align-items:center; justify-content:center; width:44px; height:44px; background:none; border:none; color:var(--text); cursor:pointer; padding:0;}
+  .nav-close-btn svg{width:24px; height:24px; display:block;}
+  .nav-drawer-extra{display:none;}
+  .nav-scrim{display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:59;}
   @media(max-width:768px){
     .hamburger-btn{display:flex;}
-    .site-nav-social{display:none;}
-    .site-nav-links{position:fixed; top:0; right:0; bottom:0; z-index:60; width:min(280px,82vw); margin:0; padding:5rem 1.5rem 1.5rem; flex-direction:column; align-items:flex-start; gap:0; row-gap:0; background:var(--bg); border-left:1px solid var(--border); transform:translateX(100%); transition:transform .22s ease; overflow-y:auto;}
+    .site-nav-right{display:none;}
+    .site-nav-links{position:fixed; top:0; right:0; bottom:0; z-index:60; width:280px; max-width:100vw; margin:0; padding:1.5rem; padding-top:4.5rem; flex-direction:column; align-items:flex-end; gap:1.5rem; row-gap:1.5rem; background:var(--bg); transform:translateX(100%); transition:transform .22s ease; overflow-y:auto;}
     html[data-nav="open"] .site-nav-links{transform:translateX(0);}
     html[data-nav="open"] .nav-scrim{display:block;}
-    .site-nav-links a{width:100%; padding:.75rem 0; font-family:var(--font-display); font-size:1.5rem; border-bottom:1px solid var(--border);}
+    .nav-close-btn{display:flex;}
+    .site-nav-links > a{width:auto; padding:0; text-align:right; font-family:var(--font-display); font-size:1.875rem; color:var(--text); border-bottom:none;}
+    .nav-drawer-extra{display:flex; flex-direction:column; align-items:flex-end; gap:2rem; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);}
+    .nav-drawer-extra .site-nav-social{justify-content:flex-end;}
   }
 
   .site-footer{border-top:1px solid var(--border); padding:3rem 1.5rem;}
@@ -288,17 +300,29 @@ function pageShell(title, bodyInner, siteLinks) {
       <img src="${MAIN_SITE}/logo.png" alt="Criticals and Fumbles logo">
       <span>Criticals &amp; Fumbles</span>
     </a>
-    <div class="site-nav-links" id="siteNavLinks">${nav}</div>
+    <div class="site-nav-links" id="siteNavLinks">
+      ${nav}
+      <div class="nav-drawer-extra">
+        ${socialIconsBlock(siteLinks)}
+        <button class="theme-toggle-btn" id="siteThemeToggleMobile" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+      </div>
+      <button class="nav-close-btn" id="navClose" aria-label="Close menu" title="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
     <div class="site-nav-right">
       ${socialIconsBlock(siteLinks)}
       <button class="theme-toggle-btn" id="siteThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
-      <button class="hamburger-btn" id="navHamburger" aria-label="Toggle menu" title="Toggle menu">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </button>
     </div>
+    <button class="hamburger-btn" id="navHamburger" aria-label="Toggle menu" title="Toggle menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
   </nav>
 </header>
 <div class="nav-scrim" id="navScrim"></div>
@@ -335,24 +359,31 @@ ${bodyInner}
   </div>
 </footer>
 <script>
-  document.getElementById('siteThemeToggle').addEventListener('click', function(){
+  function toggleTheme(){
     var html = document.documentElement;
     var isLight = html.getAttribute('data-theme') === 'light';
     html.setAttribute('data-theme', isLight ? 'dark' : 'light');
-  });
+  }
+  document.getElementById('siteThemeToggle').addEventListener('click', toggleTheme);
+  document.getElementById('siteThemeToggleMobile').addEventListener('click', toggleTheme);
   (function(){
     var html = document.documentElement;
     var hamburger = document.getElementById('navHamburger');
+    var closeBtn = document.getElementById('navClose');
     var scrim = document.getElementById('navScrim');
     var navLinks = document.getElementById('siteNavLinks');
-    function closeNav(){ html.setAttribute('data-nav', 'closed'); }
-    function openNav(){ html.setAttribute('data-nav', 'open'); }
+    function closeNav(){ html.setAttribute('data-nav', 'closed'); document.body.style.overflow = ''; }
+    function openNav(){ html.setAttribute('data-nav', 'open'); document.body.style.overflow = 'hidden'; }
     hamburger.addEventListener('click', function(){
       html.getAttribute('data-nav') === 'open' ? closeNav() : openNav();
     });
+    closeBtn.addEventListener('click', closeNav);
     scrim.addEventListener('click', closeNav);
     navLinks.addEventListener('click', function(e){
       if (e.target.tagName === 'A') closeNav();
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape' && html.getAttribute('data-nav') === 'open') closeNav();
     });
   })();
 </script>
