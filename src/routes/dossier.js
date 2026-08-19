@@ -234,10 +234,11 @@ function pageShell(title, bodyInner, siteLinks) {
   .site-footer .site-nav-brand img{height:2rem;}
   .site-nav .site-nav-brand span{display:none;}
   @media(min-width:768px){.site-nav .site-nav-brand span{display:inline;}}
-  .site-nav-links{display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; row-gap:.5rem; padding:.75rem 0;}
-  .site-nav-links > a{font-family:var(--font-ui); font-size:1rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
-  .site-nav-links > a:hover{color:var(--emerald);}
-  .site-nav-links > a.current{color:var(--emerald);}
+  .site-nav-links{display:none; align-items:center; gap:1.5rem; flex-wrap:wrap; row-gap:.5rem; padding:.75rem 0;}
+  @media(min-width:768px){.site-nav-links{display:flex;}}
+  .site-nav-links > a, .mobile-drawer-links > a{font-family:var(--font-ui); font-size:1rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
+  .site-nav-links > a:hover, .mobile-drawer-links > a:hover{color:var(--emerald);}
+  .site-nav-links > a.current, .mobile-drawer-links > a.current{color:var(--emerald);}
   .site-nav-social{display:flex; align-items:center; gap:1rem; flex-shrink:0;}
   .site-nav-social a{display:block; width:18px; height:18px; color:var(--text-muted); transition:color .15s ease;}
   .site-nav-social a:hover{color:var(--emerald);}
@@ -252,30 +253,37 @@ function pageShell(title, bodyInner, siteLinks) {
   html[data-theme="light"] .theme-toggle-btn .icon-moon{display:none;}
   html[data-theme="light"] .theme-toggle-btn .icon-sun{display:block;}
 
-  /* Mobile nav drawer — hand-matched to Nav.tsx's drawer (fixed 280px
-     panel, right-aligned text-3xl font-display links, social+toggle
-     moved into the drawer rather than staying in the top bar, X close
-     button, Escape key + body-scroll-lock — see JS below). Reuses the
-     same data-attribute + transform + scrim technique already proven by
-     the session browser's list-pane drawer (templates/dossier.js's
-     .list-pane/.deck-btn/.scrim), applied to <html> here since the
-     directory page has no app wrapper element. */
+  /* Mobile nav drawer — a fully separate, self-contained element from
+     .site-nav-links (see the HTML comment above .mobile-drawer for why:
+     a real-device iOS Safari test showed the drawer collapsing to a
+     tiny box when it was the SAME element as the desktop row, toggling
+     flex-direction/position via media query — a WebKit fixed-position/
+     containing-block quirk that a fresh, independent element sidesteps.
+     Uses an explicit height (100dvh with 100vh fallback) rather than
+     top:0;bottom:0, since implicit-height fixed elements are exactly
+     the pattern that tends to misbehave on iOS Safari with the dynamic
+     toolbar. Hand-matched to Nav.tsx's actual drawer otherwise: 280px
+     panel, right-aligned text-3xl/font-display links, social+toggle
+     below a divider, X close button, Escape key + body-scroll-lock —
+     see JS below. */
   .hamburger-btn{display:none; align-items:center; justify-content:center; width:44px; height:44px; flex-shrink:0; background:none; border:none; color:var(--text); cursor:pointer; padding:0;}
   .hamburger-btn svg{width:24px; height:24px; display:block;}
-  .nav-close-btn{display:none; position:absolute; top:1rem; right:1rem; align-items:center; justify-content:center; width:44px; height:44px; background:none; border:none; color:var(--text); cursor:pointer; padding:0;}
+  .nav-close-btn{position:absolute; top:1rem; right:1rem; display:flex; align-items:center; justify-content:center; width:44px; height:44px; background:none; border:none; color:var(--text); cursor:pointer; padding:0;}
   .nav-close-btn svg{width:24px; height:24px; display:block;}
-  .nav-drawer-extra{display:none;}
+  .mobile-drawer{position:fixed; top:0; right:0; z-index:60; width:280px; max-width:100vw; height:100vh; height:100dvh; padding:1.5rem; padding-top:4.5rem; display:flex; flex-direction:column; flex-wrap:nowrap; align-items:flex-end; gap:1.5rem; background:var(--bg); transform:translateX(100%); transition:transform .22s ease; overflow-x:hidden; overflow-y:auto; box-sizing:border-box;}
+  html[data-nav="open"] .mobile-drawer{transform:translateX(0);}
+  .mobile-drawer-links{display:flex; flex-direction:column; align-items:flex-end; gap:1.5rem; width:100%;}
+  .mobile-drawer-links > a{width:auto; text-align:right; font-family:var(--font-display); font-size:1.875rem; color:var(--text);}
+  .nav-drawer-extra{display:flex; flex-direction:column; align-items:flex-end; gap:2rem; width:100%; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);}
+  .nav-drawer-extra .site-nav-social{justify-content:flex-end;}
   .nav-scrim{display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:59;}
+  html[data-nav="open"] .nav-scrim{display:block;}
   @media(max-width:768px){
     .hamburger-btn{display:flex;}
     .site-nav-right{display:none;}
-    .site-nav-links{position:fixed; top:0; right:0; bottom:0; z-index:60; width:280px; max-width:100vw; margin:0; padding:1.5rem; padding-top:4.5rem; flex-direction:column; flex-wrap:nowrap; align-items:flex-end; gap:1.5rem; row-gap:1.5rem; background:var(--bg); transform:translateX(100%); transition:transform .22s ease; overflow-x:hidden; overflow-y:auto;}
-    html[data-nav="open"] .site-nav-links{transform:translateX(0);}
-    html[data-nav="open"] .nav-scrim{display:block;}
-    .nav-close-btn{display:flex;}
-    .site-nav-links > a{width:auto; padding:0; text-align:right; font-family:var(--font-display); font-size:1.875rem; color:var(--text); border-bottom:none;}
-    .nav-drawer-extra{display:flex; flex-direction:column; align-items:flex-end; gap:2rem; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);}
-    .nav-drawer-extra .site-nav-social{justify-content:flex-end;}
+  }
+  @media(min-width:768px){
+    .mobile-drawer, .nav-scrim{display:none !important;}
   }
 
   .site-footer{border-top:1px solid var(--border); padding:3rem 1.5rem;}
@@ -303,19 +311,7 @@ function pageShell(title, bodyInner, siteLinks) {
       <img src="${MAIN_SITE}/logo.png" alt="Criticals and Fumbles logo">
       <span>Criticals &amp; Fumbles</span>
     </a>
-    <div class="site-nav-links" id="siteNavLinks">
-      ${nav}
-      <div class="nav-drawer-extra">
-        ${socialIconsBlock(siteLinks)}
-        <button class="theme-toggle-btn" id="siteThemeToggleMobile" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
-          <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-        </button>
-      </div>
-      <button class="nav-close-btn" id="navClose" aria-label="Close menu" title="Close menu">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </div>
+    <div class="site-nav-links">${nav}</div>
     <div class="site-nav-right">
       ${socialIconsBlock(siteLinks)}
       <button class="theme-toggle-btn" id="siteThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
@@ -328,6 +324,28 @@ function pageShell(title, bodyInner, siteLinks) {
     </button>
   </nav>
 </header>
+
+<!-- Mobile drawer — a fully separate element from .site-nav-links above,
+     not the same DOM node toggling flex-direction. Nav.tsx's real
+     mobile drawer is likewise a completely separate block from the
+     desktop link row, not a CSS-repurposed version of it — reusing one
+     element for both layouts is exactly the shape of bug WebKit's
+     fixed-positioning/containing-block quirks trip on (confirmed via a
+     real-device screenshot: the drawer rendered as a tiny box instead
+     of a full-height panel when it shared markup with the desktop row). -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <button class="nav-close-btn" id="navClose" aria-label="Close menu" title="Close menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="mobile-drawer-links">${nav}</div>
+  <div class="nav-drawer-extra">
+    ${socialIconsBlock(siteLinks)}
+    <button class="theme-toggle-btn" id="siteThemeToggleMobile" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </button>
+  </div>
+</div>
 <div class="nav-scrim" id="navScrim"></div>
 
 <div class="container">
@@ -374,7 +392,7 @@ ${bodyInner}
     var hamburger = document.getElementById('navHamburger');
     var closeBtn = document.getElementById('navClose');
     var scrim = document.getElementById('navScrim');
-    var navLinks = document.getElementById('siteNavLinks');
+    var drawer = document.getElementById('mobileDrawer');
     function closeNav(){ html.setAttribute('data-nav', 'closed'); document.body.style.overflow = ''; }
     function openNav(){ html.setAttribute('data-nav', 'open'); document.body.style.overflow = 'hidden'; }
     hamburger.addEventListener('click', function(){
@@ -382,7 +400,7 @@ ${bodyInner}
     });
     closeBtn.addEventListener('click', closeNav);
     scrim.addEventListener('click', closeNav);
-    navLinks.addEventListener('click', function(e){
+    drawer.addEventListener('click', function(e){
       if (e.target.tagName === 'A') closeNav();
     });
     document.addEventListener('keydown', function(e){
