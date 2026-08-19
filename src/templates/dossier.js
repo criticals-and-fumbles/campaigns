@@ -65,7 +65,7 @@ function mediaThumb(item) {
   return `<div class="gitem">${inner}<div class="gtag">${esc(item.caption || item.kind)}</div></div>`;
 }
 
-export function renderDossierPage({ dossier, campaign, theme }) {
+export function renderDossierPage({ dossier, campaign, theme, embedded }) {
   const labels = resolveLabels(theme);
   const motifKey = resolveMotif(theme);
   const code = dossier.code || "";
@@ -157,7 +157,7 @@ ${locationMotif.css}
 <div class="scanlines"></div>
 <div class="vignette"></div>
 
-<button id="themeToggle"><span class="dot"></span><span id="themeLabel">DARK</span></button>
+${embedded ? "" : `<button id="themeToggle"><span class="dot"></span><span id="themeLabel">DARK</span></button>`}
 
 <div class="wrap">
 
@@ -401,12 +401,23 @@ const BASE_JS = `
   const html = document.documentElement;
   const toggle = document.getElementById('themeToggle');
   const label = document.getElementById('themeLabel');
-  toggle.addEventListener('click', ()=>{
-    const isLight = html.getAttribute('data-theme') === 'light';
-    html.setAttribute('data-theme', isLight ? 'dark' : 'light');
-    label.textContent = isLight ? 'DARK' : 'LIGHT';
+  // Exposed globally so the session browser (when this page is loaded in
+  // its iframe, see renderCampaignIndexPage) can drive this page's theme
+  // from its own toggle instead of duplicating one inside the iframe —
+  // same-origin, so contentWindow.setDossierTheme(...) is a direct call,
+  // no postMessage plumbing needed. Standalone (non-embedded) visits still
+  // use the local toggle button, which calls this same function.
+  window.setDossierTheme = function(theme){
+    html.setAttribute('data-theme', theme);
+    if(label) label.textContent = theme === 'light' ? 'LIGHT' : 'DARK';
     makeParticles();
-  });
+  };
+  if(toggle){
+    toggle.addEventListener('click', ()=>{
+      const isLight = html.getAttribute('data-theme') === 'light';
+      window.setDossierTheme(isLight ? 'dark' : 'light');
+    });
+  }
 
   const titleEl = document.getElementById('mainTitle');
   if(titleEl){
@@ -589,6 +600,19 @@ body{background:var(--bg); color:var(--text); font-family:var(--font-body); over
   display:flex; align-items:center; justify-content:space-between;
 }
 .list-head .close-deck{display:none; background:none; border:none; color:var(--text-dim); font-family:var(--font-mono); font-size:16px; cursor:pointer;}
+.list-head-text{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.list-head-controls{display:flex; align-items:center; gap:8px; flex-shrink:0;}
+/* Small icon toggle, moved here from the dossier page's own floating
+   text-label button (top-right of the standalone page) — this is the
+   one control for both this page's chrome and the embedded dossier
+   iframe's theme, see the script block below and renderDossierPage's
+   window.setDossierTheme(). */
+.icon-btn{display:flex; align-items:center; justify-content:center; width:26px; height:26px; flex-shrink:0; background:none; border:1px solid var(--line); border-radius:4px; color:var(--text-dim); cursor:pointer; padding:0; transition:.15s;}
+.icon-btn:hover{color:var(--accent-a); border-color:var(--accent-a);}
+.icon-btn svg{width:14px; height:14px; display:block;}
+.icon-btn .icon-sun{display:none;}
+html[data-theme="light"] .icon-btn .icon-moon{display:none;}
+html[data-theme="light"] .icon-btn .icon-sun{display:block;}
 .list-scroll{overflow-y:auto; flex:1; min-height:0;}
 
 .session-item{
@@ -695,8 +719,14 @@ body{background:var(--bg); color:var(--text); font-family:var(--font-body); over
     <div class="panes">
       <aside class="list-pane">
         <div class="list-head">
-          SESSION LOG — ${list.length} ENTR${list.length === 1 ? "Y" : "IES"}
-          <button class="close-deck" id="closeDeck">&#10005;</button>
+          <span class="list-head-text">SESSION LOG — ${list.length} ENTR${list.length === 1 ? "Y" : "IES"}</span>
+          <div class="list-head-controls">
+            <button class="icon-btn" id="themeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
+              <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+              <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            </button>
+            <button class="close-deck" id="closeDeck">&#10005;</button>
+          </div>
         </div>
         <div class="list-scroll" id="listScroll">${items || `<p class="empty">No sessions published yet.</p>`}</div>
       </aside>
@@ -715,9 +745,29 @@ body{background:var(--bg); color:var(--text); font-family:var(--font-body); over
   const listScroll = document.getElementById('listScroll');
   const detailInner = document.getElementById('detailInner');
   const appEl = document.getElementById('app');
+  const htmlEl = document.documentElement;
+  const themeToggle = document.getElementById('themeToggle');
 
   function openDeck(){ appEl.setAttribute('data-deck', 'open'); }
   function closeDeck(){ appEl.setAttribute('data-deck', 'closed'); }
+
+  // One toggle drives both this page's own chrome AND the embedded
+  // dossier iframe's theme — same-origin, so contentWindow.setDossierTheme
+  // (exposed by renderDossierPage) is a direct call, no postMessage
+  // plumbing needed. Applied on toggle click AND whenever a new iframe
+  // finishes loading (each session click replaces detailInner's iframe
+  // with a fresh one, which always starts server-rendered dark).
+  function currentTheme(){ return htmlEl.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function syncFrameTheme(){
+    const frame = detailInner.querySelector('.detail-frame');
+    if(frame && frame.contentWindow && typeof frame.contentWindow.setDossierTheme === 'function'){
+      frame.contentWindow.setDossierTheme(currentTheme());
+    }
+  }
+  themeToggle.addEventListener('click', ()=>{
+    htmlEl.setAttribute('data-theme', currentTheme() === 'light' ? 'dark' : 'light');
+    syncFrameTheme();
+  });
 
   function renderDetail(item){
     if(!item){
@@ -728,7 +778,8 @@ body{background:var(--bg); color:var(--text); font-family:var(--font-body); over
     detailInner.innerHTML =
       '<div class="detail-title">' + title + '</div>' +
       '<div class="detail-meta"><span>CODE <b>' + code + '</b></span>' + (date ? '<span>DATE <b>' + date + '</b></span>' : '') + '</div>' +
-      '<iframe class="detail-frame" title="Session detail" src="/' + encodeURIComponent(SLUG) + '/' + encodeURIComponent(code) + '"></iframe>';
+      '<iframe class="detail-frame" title="Session detail" src="/' + encodeURIComponent(SLUG) + '/' + encodeURIComponent(code) + '?embed=1"></iframe>';
+    detailInner.querySelector('.detail-frame').addEventListener('load', syncFrameTheme);
   }
 
   function selectItem(item){

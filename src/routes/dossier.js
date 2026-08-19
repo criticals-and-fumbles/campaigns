@@ -271,7 +271,7 @@ ${bodyInner}
         <span>${escapeHtml(siteLinks?.title || "Criticals and Fumbles")}</span>
       </a>
       ${siteLinks?.shortDescription ? `<p class="site-footer-desc">${escapeHtml(siteLinks.shortDescription)}</p>` : ""}
-      <p class="site-footer-values"><span class="emerald">Community</span> · <span class="amber">Collaboration</span> · <span class="magenta">Sincerity</span></p>
+      <p class="site-footer-values"><span class="emerald">Community</span> · <span class="amber">Collaboration</span> · <span class="magenta">Care</span></p>
     </div>
     <div>
       <h3>Quick Nav</h3>
@@ -374,10 +374,15 @@ app.get("/:campaignSlug/:dossierCode", async (c) => {
   const dossier = await query(c.env, DOSSIER_QUERY, { slug: campaignSlug, code: dossierCode });
   if (!dossier || !dossier.campaign?.visible) return c.notFound();
 
+  // ?embed=1 — set by renderCampaignIndexPage's iframe src. Hides this
+  // page's own floating theme toggle so the session browser's toggle
+  // (which drives this page's theme directly via
+  // frame.contentWindow.setDossierTheme(), same-origin) isn't duplicated.
   const html = renderDossierPage({
     dossier,
     campaign: dossier.campaign,
     theme: dossier.campaign?.theme,
+    embedded: c.req.query("embed") === "1",
   });
   return c.html(html);
 });
