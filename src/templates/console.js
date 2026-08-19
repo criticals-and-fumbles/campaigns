@@ -81,10 +81,53 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
     <div id="campaignsView" style="display:none;">
       <table>
         <thead>
-          <tr><th>Title</th><th>Genre</th><th>Status</th><th>Visible</th></tr>
+          <tr><th>Title</th><th>Genre</th><th>Status</th><th>Visible</th><th>Sessions</th><th></th></tr>
         </thead>
         <tbody id="campaignGridBody"></tbody>
       </table>
+    </div>
+
+    <div id="campaignSessionsView" style="display:none;">
+      <a class="back-link" href="#" id="csvBack">&larr; My Campaigns</a>
+      <h2 id="csvHeading" style="font-family:var(--font-display); letter-spacing:2px; margin:10px 0 16px; color:var(--emerald);"></h2>
+      <table>
+        <thead>
+          <tr><th>Code</th><th>Title</th><th>Location</th><th>Objectives</th><th></th></tr>
+        </thead>
+        <tbody id="campaignSessionsBody"></tbody>
+      </table>
+    </div>
+
+    <div class="editor" id="editCampaignView">
+      <h2>EDIT CAMPAIGN</h2>
+      <div class="field"><label>Title *</label><input type="text" id="ecTitle"></div>
+      <div class="field"><label>Genre * (matches a Genre Theme below)</label><input type="text" id="ecGenre"></div>
+      <div class="field"><label>System</label><input type="text" id="ecSystem"></div>
+      <div class="field">
+        <label>Status</label>
+        <select id="ecStatus">
+          <option value="active">Active</option>
+          <option value="recruiting">Recruiting</option>
+          <option value="hiatus">Hiatus</option>
+          <option value="concluded">Concluded</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Genre Theme *</label>
+        <select id="ecTheme"></select>
+      </div>
+      <div class="field"><label>GM Name(s) (comma-separated)</label><input type="text" id="ecGmNames"></div>
+      <div class="field"><label>Hook (directory card blurb)</label><textarea id="ecHook" rows="2"></textarea></div>
+      <div class="field"><label>Motto</label><input type="text" id="ecMotto"></div>
+      <div class="field"><label>Sign-Off</label><input type="text" id="ecSignOff"></div>
+      <div class="field">
+        <label class="checkline"><input type="checkbox" id="ecVisible"> Visible on the public campaign directory</label>
+      </div>
+      <div class="savebar">
+        <button class="btn primary" id="ecSave">Save Campaign</button>
+        <button class="btn" id="ecCancel">← Back</button>
+        <span class="savedflag" id="ecFlag"></span>
+      </div>
     </div>
 
     <div class="editor" id="createCampaignView">
@@ -127,84 +170,22 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
       </div>
       <div class="field"><label>Code *</label><input type="text" id="cdCode" placeholder="e.g. BN-DAWN-119-08"></div>
       <div class="field"><label>Title *</label><input type="text" id="cdTitle"></div>
-      <div class="field"><label>Classification</label><input type="text" id="cdClassification" placeholder="e.g. TOP SECRET"></div>
-      <div class="field"><label>Distribution</label><input type="text" id="cdDistribution" placeholder="e.g. PLAYER-FACING"></div>
-      <div class="field"><label>Session Label</label><input type="text" id="cdSessionLabel" placeholder="e.g. 8, Day 41"></div>
-      <div class="field"><label>Location</label><input type="text" id="cdLocation"></div>
-      <div class="field"><label>Overview</label><textarea id="cdOverview" rows="3"></textarea></div>
-      <div class="field">
-        <label>Hero Image (max 500KB — auto-downscaled/recompressed to WebP before upload)</label>
-        <div class="imgfield">
-          <div class="thumb" id="cdThumbPreview">NONE</div>
-          <input type="file" id="cdImageInput" accept="image/*" style="display:none;">
-          <button type="button" class="btn" id="cdUploadImageBtn">Upload Image</button>
-          <span class="sizewarn" id="cdSizeWarn"></span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Quick Facts (kv panel beside Overview)</label>
-        <div class="repeater" id="cdQuickFacts"></div>
-        <button type="button" class="btn small" data-add-row="cdQuickFacts:factRow">+ Add Fact</button>
-      </div>
-      <div class="field">
-        <label>Location Facts</label>
-        <div class="repeater" id="cdLocationFacts"></div>
-        <button type="button" class="btn small" data-add-row="cdLocationFacts:factRow">+ Add Fact</button>
-      </div>
-      <div class="field">
-        <label>Stat Tiles (optional status strip)</label>
-        <div class="repeater" id="cdStatTiles"></div>
-        <button type="button" class="btn small" data-add-row="cdStatTiles:statTile">+ Add Tile</button>
-      </div>
-      <div class="field">
-        <label>Threat Assessment</label>
-        <div class="repeater" id="cdThreatAssessment"></div>
-        <button type="button" class="btn small" data-add-row="cdThreatAssessment:meterRow">+ Add Row</button>
-      </div>
-      <div class="field">
-        <label>Objectives</label>
-        <div class="repeater" id="cdObjectives"></div>
-        <button type="button" class="btn small" data-add-row="cdObjectives:objective">+ Add Objective</button>
-      </div>
-      <div class="field">
-        <label>Log</label>
-        <div class="repeater" id="cdLog"></div>
-        <button type="button" class="btn small" data-add-row="cdLog:logEntry">+ Add Entry</button>
-      </div>
-
+      ${dossierFieldsBlock("cd")}
       <div class="savebar">
         <button class="btn primary" id="cdSubmit">Create Dossier</button>
         <span class="savedflag" id="cdFlag"></span>
       </div>
-      <p class="hint">Media gallery items (image/audio/video) aren't in this form yet — add those afterward directly in Sanity Studio. Everything else here can also be edited later from the Bulk Editor.</p>
     </div>
 
     <div class="editor" id="editorPanel">
       <h2 id="editorTitle">DOSSIER — DETAIL</h2>
-      <div class="field">
-        <label>Title</label>
-        <div contenteditable="true" data-bind="title"></div>
-      </div>
-      <div class="field">
-        <label>Location</label>
-        <div contenteditable="true" data-bind="location"></div>
-      </div>
-      <div class="field">
-        <label>Overview</label>
-        <div contenteditable="true" data-bind="overview" style="min-height:80px;"></div>
-      </div>
-      <div class="field">
-        <label>Hero Image (max 500KB — auto-downscaled/recompressed to WebP before upload)</label>
-        <div class="imgfield">
-          <div class="thumb" id="thumbPreview">NONE</div>
-          <input type="file" id="imageInput" accept="image/*" style="display:none;">
-          <button class="btn" id="uploadImageBtn">Upload Image</button>
-          <span class="sizewarn" id="sizeWarn"></span>
-        </div>
-      </div>
+      <div class="field"><label>Code</label><input type="text" id="edCode" readonly></div>
+      <div class="field"><label>Campaign</label><input type="text" id="edCampaignTitle" readonly></div>
+      <div class="field"><label>Title *</label><input type="text" id="edTitle"></div>
+      ${dossierFieldsBlock("ed")}
       <div class="savebar">
-        <button class="btn primary" id="closeEditor">← Back to Grid</button>
+        <button class="btn primary" id="edSave">Save Session</button>
+        <button class="btn" id="closeEditor">← Back</button>
         <span class="savedflag" id="savedFlag">✓ Saved</span>
       </div>
     </div>
@@ -227,6 +208,67 @@ function escapeHtml(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/**
+ * Shared HTML for every dossier field beyond campaign/code (identical in
+ * shape between the Create Dossier form and the single-dossier editor —
+ * see schema/dossier.js for the authoritative field list). Rendered
+ * server-side at page-render time (this is a real function call producing
+ * a string, not part of the browser-side CONSOLE_JS blob below), keeping
+ * the two forms from drifting apart the way they briefly did before this
+ * was factored out. `prefix` becomes each element's id prefix (`cd` for
+ * create, `ed` for edit) so client-side JS can address either form
+ * generically.
+ */
+function dossierFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>Classification</label><input type="text" id="${prefix}Classification" placeholder="e.g. TOP SECRET"></div>
+      <div class="field"><label>Distribution</label><input type="text" id="${prefix}Distribution" placeholder="e.g. PLAYER-FACING"></div>
+      <div class="field"><label>Session Label</label><input type="text" id="${prefix}SessionLabel" placeholder="e.g. 8, Day 41"></div>
+      <div class="field"><label>Location</label><input type="text" id="${prefix}Location"></div>
+      <div class="field"><label>Overview</label><textarea id="${prefix}Overview" rows="3"></textarea></div>
+      <div class="field">
+        <label>Hero Image (max 500KB — auto-downscaled/recompressed to WebP before upload)</label>
+        <div class="imgfield">
+          <div class="thumb" id="${prefix}ThumbPreview">NONE</div>
+          <input type="file" id="${prefix}ImageInput" accept="image/*" style="display:none;">
+          <button type="button" class="btn" id="${prefix}UploadImageBtn">Upload Image</button>
+          <span class="sizewarn" id="${prefix}SizeWarn"></span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Quick Facts (kv panel beside Overview)</label>
+        <div class="repeater" id="${prefix}QuickFacts"></div>
+        <button type="button" class="btn small" data-add-row="${prefix}QuickFacts:factRow">+ Add Fact</button>
+      </div>
+      <div class="field">
+        <label>Location Facts</label>
+        <div class="repeater" id="${prefix}LocationFacts"></div>
+        <button type="button" class="btn small" data-add-row="${prefix}LocationFacts:factRow">+ Add Fact</button>
+      </div>
+      <div class="field">
+        <label>Stat Tiles (optional status strip)</label>
+        <div class="repeater" id="${prefix}StatTiles"></div>
+        <button type="button" class="btn small" data-add-row="${prefix}StatTiles:statTile">+ Add Tile</button>
+      </div>
+      <div class="field">
+        <label>Threat Assessment</label>
+        <div class="repeater" id="${prefix}ThreatAssessment"></div>
+        <button type="button" class="btn small" data-add-row="${prefix}ThreatAssessment:meterRow">+ Add Row</button>
+      </div>
+      <div class="field">
+        <label>Objectives</label>
+        <div class="repeater" id="${prefix}Objectives"></div>
+        <button type="button" class="btn small" data-add-row="${prefix}Objectives:objective">+ Add Objective</button>
+      </div>
+      <div class="field">
+        <label>Log</label>
+        <div class="repeater" id="${prefix}Log"></div>
+        <button type="button" class="btn small" data-add-row="${prefix}Log:logEntry">+ Add Entry</button>
+      </div>
+      <p class="hint">Media gallery items (image/audio/video) aren't in this form yet — add those directly in Sanity Studio.</p>
+  `;
 }
 
 const CONSOLE_CSS = `
@@ -284,6 +326,9 @@ const CONSOLE_CSS = `
   .field input[type=text], .field select, .field textarea{width:100%; max-width:420px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 12px; font-family:var(--font-body); font-size:.92rem; outline:none;}
   .field input[type=text]:focus, .field select:focus, .field textarea:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
   .hint{font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); margin-top:14px;}
+  .back-link{display:inline-block; font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); text-decoration:none; margin-bottom:6px;}
+  .back-link:hover{color:var(--emerald);}
+  .field input[readonly]{opacity:.55; cursor:not-allowed;}
   .checkline{display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.5px; color:var(--text-dim); cursor:pointer;}
   .checkline input{width:14px; height:14px; accent-color:var(--emerald); cursor:pointer;}
   .repeater{display:flex; flex-direction:column; gap:8px; margin-bottom:8px;}
@@ -336,18 +381,21 @@ const CONSOLE_JS = `
   const VIEWS = {
     bulk: { panel: 'bulkView', title: 'Bulk Dossier Editor', toolbar: true },
     campaigns: { panel: 'campaignsView', title: 'My Campaigns', toolbar: false },
+    campaignSessions: { panel: 'campaignSessionsView', title: 'Campaign Sessions', toolbar: false },
     createCampaign: { panel: 'createCampaignView', title: 'Create New Campaign', toolbar: false },
     createDossier: { panel: 'createDossierView', title: 'Create Session / Dossier', toolbar: false },
+    editCampaign: { panel: 'editCampaignView', title: 'Edit Campaign', toolbar: false },
     single: { panel: 'editorPanel', title: 'Dossier Detail', toolbar: false },
   };
 
-  // createCampaignView/createDossierView/editorPanel all share the .editor
-  // CSS class, which defaults to display:none and only shows via the
-  // .open class (not inline style) — bulkView/campaignsView are plain
-  // divs toggled with inline style instead. Mixing the two up here was
-  // the bug: setting style.display='' on an .editor panel just falls
-  // back to its CSS default of none, since it never gets .open added.
-  const EDITOR_PANELS = new Set(['createCampaignView', 'createDossierView', 'editorPanel']);
+  // createCampaignView/createDossierView/editCampaignView/editorPanel all
+  // share the .editor CSS class, which defaults to display:none and only
+  // shows via the .open class (not inline style) — bulkView/campaignsView/
+  // campaignSessionsView are plain divs toggled with inline style instead.
+  // Mixing the two up here was the bug: setting style.display='' on an
+  // .editor panel just falls back to its CSS default of none, since it
+  // never gets .open added.
+  const EDITOR_PANELS = new Set(['createCampaignView', 'createDossierView', 'editCampaignView', 'editorPanel']);
 
   function switchView(view){
     Object.values(VIEWS).forEach(v=>{
@@ -415,9 +463,14 @@ const CONSOLE_JS = `
   }
 
   // ---------- MY CAMPAIGNS (list + visible toggle) ----------
+  function dossiersForCampaign(campaignId){
+    return dossiers.filter(d=>d.campaignId===campaignId);
+  }
+
   function renderCampaignGrid(){
     campaignGridBody.innerHTML = '';
     campaigns.forEach(cmp=>{
+      const sessionCount = dossiersForCampaign(cmp._id).length;
       const tr = document.createElement('tr');
       tr.innerHTML = \`
         <td>\${cmp.title||''}</td>
@@ -429,6 +482,8 @@ const CONSOLE_JS = `
             <span class="slider"></span>
           </label>
         </td>
+        <td><button class="rowbtn" data-sessions="\${cmp._id}">\${sessionCount} session\${sessionCount===1?'':'s'} →</button></td>
+        <td><button class="rowbtn" data-edit-campaign="\${cmp._id}">Edit</button></td>
       \`;
       campaignGridBody.appendChild(tr);
     });
@@ -453,11 +508,118 @@ const CONSOLE_JS = `
         }
       });
     });
+    campaignGridBody.querySelectorAll('[data-sessions]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openCampaignSessions(btn.dataset.sessions));
+    });
+    campaignGridBody.querySelectorAll('[data-edit-campaign]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openEditCampaign(btn.dataset.editCampaign));
+    });
   }
 
+  // ---------- CAMPAIGN SESSIONS (list a single campaign's dossiers) ----------
+  let activeCampaignId = null;
+  const campaignSessionsBody = document.getElementById('campaignSessionsBody');
+
+  function openCampaignSessions(campaignId){
+    activeCampaignId = campaignId;
+    document.getElementById('csvHeading').textContent = campaignTitleFor(campaignId);
+    renderCampaignSessions();
+    switchView('campaignSessions');
+  }
+
+  function renderCampaignSessions(){
+    campaignSessionsBody.innerHTML = '';
+    dossiersForCampaign(activeCampaignId).forEach(d=>{
+      const done = (d.objectives||[]).filter(o=>o.status==='done').length;
+      const total = (d.objectives||[]).length;
+      const tr = document.createElement('tr');
+      tr.innerHTML = \`
+        <td style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">\${d.code||''}</td>
+        <td>\${d.title||''}</td>
+        <td>\${d.location||''}</td>
+        <td style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">\${done} / \${total} done</td>
+        <td><button class="rowbtn" data-open="\${d._id}">EDIT →</button></td>
+      \`;
+      campaignSessionsBody.appendChild(tr);
+    });
+    if(dossiersForCampaign(activeCampaignId).length === 0){
+      campaignSessionsBody.innerHTML = '<tr><td colspan="5" style="opacity:.5;">No sessions in this campaign yet.</td></tr>';
+    }
+    campaignSessionsBody.querySelectorAll('[data-open]').forEach(btn=>{
+      btn.addEventListener('click', ()=>openEditor(btn.dataset.open));
+    });
+  }
+
+  document.getElementById('csvBack').addEventListener('click', (e)=>{ e.preventDefault(); switchView('campaigns'); });
+
+  // ---------- EDIT CAMPAIGN ----------
+  function openEditCampaign(id){
+    const cmp = campaigns.find(x=>x._id===id);
+    if(!cmp) return;
+    activeCampaignEditId = id;
+    populateThemeSelect('ecTheme');
+    document.getElementById('ecTitle').value = cmp.title || '';
+    document.getElementById('ecGenre').value = cmp.genre || '';
+    document.getElementById('ecSystem').value = cmp.system || '';
+    document.getElementById('ecStatus').value = cmp.status || 'active';
+    document.getElementById('ecTheme').value = cmp.theme || '';
+    document.getElementById('ecGmNames').value = (cmp.gmNames||[]).join(', ');
+    document.getElementById('ecHook').value = cmp.hook || '';
+    document.getElementById('ecMotto').value = cmp.motto || '';
+    document.getElementById('ecSignOff').value = cmp.signOff || '';
+    document.getElementById('ecVisible').checked = !!cmp.visible;
+    document.getElementById('ecFlag').className = 'savedflag';
+    switchView('editCampaign');
+  }
+
+  let activeCampaignEditId = null;
+
+  document.getElementById('ecCancel').addEventListener('click', ()=> switchView('campaigns'));
+
+  document.getElementById('ecSave').addEventListener('click', async ()=>{
+    const flag = document.getElementById('ecFlag');
+    const id = activeCampaignEditId;
+    const fields = {
+      title: document.getElementById('ecTitle').value.trim(),
+      genre: document.getElementById('ecGenre').value.trim(),
+      system: document.getElementById('ecSystem').value.trim(),
+      status: document.getElementById('ecStatus').value,
+      theme: document.getElementById('ecTheme').value,
+      gmNames: document.getElementById('ecGmNames').value.split(',').map(s=>s.trim()).filter(Boolean),
+      hook: document.getElementById('ecHook').value.trim(),
+      motto: document.getElementById('ecMotto').value.trim(),
+      signOff: document.getElementById('ecSignOff').value.trim(),
+      visible: document.getElementById('ecVisible').checked,
+    };
+    if(!fields.title || !fields.genre || !fields.theme){
+      flag.textContent = 'Title, Genre, and Genre Theme are required.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    try{
+      await Promise.all(Object.entries(fields).map(([field, value])=>
+        fetch('/api/campaign/' + encodeURIComponent(id), {
+          method: 'PATCH',
+          headers: {'content-type':'application/json'},
+          body: JSON.stringify({ field, value }),
+        }).then(async res=>{
+          if(!res.ok) throw new Error((await res.json()).error || res.statusText);
+        })
+      ));
+      const cmp = campaigns.find(x=>x._id===id);
+      if(cmp) Object.assign(cmp, fields);
+      flag.textContent = '✓ Saved.';
+      flag.className = 'savedflag show';
+      setTimeout(()=>switchView('campaigns'), 700);
+    }catch(err){
+      flag.textContent = 'Failed: ' + err.message;
+      flag.className = 'savedflag show err';
+    }
+  });
+
   // ---------- CREATE CAMPAIGN ----------
-  function populateThemeSelect(){
-    const sel = document.getElementById('ccTheme');
+  function populateThemeSelect(selectId){
+    const sel = document.getElementById(selectId || 'ccTheme');
     sel.innerHTML = themes.map(t=>
       \`<option value="\${t._id}">\${t.genre}\${t.campaignOverride ? ' (override)' : ''}</option>\`
     ).join('');
@@ -622,19 +784,57 @@ const CONSOLE_JS = `
     }
   });
 
+  // ---------- REPEATER PREFILL (edit mode — reverse of collectRepeaterRows) ----------
+  function populateRepeater(containerId, shapeName, rows){
+    clearRepeater(containerId);
+    (rows||[]).forEach(row=>{
+      addRepeaterRow(containerId, shapeName);
+      const el = document.getElementById(containerId);
+      const added = el.lastElementChild;
+      added.querySelectorAll('[data-key]').forEach(input=>{
+        if(row[input.dataset.key] !== undefined) input.value = row[input.dataset.key];
+      });
+    });
+  }
+
+  // Every dossier field this editor knows how to save, and which DOM
+  // element/kind of value it maps to — used by both prefill (openEditor)
+  // and save (edSave) so the two can never drift out of sync with each
+  // other. Repeater fields use their REPEATER_SHAPES name as the "kind".
+  const DOSSIER_FIELD_MAP = [
+    { field: 'title', id: 'edTitle', kind: 'text' },
+    { field: 'classification', id: 'edClassification', kind: 'text' },
+    { field: 'distribution', id: 'edDistribution', kind: 'text' },
+    { field: 'sessionLabel', id: 'edSessionLabel', kind: 'text' },
+    { field: 'location', id: 'edLocation', kind: 'text' },
+    { field: 'overview', id: 'edOverview', kind: 'text' },
+    { field: 'quickFacts', id: 'edQuickFacts', kind: 'factRow' },
+    { field: 'locationFacts', id: 'edLocationFacts', kind: 'factRow' },
+    { field: 'statTiles', id: 'edStatTiles', kind: 'statTile' },
+    { field: 'threatAssessment', id: 'edThreatAssessment', kind: 'meterRow' },
+    { field: 'objectives', id: 'edObjectives', kind: 'objective' },
+    { field: 'log', id: 'edLog', kind: 'logEntry' },
+  ];
+
   // ---------- SINGLE EDITOR ----------
   const editorPanel = document.getElementById('editorPanel');
   const navSingle = document.getElementById('navSingle');
-  const thumbPreview = document.getElementById('thumbPreview');
 
   function openEditor(id){
     activeId = id;
     const d = dossiers.find(x=>x._id===id);
     document.getElementById('editorTitle').textContent = (d.code||d._id) + ' — DETAIL';
-    document.querySelector('[data-bind="title"]').textContent = d.title||'';
-    document.querySelector('[data-bind="location"]').textContent = d.location||'';
-    document.querySelector('[data-bind="overview"]').textContent = d.overview||'';
-    thumbPreview.textContent = d.heroImage ? 'SET' : 'NONE';
+    document.getElementById('edCode').value = d.code || '';
+    document.getElementById('edCampaignTitle').value = campaignTitleFor(d.campaignId);
+    DOSSIER_FIELD_MAP.forEach(({ field, id, kind })=>{
+      if(kind === 'text'){
+        document.getElementById(id).value = d[field] || '';
+      } else {
+        populateRepeater(id, kind, d[field]);
+      }
+    });
+    document.getElementById('edThumbPreview').textContent = d.heroImage ? 'SET' : 'NONE';
+    document.getElementById('edSizeWarn').textContent = '';
     navSingle.style.display = 'flex';
     navSingle.textContent = 'Editing: ' + (d.code||d._id);
     switchView('single');
@@ -643,23 +843,36 @@ const CONSOLE_JS = `
     navSingle.style.display = 'none';
     switchView('bulk');
   });
-  document.querySelectorAll('.editor [contenteditable]').forEach(el=>{
-    el.addEventListener('blur', async ()=>{
-      if(!activeId) return;
-      await patchDossierField(activeId, el.dataset.bind, el.textContent.trim());
-      const flag = document.getElementById('savedFlag');
+
+  document.getElementById('edSave').addEventListener('click', async ()=>{
+    if(!activeId) return;
+    const flag = document.getElementById('savedFlag');
+    const updates = {};
+    DOSSIER_FIELD_MAP.forEach(({ field, id, kind })=>{
+      updates[field] = kind === 'text' ? document.getElementById(id).value.trim() : collectRepeaterRows(id);
+    });
+    try{
+      await Promise.all(Object.entries(updates).map(([field, value])=>
+        patchDossierField(activeId, field, value)
+      ));
+      flag.textContent = '✓ Saved';
       flag.classList.add('show');
       setTimeout(()=>flag.classList.remove('show'), 1600);
       renderGrid();
-    });
+    }catch(err){
+      flag.textContent = 'Save failed: ' + err.message;
+      flag.classList.add('show', 'err');
+      setTimeout(()=>flag.classList.remove('show','err'), 2400);
+    }
   });
 
   // ---------- IMAGE UPLOAD (client-side downscale + WebP recompress to <500KB) ----------
-  // Shared between the single-dossier editor (PATCHes heroImage onto an
-  // existing dossier immediately) and the create-dossier form (uploads the
-  // asset independently of dossier creation, then includes the resulting
-  // reference in the POST body — the asset endpoint doesn't require a
-  // dossier to already exist).
+  // Generic across any form using the dossierFieldsBlock(prefix) markup —
+  // both the single-dossier editor (prefix 'ed', PATCHes heroImage onto
+  // an existing dossier immediately since there's no reason to wait for
+  // "Save Session") and the create-dossier form (prefix 'cd', uploads the
+  // asset independently of dossier creation and stores the ref locally,
+  // included in the POST body when the dossier is actually created).
   const MAX_BYTES = 500 * 1024;
   const MAX_EDGE = 1920;
 
@@ -699,41 +912,40 @@ const CONSOLE_JS = `
     return { asset: body.asset, webp };
   }
 
-  document.getElementById('uploadImageBtn').addEventListener('click', ()=> document.getElementById('imageInput').click());
-  document.getElementById('imageInput').addEventListener('change', async (e)=>{
-    const file = e.target.files[0]; if(!file || !activeId) return;
-    const sizeWarn = document.getElementById('sizeWarn');
-    sizeWarn.textContent = 'Processing…';
-    try{
-      const { asset, webp } = await uploadImageAsset(file);
-      await patchDossierField(activeId, 'heroImage', { _type: 'image', asset: { _type: 'reference', _ref: asset._id } });
-      thumbPreview.textContent = 'SET';
-      sizeWarn.textContent = '✓ Uploaded (' + Math.round(webp.size/1024) + 'KB)';
-    }catch(err){
-      sizeWarn.textContent = 'Upload failed: ' + err.message;
-    }
-    e.target.value = '';
+  // Wires <prefix>UploadImageBtn/<prefix>ImageInput/<prefix>ThumbPreview/
+  // <prefix>SizeWarn (the ids dossierFieldsBlock() generates) to a single
+  // upload flow; onUploaded(assetId) decides what happens with the result.
+  function wireImageUpload(prefix, onUploaded){
+    const btn = document.getElementById(prefix + 'UploadImageBtn');
+    const input = document.getElementById(prefix + 'ImageInput');
+    const thumb = document.getElementById(prefix + 'ThumbPreview');
+    const sizeWarn = document.getElementById(prefix + 'SizeWarn');
+    btn.addEventListener('click', ()=> input.click());
+    input.addEventListener('change', async (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      sizeWarn.textContent = 'Processing…';
+      try{
+        const { asset, webp } = await uploadImageAsset(file);
+        await onUploaded(asset._id);
+        thumb.textContent = 'SET';
+        sizeWarn.textContent = '✓ Uploaded (' + Math.round(webp.size/1024) + 'KB)';
+      }catch(err){
+        sizeWarn.textContent = 'Upload failed: ' + err.message;
+      }
+      e.target.value = '';
+    });
+  }
+
+  wireImageUpload('ed', async (assetId)=>{
+    if(!activeId) return;
+    await patchDossierField(activeId, 'heroImage', { _type: 'image', asset: { _type: 'reference', _ref: assetId } });
   });
 
   // Create-dossier form's own hero image upload — same flow, but stores
   // the reference locally (cdHeroImageAsset) since the dossier doesn't
   // exist yet to PATCH.
   let cdHeroImageAsset = null;
-  document.getElementById('cdUploadImageBtn').addEventListener('click', ()=> document.getElementById('cdImageInput').click());
-  document.getElementById('cdImageInput').addEventListener('change', async (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    const sizeWarn = document.getElementById('cdSizeWarn');
-    sizeWarn.textContent = 'Processing…';
-    try{
-      const { asset, webp } = await uploadImageAsset(file);
-      cdHeroImageAsset = asset._id;
-      document.getElementById('cdThumbPreview').textContent = 'SET';
-      sizeWarn.textContent = '✓ Uploaded (' + Math.round(webp.size/1024) + 'KB)';
-    }catch(err){
-      sizeWarn.textContent = 'Upload failed: ' + err.message;
-    }
-    e.target.value = '';
-  });
+  wireImageUpload('cd', async (assetId)=>{ cdHeroImageAsset = assetId; });
 
   // ---------- THEME ----------
   document.getElementById('themeToggle').addEventListener('click', ()=>{
