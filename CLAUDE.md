@@ -295,3 +295,20 @@ against real Sanity, only against mocked/local responses. If a future
 session touches asset upload URLs, double-check them against a live
 `curl` test the same way, not just by re-reading the code — the error
 message alone doesn't distinguish the two failure modes.
+
+**Checked 2026-08-20: this repo does NOT have cnf-website's
+"deploy without rebuilding" risk (see that repo's
+`docs/seo-and-infra.md` § Deploy and its closed issue #5).** That repo's
+`opennextjs-cloudflare deploy` deploys a separate, persistent
+`.open-next` build directory that a plain `deploy` command never
+regenerates — four deploys there in a row silently re-shipped a day-old
+bundle. This repo's `wrangler deploy` has no equivalent risk: it's a
+plain Cloudflare Worker, and `wrangler deploy` bundles straight from
+`src/worker.js` via esbuild at deploy time — there's no intermediate
+build-output directory that could go stale between a separate build
+step and the deploy step, because there is no separate build step.
+Same holds for the GitHub Actions path (`.github/workflows/deploy.yml`)
+— fresh checkout every run, no cached build artifacts carried across
+runs. Verified empirically, not just by architecture reasoning: the
+live site was confirmed to already reflect the latest commit at the
+time this was checked.
