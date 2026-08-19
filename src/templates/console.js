@@ -29,7 +29,7 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>// CAMPAIGNS :: DOSSIER CONSOLE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>${CONSOLE_CSS}</style>
 </head>
 <body>
@@ -109,11 +109,14 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
       <div class="field"><label>Hook (directory card blurb)</label><textarea id="ccHook" rows="2"></textarea></div>
       <div class="field"><label>Motto</label><input type="text" id="ccMotto"></div>
       <div class="field"><label>Sign-Off</label><input type="text" id="ccSignOff"></div>
+      <div class="field">
+        <label class="checkline"><input type="checkbox" id="ccVisible"> Publish immediately (visible on the public campaign directory)</label>
+      </div>
       <div class="savebar">
         <button class="btn primary" id="ccSubmit">Create Campaign</button>
         <span class="savedflag" id="ccFlag"></span>
       </div>
-      <p class="hint">New campaigns start hidden (not Visible) — publish it from "My Campaigns" once it's ready.</p>
+      <p class="hint">Leave "Publish immediately" unchecked to build the campaign out first — you can publish it anytime from "My Campaigns".</p>
     </div>
 
     <div class="editor" id="createDossierView">
@@ -129,11 +132,52 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail })
       <div class="field"><label>Session Label</label><input type="text" id="cdSessionLabel" placeholder="e.g. 8, Day 41"></div>
       <div class="field"><label>Location</label><input type="text" id="cdLocation"></div>
       <div class="field"><label>Overview</label><textarea id="cdOverview" rows="3"></textarea></div>
+      <div class="field">
+        <label>Hero Image (max 500KB — auto-downscaled/recompressed to WebP before upload)</label>
+        <div class="imgfield">
+          <div class="thumb" id="cdThumbPreview">NONE</div>
+          <input type="file" id="cdImageInput" accept="image/*" style="display:none;">
+          <button type="button" class="btn" id="cdUploadImageBtn">Upload Image</button>
+          <span class="sizewarn" id="cdSizeWarn"></span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Quick Facts (kv panel beside Overview)</label>
+        <div class="repeater" id="cdQuickFacts"></div>
+        <button type="button" class="btn small" data-add-row="cdQuickFacts:factRow">+ Add Fact</button>
+      </div>
+      <div class="field">
+        <label>Location Facts</label>
+        <div class="repeater" id="cdLocationFacts"></div>
+        <button type="button" class="btn small" data-add-row="cdLocationFacts:factRow">+ Add Fact</button>
+      </div>
+      <div class="field">
+        <label>Stat Tiles (optional status strip)</label>
+        <div class="repeater" id="cdStatTiles"></div>
+        <button type="button" class="btn small" data-add-row="cdStatTiles:statTile">+ Add Tile</button>
+      </div>
+      <div class="field">
+        <label>Threat Assessment</label>
+        <div class="repeater" id="cdThreatAssessment"></div>
+        <button type="button" class="btn small" data-add-row="cdThreatAssessment:meterRow">+ Add Row</button>
+      </div>
+      <div class="field">
+        <label>Objectives</label>
+        <div class="repeater" id="cdObjectives"></div>
+        <button type="button" class="btn small" data-add-row="cdObjectives:objective">+ Add Objective</button>
+      </div>
+      <div class="field">
+        <label>Log</label>
+        <div class="repeater" id="cdLog"></div>
+        <button type="button" class="btn small" data-add-row="cdLog:logEntry">+ Add Entry</button>
+      </div>
+
       <div class="savebar">
         <button class="btn primary" id="cdSubmit">Create Dossier</button>
         <span class="savedflag" id="cdFlag"></span>
       </div>
-      <p class="hint">Quick facts, objectives, media, and the log can be filled in afterward from the Bulk Editor.</p>
+      <p class="hint">Media gallery items (image/audio/video) aren't in this form yet — add those afterward directly in Sanity Studio. Everything else here can also be edited later from the Bulk Editor.</p>
     </div>
 
     <div class="editor" id="editorPanel">
@@ -186,11 +230,19 @@ function escapeHtml(s) {
 }
 
 const CONSOLE_CSS = `
-  :root{--bg:#050708; --panel:#0b1211f0; --panel-2:#0e1a17; --line:rgba(23,233,160,.18); --line-strong:rgba(23,233,160,.4);
-    --emerald:#17e9a0; --pink:#ff4fae; --text:#dfeee9; --text-dim:#7f948d; --text-faint:#4c5b56; --warn:#ffb84f; --danger:#ff4f6a;
-    --font-display:'Space Grotesk',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'JetBrains Mono',monospace;}
-  html[data-theme="light"]{--bg:#efe6d2; --panel:#f7f1e2f0; --panel-2:#f0e8d3; --line:rgba(13,122,86,.25); --line-strong:rgba(13,122,86,.55);
-    --emerald:#0d8f63; --pink:#c22e83; --text:#231f18; --text-dim:#5c5340; --text-faint:#8c8065; --warn:#a5730c; --danger:#c23a4e;}
+  /* Same palette/fonts as the main criticalsandfumbles.com site (see its
+     docs/design-system.md) — the console is an admin tool on the main
+     site's visual language, NOT genre-themed. Genre theming
+     (theme.js/themeToCssVars) is scoped to dossier pages and each
+     campaign's session-index page only — never here, never the public
+     directory. Variable names kept as-is (--pink etc.) to minimize diff
+     against the rest of this file; only the color VALUES and fonts
+     changed to match the main site's tokens. */
+  :root{--bg:#111111; --panel:#1a1a1a; --panel-2:#151515; --line:rgba(46,197,107,.18); --line-strong:rgba(46,197,107,.4);
+    --emerald:#2ec56b; --pink:#d946a8; --text:#f0eae0; --text-dim:#a39a8e; --text-faint:#666666; --warn:#c8893a; --danger:#c23a4e;
+    --font-display:'Bebas Neue',sans-serif; --font-body:'Crimson Pro',serif; --font-mono:'Space Mono',monospace;}
+  html[data-theme="light"]{--bg:#fbf0e0; --panel:#f0e8d8; --panel-2:#e8dcc4; --line:rgba(26,122,69,.25); --line-strong:rgba(26,122,69,.55);
+    --emerald:#1a7a45; --pink:#c4306a; --text:#1a1208; --text-dim:#6b6045; --text-faint:#8a7055; --warn:#b36a1a; --danger:#c23a4e;}
   *{box-sizing:border-box; margin:0; padding:0;}
   body{background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh;}
   .app{display:grid; grid-template-columns:220px 1fr; min-height:100vh;}
@@ -232,6 +284,14 @@ const CONSOLE_CSS = `
   .field input[type=text], .field select, .field textarea{width:100%; max-width:420px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 12px; font-family:var(--font-body); font-size:.92rem; outline:none;}
   .field input[type=text]:focus, .field select:focus, .field textarea:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
   .hint{font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); margin-top:14px;}
+  .checkline{display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:10.5px; letter-spacing:.5px; color:var(--text-dim); cursor:pointer;}
+  .checkline input{width:14px; height:14px; accent-color:var(--emerald); cursor:pointer;}
+  .repeater{display:flex; flex-direction:column; gap:8px; margin-bottom:8px;}
+  .repeater-row{display:flex; gap:8px; align-items:flex-start; background:var(--panel-2); border:1px solid var(--line); padding:8px; flex-wrap:wrap;}
+  .repeater-row input, .repeater-row select, .repeater-row textarea{flex:1; min-width:120px; background:var(--panel); border:1px solid var(--line); color:var(--text); padding:7px 9px; font-family:var(--font-body); font-size:.85rem; outline:none;}
+  .repeater-row textarea{min-width:200px; flex-basis:100%;}
+  .repeater-row .rm{flex:0 0 auto; font-family:var(--font-mono); font-size:9px; color:var(--danger); border:1px solid var(--line); background:none; padding:6px 9px; cursor:pointer; align-self:flex-start;}
+  .btn.small{padding:6px 10px; font-size:9px;}
   .savebar{display:flex; align-items:center; gap:10px; margin-top:10px;}
   .savebar .savedflag{font-family:var(--font-mono); font-size:9.5px; color:var(--emerald); opacity:0; transition:.3s;}
   .savebar .savedflag.show{opacity:1;}
@@ -415,6 +475,7 @@ const CONSOLE_JS = `
       hook: document.getElementById('ccHook').value.trim(),
       motto: document.getElementById('ccMotto').value.trim(),
       signOff: document.getElementById('ccSignOff').value.trim(),
+      visible: document.getElementById('ccVisible').checked,
     };
     if(!body.title || !body.genre || !body.theme){
       flag.textContent = 'Title, Genre, and Genre Theme are required.';
@@ -429,15 +490,77 @@ const CONSOLE_JS = `
       });
       const result = await res.json();
       if(!res.ok) throw new Error(result.error || res.statusText);
-      campaigns.push({ _id: result.id, title: body.title, genre: body.genre, status: body.status, visible: false });
-      flag.textContent = '✓ Created — publish it from "My Campaigns" when ready.';
+      campaigns.push({ _id: result.id, title: body.title, genre: body.genre, status: body.status, visible: body.visible });
+      flag.textContent = body.visible ? '✓ Created and published.' : '✓ Created — publish it from "My Campaigns" when ready.';
       flag.className = 'savedflag show';
       ['ccTitle','ccGenre','ccSystem','ccGmNames','ccHook','ccMotto','ccSignOff'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('ccVisible').checked = false;
       setTimeout(()=>switchView('campaigns'), 900);
     }catch(err){
       flag.textContent = 'Failed: ' + err.message;
       flag.className = 'savedflag show err';
     }
+  });
+
+  // ---------- REPEATERS (dossier array fields: quickFacts, locationFacts,
+  // statTiles, threatAssessment, objectives, log — see schema/dossier.js
+  // for the authoritative object shapes each of these mirrors) ----------
+  const REPEATER_SHAPES = {
+    factRow: [
+      { key: 'label', ph: 'Label' },
+      { key: 'value', ph: 'Value' },
+    ],
+    statTile: [
+      { key: 'value', ph: 'Value' },
+      { key: 'label', ph: 'Label' },
+    ],
+    meterRow: [
+      { key: 'label', ph: 'Label' },
+      { key: 'level', ph: 'Level (e.g. low / medium / high / very-high)' },
+    ],
+    objective: [
+      { key: 'title', ph: 'Title' },
+      { key: 'description', ph: 'Description', type: 'textarea' },
+      { key: 'priority', ph: 'Priority', type: 'select', options: ['primary','secondary','tertiary'] },
+      { key: 'status', ph: 'Status', type: 'select', options: ['open','done'] },
+    ],
+    logEntry: [
+      { key: 'ts', ph: 'Timestamp (e.g. Day 41, 22:04 IC)' },
+      { key: 'entry', ph: 'Entry', type: 'textarea' },
+    ],
+  };
+
+  function addRepeaterRow(containerId, shapeName){
+    const container = document.getElementById(containerId);
+    const shape = REPEATER_SHAPES[shapeName];
+    const row = document.createElement('div');
+    row.className = 'repeater-row';
+    row.dataset.shape = shapeName;
+    row.innerHTML = shape.map(f=>{
+      if(f.type === 'textarea') return \`<textarea data-key="\${f.key}" placeholder="\${f.ph}" rows="2"></textarea>\`;
+      if(f.type === 'select') return \`<select data-key="\${f.key}">\${f.options.map(o=>\`<option value="\${o}">\${o}</option>\`).join('')}</select>\`;
+      return \`<input type="text" data-key="\${f.key}" placeholder="\${f.ph}">\`;
+    }).join('') + '<button type="button" class="rm">Remove</button>';
+    row.querySelector('.rm').addEventListener('click', ()=> row.remove());
+    container.appendChild(row);
+  }
+
+  function collectRepeaterRows(containerId){
+    const container = document.getElementById(containerId);
+    return Array.from(container.querySelectorAll('.repeater-row')).map(row=>{
+      const obj = { _key: (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).slice(0, 12), _type: row.dataset.shape };
+      row.querySelectorAll('[data-key]').forEach(input=>{ obj[input.dataset.key] = input.value.trim(); });
+      return obj;
+    }).filter(obj => Object.keys(obj).some(k => k !== '_key' && k !== '_type' && obj[k]));
+  }
+
+  function clearRepeater(containerId){
+    document.getElementById(containerId).innerHTML = '';
+  }
+
+  document.querySelectorAll('[data-add-row]').forEach(btn=>{
+    const [containerId, shapeName] = btn.dataset.addRow.split(':');
+    btn.addEventListener('click', ()=> addRepeaterRow(containerId, shapeName));
   });
 
   // ---------- CREATE DOSSIER ----------
@@ -461,7 +584,16 @@ const CONSOLE_JS = `
       sessionLabel: document.getElementById('cdSessionLabel').value.trim(),
       location: document.getElementById('cdLocation').value.trim(),
       overview: document.getElementById('cdOverview').value.trim(),
+      quickFacts: collectRepeaterRows('cdQuickFacts'),
+      locationFacts: collectRepeaterRows('cdLocationFacts'),
+      statTiles: collectRepeaterRows('cdStatTiles'),
+      threatAssessment: collectRepeaterRows('cdThreatAssessment'),
+      objectives: collectRepeaterRows('cdObjectives'),
+      log: collectRepeaterRows('cdLog'),
     };
+    if(cdHeroImageAsset){
+      body.heroImage = { _type: 'image', asset: { _type: 'reference', _ref: cdHeroImageAsset } };
+    }
     if(!body.campaign || !body.code || !body.title){
       flag.textContent = 'Campaign, Code, and Title are required.';
       flag.className = 'savedflag show err';
@@ -475,10 +607,14 @@ const CONSOLE_JS = `
       });
       const result = await res.json();
       if(!res.ok) throw new Error(result.error || res.statusText);
-      dossiers.unshift({ _id: result.id, code: body.code, title: body.title, location: body.location, overview: body.overview, objectives: [], campaignId: body.campaign });
+      dossiers.unshift({ _id: result.id, code: body.code, title: body.title, location: body.location, overview: body.overview, heroImage: body.heroImage, objectives: body.objectives, campaignId: body.campaign });
       flag.textContent = '✓ Created.';
       flag.className = 'savedflag show';
       ['cdCode','cdTitle','cdClassification','cdDistribution','cdSessionLabel','cdLocation','cdOverview'].forEach(id=>document.getElementById(id).value='');
+      ['cdQuickFacts','cdLocationFacts','cdStatTiles','cdThreatAssessment','cdObjectives','cdLog'].forEach(clearRepeater);
+      cdHeroImageAsset = null;
+      document.getElementById('cdThumbPreview').textContent = 'NONE';
+      document.getElementById('cdSizeWarn').textContent = '';
       setTimeout(()=>switchView('bulk'), 900);
     }catch(err){
       flag.textContent = 'Failed: ' + err.message;
@@ -519,6 +655,11 @@ const CONSOLE_JS = `
   });
 
   // ---------- IMAGE UPLOAD (client-side downscale + WebP recompress to <500KB) ----------
+  // Shared between the single-dossier editor (PATCHes heroImage onto an
+  // existing dossier immediately) and the create-dossier form (uploads the
+  // asset independently of dossier creation, then includes the resulting
+  // reference in the POST body — the asset endpoint doesn't require a
+  // dossier to already exist).
   const MAX_BYTES = 500 * 1024;
   const MAX_EDGE = 1920;
 
@@ -542,25 +683,51 @@ const CONSOLE_JS = `
     return blob;
   }
 
+  // Downscales, uploads, and returns { asset, webp } — or throws. Caller
+  // handles size-warning text and whatever happens with the asset ref.
+  async function uploadImageAsset(file){
+    const webp = await downscaleToWebp(file);
+    if(webp.size > MAX_BYTES){
+      throw new Error('Still over 500KB after max downscale — try a smaller source image.');
+    }
+    const form = new FormData();
+    form.append('file', webp, 'upload.webp');
+    form.append('kind', 'image');
+    const res = await fetch('/api/upload', { method: 'POST', body: form });
+    const body = await res.json();
+    if(!res.ok) throw new Error(body.error || res.statusText);
+    return { asset: body.asset, webp };
+  }
+
   document.getElementById('uploadImageBtn').addEventListener('click', ()=> document.getElementById('imageInput').click());
   document.getElementById('imageInput').addEventListener('change', async (e)=>{
     const file = e.target.files[0]; if(!file || !activeId) return;
     const sizeWarn = document.getElementById('sizeWarn');
     sizeWarn.textContent = 'Processing…';
     try{
-      const webp = await downscaleToWebp(file);
-      if(webp.size > MAX_BYTES){
-        sizeWarn.textContent = 'Still over 500KB after max downscale — try a smaller source image.';
-        return;
-      }
-      const form = new FormData();
-      form.append('file', webp, 'upload.webp');
-      form.append('kind', 'image');
-      const res = await fetch('/api/upload', { method: 'POST', body: form });
-      const body = await res.json();
-      if(!res.ok) throw new Error(body.error || res.statusText);
-      await patchDossierField(activeId, 'heroImage', { _type: 'image', asset: { _type: 'reference', _ref: body.asset._id } });
+      const { asset, webp } = await uploadImageAsset(file);
+      await patchDossierField(activeId, 'heroImage', { _type: 'image', asset: { _type: 'reference', _ref: asset._id } });
       thumbPreview.textContent = 'SET';
+      sizeWarn.textContent = '✓ Uploaded (' + Math.round(webp.size/1024) + 'KB)';
+    }catch(err){
+      sizeWarn.textContent = 'Upload failed: ' + err.message;
+    }
+    e.target.value = '';
+  });
+
+  // Create-dossier form's own hero image upload — same flow, but stores
+  // the reference locally (cdHeroImageAsset) since the dossier doesn't
+  // exist yet to PATCH.
+  let cdHeroImageAsset = null;
+  document.getElementById('cdUploadImageBtn').addEventListener('click', ()=> document.getElementById('cdImageInput').click());
+  document.getElementById('cdImageInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    const sizeWarn = document.getElementById('cdSizeWarn');
+    sizeWarn.textContent = 'Processing…';
+    try{
+      const { asset, webp } = await uploadImageAsset(file);
+      cdHeroImageAsset = asset._id;
+      document.getElementById('cdThumbPreview').textContent = 'SET';
       sizeWarn.textContent = '✓ Uploaded (' + Math.round(webp.size/1024) + 'KB)';
     }catch(err){
       sizeWarn.textContent = 'Upload failed: ' + err.message;

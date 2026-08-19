@@ -477,3 +477,103 @@ const BASE_JS = `
     });
   });
 `;
+
+/**
+ * Per-campaign session index — GET /:campaignSlug. Genre-themed (via the
+ * same themeToCssVars/resolveLabels helpers the dossier page itself uses)
+ * since this is a "dossier list page," not part of the main site's own
+ * chrome — see CLAUDE.md § Visual design for the split (directory "/" and
+ * the console are main-site-styled; this page and the dossier page below
+ * it are genre-themed).
+ *
+ * Two-pane layout: left is the session list (already sorted most-recent-
+ * first by the caller's GROQ query), right is an <iframe> that loads the
+ * selected dossier's own full page unchanged — reusing renderDossierPage
+ * as-is rather than re-implementing dossier rendering inline, so the two
+ * never drift apart. The most recent session auto-selects on load so the
+ * right pane isn't empty by default.
+ */
+export function renderCampaignIndexPage({ campaign, dossiers, theme }) {
+  const labels = resolveLabels(theme);
+  const themeVars = themeToCssVars(theme);
+  const slugJson = JSON.stringify(campaign.slug?.current || "");
+
+  const items = (dossiers || [])
+    .map((d, i) => {
+      const date = d._createdAt ? new Date(d._createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "";
+      return `<button type="button" class="session-item${i === 0 ? " active" : ""}" data-code="${esc(d.code)}">
+  <span class="s-title">${esc(d.sessionLabel || d.code)} — ${esc(d.title)}</span>
+  <span class="s-meta"><span>${esc(d.code)}</span>${date ? `<span>${esc(date)}</span>` : ""}</span>
+</button>`;
+    })
+    .join("\n");
+
+  const firstCode = dossiers && dossiers[0] ? dossiers[0].code : null;
+
+  return `<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(campaign.title)} — ${esc(labels.dossier || "Sessions")}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share%20Tech%20Mono&display=swap" rel="stylesheet">
+<style>
+${themeVars}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{background:var(--bg); color:var(--text); font-family:var(--font-body); overflow:hidden;}
+.shell{display:grid; grid-template-columns:340px 1fr; height:100vh;}
+@media(max-width:820px){.shell{grid-template-columns:1fr; height:auto;}
+  .detail-pane{height:70vh;}}
+.list-pane{border-right:1px solid rgba(255,255,255,.12); padding:22px 18px; overflow-y:auto;}
+.back-link{display:inline-block; font-family:var(--font-mono); font-size:.75rem; color:var(--text); opacity:.6; text-decoration:none; margin-bottom:14px;}
+.back-link:hover{opacity:1; color:var(--accent-a);}
+.list-pane h1{font-family:var(--font-display); font-size:1.6rem; letter-spacing:.02em; margin-bottom:.35rem;}
+.hook{opacity:.75; font-size:.9rem; margin-bottom:.5rem;}
+.meta-line{display:flex; gap:10px; font-family:var(--font-mono); font-size:.7rem; opacity:.6; margin-bottom:18px; text-transform:uppercase; letter-spacing:.05em;}
+.session-item{display:block; width:100%; text-align:left; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.12); border-radius:6px; padding:12px 14px; margin-bottom:10px; color:var(--text); cursor:pointer; font-family:var(--font-body); transition:border-color .15s ease, background .15s ease;}
+.session-item:hover{border-color:var(--accent-a);}
+.session-item.active{border-color:var(--accent-a); background:rgba(255,255,255,.06);}
+.s-title{display:block; font-size:.95rem; margin-bottom:6px;}
+.s-meta{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:.65rem; opacity:.55; letter-spacing:.03em;}
+.empty{opacity:.5; font-family:var(--font-mono); font-size:.8rem;}
+.detail-pane{position:relative; height:100%;}
+.detail-pane iframe{width:100%; height:100%; border:none; display:none;}
+.empty-state{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:.85rem; opacity:.4; text-align:center; padding:2rem;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="list-pane">
+    <a class="back-link" href="/">&larr; All Campaigns</a>
+    <h1>${esc(campaign.title)}</h1>
+    ${campaign.hook ? `<p class="hook">${esc(campaign.hook)}</p>` : ""}
+    <div class="meta-line"><span>${esc(campaign.system || "")}</span><span>${esc(campaign.status || "")}</span></div>
+    ${items || `<p class="empty">No sessions published yet.</p>`}
+  </aside>
+  <main class="detail-pane">
+    <iframe id="dossierFrame" title="Session detail"></iframe>
+    <div class="empty-state" id="emptyState">Select a session to view its dossier.</div>
+  </main>
+</div>
+<script>
+  const SLUG = ${slugJson};
+  const frame = document.getElementById('dossierFrame');
+  const empty = document.getElementById('emptyState');
+  const items = document.querySelectorAll('.session-item');
+
+  function select(code){
+    items.forEach(i=>i.classList.toggle('active', i.dataset.code===code));
+    frame.src = '/' + encodeURIComponent(SLUG) + '/' + encodeURIComponent(code);
+    frame.style.display = 'block';
+    empty.style.display = 'none';
+  }
+  items.forEach(item=>{
+    item.addEventListener('click', ()=> select(item.dataset.code));
+  });
+  ${firstCode ? `select(${JSON.stringify(firstCode)});` : ""}
+</script>
+</body>
+</html>`;
+}

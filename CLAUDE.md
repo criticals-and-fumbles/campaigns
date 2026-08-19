@@ -63,12 +63,20 @@ targeting another DM's campaign fails per-row rather than silently
 touching it.
 
 `visible` (also on `campaign`) is a separate, unrelated concern — public
-publish/unpublish, not ownership. Defaults to `false` (new campaigns
-start hidden) so a DM can build one out before it appears on the public
-directory. It's a real access gate, not just a listing filter: a direct
-link to `/:campaignSlug` or `/:campaignSlug/:dossierCode` under a
-non-visible campaign 404s (see `src/routes/dossier.js`), it doesn't just
-disappear from `/`.
+publish/unpublish, not ownership. Defaults to `false` server-side (`POST
+/api/campaign` falls back to hidden if the client omits it) so a DM can
+build a campaign out before it appears on the public directory, but
+unlike `ownerEmail` it's not creation-only or immutable — the client MAY
+opt into `visible: true` at creation time (the console's "Publish
+immediately" checkbox, added 2026-08-19 for discoverability — the
+toggle in "My Campaigns" existed first but wasn't obvious enough on its
+own), and it stays freely PATCHable afterward either way. It's a real
+access gate, not just a listing filter: a direct link to
+`/:campaignSlug` or `/:campaignSlug/:dossierCode` under a non-visible
+campaign 404s (see `src/routes/dossier.js`), it doesn't just disappear
+from `/`. Dossiers have no `visible` field of their own — every dossier
+under a visible campaign is visible, there is no per-dossier draft state
+(the create-dossier form has no publish toggle for this reason).
 
 **What is NOT scoped by ownership:** `genreTheme` documents are shared
 reference data across all DMs (the console's "Create Campaign" theme
@@ -179,21 +187,40 @@ site's actual registered schema during scaffolding (same Claude Code
 session had it in context) — the real type name is `world`. Used the
 verified name, not the brief's placeholder guess.
 
-## Visual design — matches the main site, not invented here
+## Visual design — two deliberately different skins, split by audience
 
-The public campaign directory (`GET /`, `src/routes/dossier.js`) is styled
-to match criticalsandfumbles.com's actual design system — dark-mode-default
-palette, Bebas Neue/Crimson Pro/Space Mono fonts, the three-color brand
-title treatment, card/badge shapes — because this page launches *from*
-that site (2026-08-19 decision), not as a standalone-looking subsite.
-Values were copied by hand from that repo's `app/(site)/globals.css` and
-`components/content/ArticleCard.tsx` (see its `docs/design-system.md` for
-the source of truth) — there's no shared package/token file between the
-two repos, so if the main site's palette or fonts change, this page's
-inline `<style>` block has to be updated to match by hand; nothing keeps
-them in sync automatically. Nav/header is deliberately absent here — the
-main site will link into this page directly once that's built, this repo
-doesn't own that navigation.
+**Main-site-styled** (dark-mode-default palette, Bebas Neue/Crimson Pro/
+Space Mono fonts, the three-color brand title treatment): the public
+campaign **directory** (`GET /`) and **the console** (`/console`,
+`templates/console.js`). Both are chrome around the main site's product
+— the directory launches *from* criticalsandfumbles.com, the console is
+an admin tool a DM uses the same way they'd use any other internal main-
+site tool — so both use that site's actual design system, not an
+invented one. Values were copied by hand from `app/(site)/globals.css`
+and `components/content/ArticleCard.tsx` in that repo (see its
+`docs/design-system.md` for the source of truth) — there's no shared
+package/token file between the two repos, so if the main site's palette
+or fonts change, both this page's inline `<style>` block AND
+`templates/console.js`'s `CONSOLE_CSS` have to be updated by hand;
+nothing keeps them in sync automatically. Nav/header is deliberately
+absent on the directory page — the main site will link into it directly
+once that's built, this repo doesn't own that navigation.
+
+**Genre-themed** (via `src/lib/theme.js`'s `themeToCssVars`/
+`resolveLabels`, driven by the campaign's referenced `genreTheme`
+document): the dossier page itself (`renderDossierPage`) and, since
+2026-08-19, each campaign's **session index** (`renderCampaignIndexPage`,
+`GET /:campaignSlug`) too — a "dossier list page" is part of that
+campaign's in-fiction presentation, not main-site chrome, so it picks up
+the same colors/fonts/motif a dossier under that campaign would. The
+session-index page is a two-pane list+detail view: the left pane lists
+sessions most-recent-first (the underlying GROQ query already sorts
+`order(_createdAt desc)`, so no client-side re-sorting needed); the right
+pane is an `<iframe>` pointed at the selected session's own
+`/:campaignSlug/:dossierCode` URL — reusing `renderDossierPage` completely
+unchanged rather than re-implementing dossier rendering inline, so the
+embedded and directly-linked views can never drift apart. The most recent
+session auto-selects on load so the right pane isn't empty by default.
 
 ## Lessons learned
 

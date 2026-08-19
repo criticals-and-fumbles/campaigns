@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { query } from "../lib/sanity.js";
-import { renderDossierPage } from "../templates/dossier.js";
+import { renderDossierPage, renderCampaignIndexPage } from "../templates/dossier.js";
 import { urlFor } from "../lib/sanity-image.js";
 
 const app = new Hono();
@@ -17,7 +17,7 @@ const DOSSIER_QUERY = `*[_type == "dossier" && code == $code && campaign->slug.c
 }`;
 
 const CAMPAIGN_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->slug.current == $slug] | order(_createdAt desc){
-  _id, code, title, sessionLabel, location
+  _id, code, title, sessionLabel, location, _createdAt
 }`;
 
 const ALL_CAMPAIGNS_QUERY = `*[_type == "campaign" && visible == true] | order(status asc, title asc){
@@ -31,14 +31,14 @@ const STATUS_LABEL = {
   concluded: "Concluded",
 };
 
-// Shared page chrome for the two public listing pages (directory +
-// per-campaign session index) — styled to match the main
-// criticalsandfumbles.com site's design system (see that repo's
-// docs/design-system.md) since these pages are meant to be launched from
-// there. Hand-rolled plain CSS since this Worker has no Tailwind/
+// Page chrome for the public campaign DIRECTORY ONLY ("/") — styled to
+// match the main criticalsandfumbles.com site's design system (see that
+// repo's docs/design-system.md) since this page is meant to be launched
+// from there. Hand-rolled plain CSS since this Worker has no Tailwind/
 // component layer; values copied by hand, see CLAUDE.md § Visual design.
-// The dossier page itself (renderDossierPage) is intentionally NOT run
-// through this shell — it has its own genre-driven theme system.
+// Everything downstream of a campaign — its session index and the
+// dossier page itself — is genre-themed instead (renderCampaignIndexPage/
+// renderDossierPage, via theme.js), NOT run through this shell.
 function pageShell(title, bodyInner) {
   return `<!DOCTYPE html>
 <html lang="en" class="dark">
@@ -80,9 +80,6 @@ function pageShell(title, bodyInner) {
   .hook{font-size:1.1rem; color:var(--text-muted); margin:0; flex:1;}
   .meta{display:flex; justify-content:space-between; font-family:var(--font-ui); font-size:.75rem; color:var(--text-muted);}
   .empty{color:var(--text-muted);}
-  .session-row a{display:block; padding:1rem 1.25rem; border:1px solid var(--border); border-radius:.5rem; background:var(--surface); text-decoration:none; font-family:var(--font-ui); font-size:.9rem; transition:border-color .2s ease;}
-  .session-row a:hover{border-color:var(--emerald);}
-  ul.sessions{display:flex; flex-direction:column; gap:.75rem;}
 </style>
 </head>
 <body>
@@ -147,7 +144,9 @@ app.get("/:campaignSlug/:dossierCode", async (c) => {
 });
 
 // GET /:campaignSlug — per-campaign session index. Same 404-if-not-visible
-// gate as the dossier page above.
+// gate as the dossier page above. Genre-themed two-pane list+detail view
+// (renderCampaignIndexPage) — dossiers already come back most-recent-first
+// from CAMPAIGN_DOSSIERS_QUERY's order(_createdAt desc).
 app.get("/:campaignSlug", async (c) => {
   const { campaignSlug } = c.req.param();
   const campaign = await query(c.env, CAMPAIGN_QUERY, { slug: campaignSlug });
@@ -155,19 +154,7 @@ app.get("/:campaignSlug", async (c) => {
 
   const dossiers = await query(c.env, CAMPAIGN_DOSSIERS_QUERY, { slug: campaignSlug });
 
-  const list = dossiers
-    .map(
-      (d) => `<li class="session-row"><a href="/${encodeURIComponent(campaignSlug)}/${encodeURIComponent(d.code)}">${escapeHtml(d.sessionLabel || d.code)} — ${escapeHtml(d.title)}</a></li>`,
-    )
-    .join("\n");
-
-  const body = `<a class="back-link" href="/">&larr; All Campaigns</a>
-  <h1>${escapeHtml(campaign.title)}</h1>
-  <p class="intro">${escapeHtml(campaign.hook || "")}<br>
-  <span class="meta"><span>${escapeHtml(campaign.system || "")}</span><span>${escapeHtml(STATUS_LABEL[campaign.status] || campaign.status || "")}</span></span></p>
-  <ul class="sessions">${list || `<p class="empty">No sessions published yet.</p>`}</ul>`;
-
-  return c.html(pageShell(`${campaign.title} — Session Index`, body));
+  return c.html(renderCampaignIndexPage({ campaign, dossiers, theme: campaign.theme }));
 });
 
 function escapeHtml(s) {

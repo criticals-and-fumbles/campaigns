@@ -13,8 +13,11 @@ function slugify(s) {
 }
 
 // POST /api/campaign — body: { title, genre, system, status, gmNames, theme,
-// hook, motto, signOff }. ownerEmail/visible are always server-set, never
+// hook, motto, signOff, visible? }. ownerEmail is always server-set, never
 // client-supplied — see Schema Safety Protocol / CLAUDE.md § ownership.
+// visible defaults to false (draft) but the client may opt into publishing
+// immediately at creation time — it's a publish flag, not an access
+// boundary, so accepting it here (unlike ownerEmail) is safe.
 app.post("/", async (c) => {
   const body = await c.req.json();
   if (!body.title) return c.json({ error: "title is required" }, 400);
@@ -41,7 +44,7 @@ app.post("/", async (c) => {
     motto: body.motto || undefined,
     signOff: body.signOff || undefined,
     ownerEmail: c.get("gmEmail"),
-    visible: false,
+    visible: body.visible === true,
   };
 
   try {
