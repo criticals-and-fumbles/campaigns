@@ -1,21 +1,25 @@
 /**
  * Bulk Wiki JSON import — parses/resolves the shape defined by
  * WIKI_JSON_TEMPLATE (import-templates.js) into a single atomic Sanity
- * transaction, targeting one worldUnit selected in the console UI (never
- * from the file itself — see the template's own "_instructions").
+ * transaction, targeting one WORLD selected in the console UI (never from
+ * the file itself). The specific world UNIT within that world is instead
+ * named in the file (parsed.worldUnit.name, required) — worlds can only
+ * be created in Sanity Studio (admin-only), but world units can be
+ * created by this console's service account, so unlike the world, the
+ * unit is fair game for this import to create if it doesn't exist yet.
  *
  * Reference resolution is single-pass, not dependency-ordered, and that's
- * deliberate: every entry's Sanity _id is computed deterministically up
- * front (wikiDocId(), same scheme api-faction.js etc. use for the manual
- * builder, so bulk-imported and manually-created content interoperate
- * under the same "same name+scope updates in place" rule) before any
- * mutation is built. Since Sanity references are just string _id
- * pointers created within the same transaction, a faction that
- * references a keyFigure and a keyFigure that references that same
- * faction (a real circular case in this schema) both resolve correctly
- * without needing factions-before-keyFigures ordering — building the
- * whole id map first replaces the "process in dependency order" approach
- * originally planned.
+ * deliberate: every entry's Sanity _id — including the worldUnit's own
+ * id — is computed deterministically up front (wikiDocId(), same scheme
+ * api-faction.js etc. use for the manual builder, so bulk-imported and
+ * manually-created content interoperate under the same "same name+scope
+ * updates in place" rule) before any mutation is built. Since Sanity
+ * references are just string _id pointers created within the same
+ * transaction, a faction that references a keyFigure and a keyFigure
+ * that references that same faction (a real circular case in this
+ * schema) both resolve correctly without needing factions-before-
+ * keyFigures ordering — building the whole id map first replaces the
+ * "process in dependency order" approach originally planned.
  */
 import { wikiDocId, slugify } from "./slug.js";
 import { markdownToBlocks } from "./portable-text.js";
@@ -67,12 +71,15 @@ function resolveRefList(values, localIdMap, existingByName, warnings, itemLabel,
 
 /**
  * @param {object} parsed - the uploaded JSON, already JSON.parse()'d
- * @param {object} target - { worldUnitId, worldId, existingOverviewBlocks, unitSlug, worldSlug }
+ * @param {object} target - { worldId, existingWorldUnit } — existingWorldUnit is
+ *   the current worldUnit doc ({ _id, overview } or null if it doesn't exist yet
+ *   under this world) for the computed name, fetched by the caller by _id since
+ *   the id is deterministic from worldId + parsed.worldUnit.name
  * @param {object} existing - { factions, keyFigures, magicItems, notablePlaces, loreEntries } each
  *   an array of { _id, name|title } already fetched, scoped to this world unit (loreEntries scoped
  *   to the world, since it's the field that's actually required on that type)
  * @param {string} gmEmail
- * @returns {{ mutations: object[], report: { type, name, status: "created"|"updated"|"failed", reason? }[], warnings: string[] }}
+ * @returns {{ mutations: object[], report: { type, name, status: "created"|"updated"|"failed", reason? }[], warnings: string[], worldUnitId?: string }}
  */
 export function buildWikiImportTransaction(parsed, target, existing, gmEmail) {
   const warnings = [];
@@ -80,6 +87,17 @@ export function buildWikiImportTransaction(parsed, target, existing, gmEmail) {
   const mutations = [];
   const now = new Date().toISOString();
   const audit = { consoleEditedByEmail: gmEmail, consoleEditedAt: now };
+
+  const worldUnitName = parsed.worldUnit?.name;
+  if (!worldUnitName || !String(worldUnitName).trim()) {
+    return {
+      mutations: [],
+      report: [{ type: "worldUnit", name: "(missing)", status: "failed", reason: 'worldUnit.name is required — it says which unit within the selected world this import targets' }],
+      warnings: [],
+    };
+  }
+  const worldUnitId = wikiDocId("worldUnit", target.worldId, null, worldUnitName);
+  target = { ...target, worldUnitId };
 
   if (Array.isArray(parsed.sessionLogs) && parsed.sessionLogs.length) {
     for (const s of parsed.sessionLogs) {
@@ -242,39 +260,58 @@ export function buildWikiImportTransaction(parsed, target, existing, gmEmail) {
     report.push({ type: "loreEntry", name: displayName, status: existingIdSet.has(_id) ? "updated" : "created" });
   }
 
-  // --- worldUnit patch: overview is APPENDED, other fields are set-if-present ---
-  if (parsed.worldUnit && typeof parsed.worldUnit === "object") {
+  // --- worldUnit: create if it doesn't exist yet under this world, else
+  // patch it. Unlike a world (admin-only in Studio), a unit is fair game
+  // for this import to create. overview is APPENDED to an existing
+  // unit's overview, or becomes the whole overview on a freshly created
+  // one (nothing to append to).
+  {
     const wu = parsed.worldUnit;
-    const set = { ...audit };
-    let touchedWorldUnit = false;
+    const devStatus = checkEnum("worldUnit.developmentStatus", wu.developmentStatus, warnings, "World Unit");
+    const overviewBlocks = wu.overview && String(wu.overview).trim() ? markdownToBlocks(wu.overview) || [] : undefined;
 
-    if (wu.overview && String(wu.overview).trim()) {
-      // Append at the block-array level, not by round-tripping the
-      // EXISTING blocks through markdown — blocksToMarkdown() is lossy
-      // (drops headings/lists/anything beyond bold+italic paragraphs),
-      // so converting-then-reconverting existing content would silently
-      // flatten any real formatting already there. Only the NEW text
-      // goes through markdownToBlocks(); existing blocks are left
-      // completely untouched and just concatenated with the new ones.
-      const newBlocks = markdownToBlocks(wu.overview) || [];
-      set.overview = [...(target.existingOverviewBlocks || []), ...newBlocks];
-      touchedWorldUnit = true;
-    }
-    if (wu.developmentStatus) {
-      const v = checkEnum("worldUnit.developmentStatus", wu.developmentStatus, warnings, "World Unit");
-      if (v) { set.developmentStatus = v; touchedWorldUnit = true; }
-    }
-    if (wu.colourAccent) { set.colourAccent = wu.colourAccent; touchedWorldUnit = true; }
-    if (wu.pageFooterCTA && String(wu.pageFooterCTA).trim()) {
-      set.pageFooterCTA = markdownToBlocks(wu.pageFooterCTA);
-      touchedWorldUnit = true;
-    }
-
-    if (touchedWorldUnit) {
-      mutations.push({ patch: { id: target.worldUnitId, set } });
-      report.push({ type: "worldUnit", name: "(world unit overview/settings)", status: "updated" });
+    if (target.existingWorldUnit) {
+      const set = { ...audit };
+      let touchedWorldUnit = false;
+      if (overviewBlocks) {
+        // Append at the block-array level, not by round-tripping the
+        // EXISTING blocks through markdown — blocksToMarkdown() is lossy
+        // (drops headings/lists/anything beyond bold+italic paragraphs),
+        // so converting-then-reconverting existing content would silently
+        // flatten any real formatting already there. Only the NEW text
+        // goes through markdownToBlocks(); existing blocks are left
+        // completely untouched and just concatenated with the new ones.
+        set.overview = [...(target.existingWorldUnit.overview || []), ...overviewBlocks];
+        touchedWorldUnit = true;
+      }
+      if (devStatus) { set.developmentStatus = devStatus; touchedWorldUnit = true; }
+      if (wu.colourAccent) { set.colourAccent = wu.colourAccent; touchedWorldUnit = true; }
+      if (wu.pageFooterCTA && String(wu.pageFooterCTA).trim()) {
+        set.pageFooterCTA = markdownToBlocks(wu.pageFooterCTA);
+        touchedWorldUnit = true;
+      }
+      if (touchedWorldUnit) {
+        mutations.push({ patch: { id: worldUnitId, set } });
+        report.push({ type: "worldUnit", name: worldUnitName, status: "updated" });
+      }
+    } else {
+      mutations.push({
+        createOrReplace: {
+          _id: worldUnitId,
+          _type: "worldUnit",
+          name: worldUnitName,
+          slug: { _type: "slug", current: slugify(worldUnitName) },
+          world: { _type: "reference", _ref: target.worldId },
+          overview: overviewBlocks,
+          developmentStatus: devStatus,
+          colourAccent: wu.colourAccent || undefined,
+          pageFooterCTA: wu.pageFooterCTA && String(wu.pageFooterCTA).trim() ? markdownToBlocks(wu.pageFooterCTA) : undefined,
+          ...audit,
+        },
+      });
+      report.push({ type: "worldUnit", name: worldUnitName, status: "created" });
     }
   }
 
-  return { mutations, report, warnings };
+  return { mutations, report, warnings, worldUnitId };
 }

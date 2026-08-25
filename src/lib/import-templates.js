@@ -78,15 +78,22 @@ export const WIKI_JSON_TEMPLATE = JSON.stringify(
     _instructions: [
       "Bulk Wiki import template — Criticals & Fumbles Wiki",
       "",
-      "The world unit this content goes into is chosen in the console UI when",
-      "you upload this file (dropdown), not in this file — do not add",
-      "world/unit fields to any entry below.",
+      "The WORLD this content goes into is chosen in the console UI when you",
+      "upload this file (dropdown) — do not add a world field to any entry",
+      "below. Worlds themselves can only be created in Sanity Studio",
+      "(admin-only); this tool works within an existing world.",
       "",
-      "worldUnit — anything that doesn't fit one of the six typed sections",
-      "below goes in worldUnit.overview as plain text/markdown. It's",
-      "APPENDED to the selected world unit's existing overview, not",
-      "replaced. Every field in worldUnit is optional — omit it entirely if",
-      "you have nothing that fits it.",
+      "worldUnit.name (required) says which unit WITHIN that world this",
+      "import targets — every faction/keyFigure/magicItem/loreEntry/",
+      "notablePlace below attaches to this one unit. If no unit with this",
+      "exact name exists yet in the selected world, one is created (this is",
+      "allowed without admin rights, unlike creating a whole world);",
+      "if it already exists, it's updated in place.",
+      "",
+      "worldUnit.overview — anything that doesn't fit one of the six typed",
+      "sections below goes here as plain text/markdown. If the unit already",
+      "existed, this is APPENDED to its existing overview, not replaced; if",
+      "the unit is being created fresh, it becomes the whole overview.",
       "  developmentStatus: one of draft | in-progress | established | canonical",
       "  colourAccent: hex color, e.g. #8B2E2E",
       "",
@@ -131,7 +138,8 @@ export const WIKI_JSON_TEMPLATE = JSON.stringify(
       "  session dm/players assignment.",
     ].join("\n"),
     worldUnit: {
-      overview: "Anything that doesn't fit the sections below — loose notes, background, half-formed ideas. Appended to the world unit's existing overview.",
+      name: "The Docks District",
+      overview: "Anything that doesn't fit the sections below — loose notes, background, half-formed ideas. Appended to the world unit's existing overview (or becomes the whole overview if this unit is being created fresh).",
       developmentStatus: "draft",
       colourAccent: "",
       pageFooterCTA: "",
@@ -244,10 +252,12 @@ Rules — follow exactly, do not deviate:
    doesn't clearly fit any of those, put it as plain text/markdown in
    worldUnit.overview instead of forcing it into the wrong section.
 
-4. Only "name" (or "title" for loreEntries/sessionLogs) is required.
-   Omit every other field you don't have real content for — do not
-   invent placeholder values, do not write "unknown" or "TBD" into a
-   field just to fill it in.
+4. worldUnit.name is required — it says which world unit within the
+   selected world this import targets (creating it if it doesn't exist
+   yet). For every other entry, only "name" (or "title" for loreEntries/
+   sessionLogs) is required. Omit every other field you don't have real
+   content for — do not invent placeholder values, do not write
+   "unknown" or "TBD" into a field just to fill it in.
 
 5. Enum fields must use EXACTLY one of the allowed values listed in the
    template's instructions (e.g. threatLevel must be exactly "friendly",
@@ -266,9 +276,9 @@ Rules — follow exactly, do not deviate:
    (paragraphs separated by a blank line) — not any special block
    format.
 
-8. Never add a "world" or "unit" field anywhere — which world unit this
-   goes into is chosen separately when the file is uploaded, not in the
-   file itself.
+8. Never add a "world" field anywhere — which world this goes into is
+   chosen separately when the file is uploaded, not in the file itself.
+   Do set worldUnit.name (rule 4) — that part IS in the file.
 
 9. If my notes contain something you're not confident how to categorize
    or which enum value fits, still include it — put it in worldUnit.overview

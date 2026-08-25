@@ -344,8 +344,11 @@ export function renderConsolePage({
       <p class="hint">
         Hand the downloaded template and prompt to your AI agent (Claude, ChatGPT, Gemini)
         along with your raw notes — it sorts your notes into the template's shape.
-        Then pick which World Unit this import targets and upload the result.
-        Nothing in the file chooses the World Unit — that's always set here.
+        Then pick which World this import targets and upload the result.
+        Nothing in the file chooses the World — that's always set here.
+        Which World Unit within it gets created/updated is instead named
+        in the file itself (worldUnit.name) — worlds can only be created
+        in Sanity Studio, but a unit can be created right here.
       </p>
       <div class="field">
         <a class="btn" href="/console/templates/wiki-import.json">Download JSON Template</a>
@@ -353,8 +356,8 @@ export function renderConsolePage({
         <span class="savedflag" id="bwCopyFlag"></span>
       </div>
       <div class="field">
-        <label>Target World Unit *</label>
-        <select id="bwWorldUnit"></select>
+        <label>Target World *</label>
+        <select id="bwWorld"></select>
       </div>
       <div class="field">
         <label>Wiki Import JSON</label>
@@ -2184,15 +2187,15 @@ const CONSOLE_JS = `
 
   document.getElementById('bwImport').addEventListener('click', async ()=>{
     const flag = document.getElementById('bwFlag');
-    const worldUnitId = document.getElementById('bwWorldUnit').value;
+    const worldId = document.getElementById('bwWorld').value;
     const fileInput = document.getElementById('bwFile');
     const file = fileInput.files[0];
-    if(!worldUnitId){ flag.textContent = 'Pick a target World Unit first.'; flag.className = 'savedflag show err'; return; }
+    if(!worldId){ flag.textContent = 'Pick a target World first.'; flag.className = 'savedflag show err'; return; }
     if(!file){ flag.textContent = 'Choose a JSON file first.'; flag.className = 'savedflag show err'; return; }
 
     const form = new FormData();
     form.append('file', file);
-    form.append('worldUnitId', worldUnitId);
+    form.append('worldId', worldId);
 
     flag.textContent = 'Importing…';
     flag.className = 'savedflag show';
@@ -2227,7 +2230,7 @@ const CONSOLE_JS = `
     if(view === 'createMagicItem'){ populateSelect('cmiWorld', worlds, 'name', true); populateSelect('cmiUnit', worldUnits, 'name', true); populateSelect('cmiCurrentHolder', keyFigures, 'name', true); populateSelect('cmiFoundAt', notablePlaces, 'name', true); }
     if(view === 'createLoreEntry'){ populateSelect('cleWorld', worlds, 'name'); populateSelect('cleUnit', worldUnits, 'name', true); populateSelect('cleRelatedEntries', loreEntries, 'title'); populateSelect('cleSubmittedBy', teamMembers, 'handle', true); }
     if(view === 'createNotablePlace'){ populateSelect('cnpWorld', worlds, 'name', true); populateSelect('cnpUnit', worldUnits, 'name', true); populateSelect('cnpKeyFigures', keyFigures, 'name'); populateSelect('cnpItems', magicItems, 'name'); }
-    if(view === 'bulkWiki'){ populateSelect('bwWorldUnit', worldUnits, 'name'); document.getElementById('bwResults').innerHTML = ''; document.getElementById('bwFlag').textContent = ''; }
+    if(view === 'bulkWiki'){ populateSelect('bwWorld', worlds, 'name'); document.getElementById('bwResults').innerHTML = ''; document.getElementById('bwFlag').textContent = ''; }
   };
 
   renderGrid();
