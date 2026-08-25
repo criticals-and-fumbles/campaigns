@@ -53,8 +53,8 @@ export function renderConsolePage({
       <div class="navitem sub" data-view="createDossier">+ Create Session / Dossier</div>
       <div class="navitem" data-view="campaigns">My Campaigns <span class="n" id="campaignCountTag">0</span></div>
     </div>
-    <div class="navgroup">
-      <div class="label">WORLD BUILDING</div>
+    <div class="navgroup collapsible collapsed" id="worldBuildingGroup">
+      <div class="label collapse-toggle"><span>WORLD BUILDING</span><span class="chev">▸</span></div>
       <div class="navitem" data-view="createWorldUnit">+ Create World Unit</div>
       <div class="navitem" data-view="worldUnits">My World Units <span class="n" id="worldUnitCountTag">0</span></div>
       <div class="navitem" data-view="createFaction">+ Create Faction</div>
@@ -67,11 +67,14 @@ export function renderConsolePage({
       <div class="navitem" data-view="loreEntries">My Lore Entries <span class="n" id="loreEntryCountTag">0</span></div>
       <div class="navitem" data-view="createNotablePlace">+ Create Notable Place</div>
       <div class="navitem" data-view="notablePlaces">My Notable Places <span class="n" id="notablePlaceCountTag">0</span></div>
-      <div class="navitem" data-view="bulkWiki">Bulk Wiki Import</div>
+    </div>
+    <div class="navgroup">
+      <div class="label">IMPORT / EXPORT</div>
+      <div class="navitem active" data-view="bulk">Dossier Import/Export <span class="n" id="countTag">0</span></div>
+      <div class="navitem" data-view="bulkWiki">Wiki Import</div>
     </div>
     <div class="navgroup">
       <div class="label">VIEWS</div>
-      <div class="navitem active" data-view="bulk">Bulk Editor <span class="n" id="countTag">0</span></div>
       <div class="navitem" data-view="single" id="navSingle" style="display:none;">Editing Dossier</div>
     </div>
     <div class="navgroup">
@@ -83,7 +86,7 @@ export function renderConsolePage({
 
   <main class="main">
     <div class="topbar">
-      <h1 id="viewTitle">Bulk Dossier Editor</h1>
+      <h1 id="viewTitle">Dossier Import/Export</h1>
       <div class="toolbar" id="bulkToolbar">
         <button class="btn" id="exportXml">Export XML</button>
         <button class="btn" id="importXmlBtn">Import XML</button>
@@ -718,6 +721,10 @@ const CONSOLE_CSS = `
   .brand .dot{margin-top:6px; flex-shrink:0;}
   .brand .dot{width:8px; height:8px; border-radius:50%; background:var(--pink); box-shadow:0 0 8px var(--pink);}
   .navgroup .label{font-family:var(--font-mono); font-size:9.5px; letter-spacing:2px; color:var(--text-faint); margin:14px 0 8px;}
+  .navgroup .label.collapse-toggle{display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;}
+  .navgroup .label.collapse-toggle .chev{font-size:11px; transition:transform .15s ease;}
+  .navgroup.collapsible:not(.collapsed) .label.collapse-toggle .chev{transform:rotate(90deg);}
+  .navgroup.collapsible.collapsed .navitem{display:none;}
   .navitem{display:flex; align-items:center; justify-content:space-between; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; padding:9px 10px; color:var(--text-dim); cursor:pointer; border-left:2px solid transparent;}
   .navitem.sub{padding-left:22px; font-size:10px;}
   .navitem.active{color:var(--emerald); border-left-color:var(--emerald); background:var(--panel);}
@@ -805,7 +812,7 @@ const CONSOLE_JS = `
 
   // ---------- VIEW SWITCHING ----------
   const VIEWS = {
-    bulk: { panel: 'bulkView', title: 'Bulk Dossier Editor', toolbar: true },
+    bulk: { panel: 'bulkView', title: 'Dossier Import/Export', toolbar: true },
     campaigns: { panel: 'campaignsView', title: 'My Campaigns', toolbar: false },
     campaignSessions: { panel: 'campaignSessionsView', title: 'Campaign Sessions', toolbar: false },
     createCampaign: { panel: 'createCampaignView', title: 'Create New Campaign', toolbar: false },
@@ -844,6 +851,10 @@ const CONSOLE_JS = `
 
   document.querySelectorAll('.navitem[data-view]').forEach(item=>{
     item.addEventListener('click', ()=> switchView(item.dataset.view));
+  });
+
+  document.querySelectorAll('.navgroup.collapsible .collapse-toggle').forEach(toggle=>{
+    toggle.addEventListener('click', ()=> toggle.closest('.navgroup').classList.toggle('collapsed'));
   });
 
   // ---------- BULK DOSSIER GRID ----------
@@ -2100,7 +2111,7 @@ const CONSOLE_JS = `
     notablePlaces: { panel: 'notablePlacesView', title: 'My Notable Places', toolbar: false },
     createNotablePlace: { panel: 'createNotablePlaceView', title: 'Create Notable Place', toolbar: false },
     editNotablePlace: { panel: 'editNotablePlaceView', title: 'Edit Notable Place', toolbar: false },
-    bulkWiki: { panel: 'bulkWikiView', title: 'Bulk Wiki Import', toolbar: false },
+    bulkWiki: { panel: 'bulkWikiView', title: 'Wiki Import', toolbar: false },
   });
   [
     'createWorldUnitView','editWorldUnitView','createFactionView','editFactionView',
