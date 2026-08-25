@@ -55,23 +55,25 @@ export function renderConsolePage({
     </div>
     <div class="navgroup collapsible collapsed" id="worldBuildingGroup">
       <div class="label collapse-toggle"><span>WORLD BUILDING</span><span class="chev">▸</span></div>
+      <div class="sublabel">Create</div>
       <div class="navitem" data-view="createWorldUnit">+ Create World Unit</div>
-      <div class="navitem" data-view="worldUnits">My World Units <span class="n" id="worldUnitCountTag">0</span></div>
       <div class="navitem" data-view="createFaction">+ Create Faction</div>
-      <div class="navitem" data-view="factions">My Factions <span class="n" id="factionCountTag">0</span></div>
       <div class="navitem" data-view="createKeyFigure">+ Create Key Figure</div>
-      <div class="navitem" data-view="keyFigures">My Key Figures <span class="n" id="keyFigureCountTag">0</span></div>
       <div class="navitem" data-view="createMagicItem">+ Create Magic Item</div>
-      <div class="navitem" data-view="magicItems">My Magic Items <span class="n" id="magicItemCountTag">0</span></div>
       <div class="navitem" data-view="createLoreEntry">+ Create Lore Entry</div>
-      <div class="navitem" data-view="loreEntries">My Lore Entries <span class="n" id="loreEntryCountTag">0</span></div>
       <div class="navitem" data-view="createNotablePlace">+ Create Notable Place</div>
+      <div class="sublabel">Edit</div>
+      <div class="navitem" data-view="worldUnits">My World Units <span class="n" id="worldUnitCountTag">0</span></div>
+      <div class="navitem" data-view="factions">My Factions <span class="n" id="factionCountTag">0</span></div>
+      <div class="navitem" data-view="keyFigures">My Key Figures <span class="n" id="keyFigureCountTag">0</span></div>
+      <div class="navitem" data-view="magicItems">My Magic Items <span class="n" id="magicItemCountTag">0</span></div>
+      <div class="navitem" data-view="loreEntries">My Lore Entries <span class="n" id="loreEntryCountTag">0</span></div>
       <div class="navitem" data-view="notablePlaces">My Notable Places <span class="n" id="notablePlaceCountTag">0</span></div>
     </div>
     <div class="navgroup">
       <div class="label">IMPORT / EXPORT</div>
-      <div class="navitem active" data-view="bulk">Dossier Import/Export <span class="n" id="countTag">0</span></div>
-      <div class="navitem" data-view="bulkWiki">Wiki Import</div>
+      <div class="navitem active" data-view="bulk">Dossier <span class="n" id="countTag">0</span></div>
+      <div class="navitem" data-view="bulkWiki">Wiki</div>
     </div>
     <div class="navgroup">
       <div class="label">VIEWS</div>
@@ -86,7 +88,7 @@ export function renderConsolePage({
 
   <main class="main">
     <div class="topbar">
-      <h1 id="viewTitle">Dossier Import/Export</h1>
+      <h1 id="viewTitle">Dossier</h1>
       <div class="toolbar" id="bulkToolbar">
         <button class="btn" id="exportXml">Export XML</button>
         <button class="btn" id="importXmlBtn">Import XML</button>
@@ -724,7 +726,8 @@ const CONSOLE_CSS = `
   .navgroup .label.collapse-toggle{display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;}
   .navgroup .label.collapse-toggle .chev{font-size:11px; transition:transform .15s ease;}
   .navgroup.collapsible:not(.collapsed) .label.collapse-toggle .chev{transform:rotate(90deg);}
-  .navgroup.collapsible.collapsed .navitem{display:none;}
+  .navgroup.collapsible.collapsed .navitem, .navgroup.collapsible.collapsed .sublabel{display:none;}
+  .sublabel{font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; color:var(--text-faint); padding:8px 10px 4px; text-transform:uppercase;}
   .navitem{display:flex; align-items:center; justify-content:space-between; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; padding:9px 10px; color:var(--text-dim); cursor:pointer; border-left:2px solid transparent;}
   .navitem.sub{padding-left:22px; font-size:10px;}
   .navitem.active{color:var(--emerald); border-left-color:var(--emerald); background:var(--panel);}
@@ -812,7 +815,7 @@ const CONSOLE_JS = `
 
   // ---------- VIEW SWITCHING ----------
   const VIEWS = {
-    bulk: { panel: 'bulkView', title: 'Dossier Import/Export', toolbar: true },
+    bulk: { panel: 'bulkView', title: 'Dossier', toolbar: true },
     campaigns: { panel: 'campaignsView', title: 'My Campaigns', toolbar: false },
     campaignSessions: { panel: 'campaignSessionsView', title: 'Campaign Sessions', toolbar: false },
     createCampaign: { panel: 'createCampaignView', title: 'Create New Campaign', toolbar: false },
@@ -2111,7 +2114,7 @@ const CONSOLE_JS = `
     notablePlaces: { panel: 'notablePlacesView', title: 'My Notable Places', toolbar: false },
     createNotablePlace: { panel: 'createNotablePlaceView', title: 'Create Notable Place', toolbar: false },
     editNotablePlace: { panel: 'editNotablePlaceView', title: 'Edit Notable Place', toolbar: false },
-    bulkWiki: { panel: 'bulkWikiView', title: 'Wiki Import', toolbar: false },
+    bulkWiki: { panel: 'bulkWikiView', title: 'Wiki', toolbar: false },
   });
   [
     'createWorldUnitView','editWorldUnitView','createFactionView','editFactionView',
