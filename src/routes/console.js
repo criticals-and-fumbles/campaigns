@@ -1,7 +1,13 @@
 import { Hono } from "hono";
 import { query } from "../lib/sanity.js";
 import { renderConsolePage } from "../templates/console.js";
-import { DOSSIER_XML_TEMPLATE, OBJECTIVES_CSV_TEMPLATE } from "../lib/import-templates.js";
+import {
+  DOSSIER_XML_TEMPLATE,
+  OBJECTIVES_CSV_TEMPLATE,
+  WIKI_JSON_TEMPLATE,
+  WIKI_IMPORT_PROMPT,
+} from "../lib/import-templates.js";
+import { blocksToMarkdown } from "../lib/portable-text.js";
 
 const app = new Hono();
 
@@ -28,17 +34,111 @@ const MY_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->ownerEmail == $emai
 // DM picks from the same list when creating a campaign.
 const GENRE_THEMES_QUERY = `*[_type == "genreTheme"] | order(genre asc){ _id, genre, campaignOverride }`;
 
+// ---- Wiki manual builder data (unscoped — shared content, any console
+// GM may edit any of it, see lib/wiki-audit.js) ----
+const WORLDS_QUERY = `*[_type == "world"] | order(name asc){ _id, name }`;
+const TEAM_MEMBERS_QUERY = `*[_type == "teamMember"] | order(handle asc){ _id, handle }`;
+
+const WORLD_UNITS_QUERY = `*[_type == "worldUnit"] | order(name asc){
+  _id, name, overview, developmentStatus, colourAccent, pageFooterCTA, mapImageUrl,
+  consoleEditedByEmail, consoleEditedAt,
+  "world": world._ref, "dmOwner": dmOwner._ref
+}`;
+
+const FACTIONS_QUERY = `*[_type == "faction"] | order(name asc){
+  _id, name, factionType, description, dmNotes,
+  consoleEditedByEmail, consoleEditedAt,
+  "world": world._ref, "unit": unit._ref, "members": members[]._ref
+}`;
+
+const KEY_FIGURES_QUERY = `*[_type == "keyFigure"] | order(name asc){
+  _id, name, alsoKnownAs, status, role, threatLevel, description,
+  hasStatBlock, statBlock, dmNotes,
+  consoleEditedByEmail, consoleEditedAt,
+  "world": world._ref, "unit": unit._ref, "faction": faction._ref
+}`;
+
+const MAGIC_ITEMS_QUERY = `*[_type == "magicItem"] | order(name asc){
+  _id, name, itemType, rarity, lore, hasMechanics, mechanics, dmNotes,
+  consoleEditedByEmail, consoleEditedAt,
+  "world": world._ref, "unit": unit._ref,
+  "currentHolder": currentHolder._ref, "foundAt": foundAt._ref
+}`;
+
+const NOTABLE_PLACES_QUERY = `*[_type == "notablePlace"] | order(name asc){
+  _id, name, placeType, dangerLevel, description, dmNotes,
+  consoleEditedByEmail, consoleEditedAt,
+  "world": world._ref, "unit": unit._ref,
+  "keyFigures": keyFigures[]._ref, "items": items[]._ref
+}`;
+
+const LORE_ENTRIES_QUERY = `*[_type == "loreEntry"] | order(title asc){
+  _id, title, alsoKnownAs, category, summary, body, canonStatus,
+  firstAppeared, tags,
+  consoleEditedByEmail, consoleEditedAt,
+  "world": world._ref, "unit": unit._ref,
+  "relatedEntries": relatedEntries[]._ref, "submittedBy": submittedBy._ref
+}`;
+
+// Portable Text fields converted to plain markdown server-side so the
+// manual builder's <textarea>s can show/re-save them as text — see
+// lib/portable-text.js. Mutates each doc in place for brevity.
+function convertBlocksToMarkdown(docs, fields) {
+  for (const doc of docs) {
+    for (const field of fields) {
+      if (doc[field]) doc[field] = blocksToMarkdown(doc[field]);
+    }
+  }
+  return docs;
+}
+
 app.get("/", async (c) => {
   const email = c.get("gmEmail");
-  const [campaigns, dossiers, genreThemes] = await Promise.all([
+  const [
+    campaigns,
+    dossiers,
+    genreThemes,
+    worlds,
+    teamMembers,
+    worldUnits,
+    factions,
+    keyFigures,
+    magicItems,
+    notablePlaces,
+    loreEntries,
+  ] = await Promise.all([
     query(c.env, MY_CAMPAIGNS_QUERY, { email }),
     query(c.env, MY_DOSSIERS_QUERY, { email }),
     query(c.env, GENRE_THEMES_QUERY),
+    query(c.env, WORLDS_QUERY),
+    query(c.env, TEAM_MEMBERS_QUERY),
+    query(c.env, WORLD_UNITS_QUERY),
+    query(c.env, FACTIONS_QUERY),
+    query(c.env, KEY_FIGURES_QUERY),
+    query(c.env, MAGIC_ITEMS_QUERY),
+    query(c.env, NOTABLE_PLACES_QUERY),
+    query(c.env, LORE_ENTRIES_QUERY),
   ]);
+
+  convertBlocksToMarkdown(worldUnits, ["overview", "pageFooterCTA"]);
+  convertBlocksToMarkdown(factions, ["description", "dmNotes"]);
+  convertBlocksToMarkdown(keyFigures, ["description", "dmNotes"]);
+  convertBlocksToMarkdown(magicItems, ["lore", "dmNotes"]);
+  convertBlocksToMarkdown(notablePlaces, ["description", "dmNotes"]);
+  convertBlocksToMarkdown(loreEntries, ["body"]);
+
   const html = renderConsolePage({
     campaigns,
     dossiers,
     genreThemes,
+    worlds,
+    teamMembers,
+    worldUnits,
+    factions,
+    keyFigures,
+    magicItems,
+    notablePlaces,
+    loreEntries,
     gmEmail: email,
     sanityProjectId: c.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
     sanityDataset: c.env.NEXT_PUBLIC_SANITY_DATASET,
@@ -63,6 +163,19 @@ app.get("/templates/objectives.csv", (c) =>
     "content-type": "text/csv",
     "content-disposition": 'attachment; filename="objectives-import-template.csv"',
   }),
+);
+
+app.get("/templates/wiki-import.json", (c) =>
+  c.body(WIKI_JSON_TEMPLATE, 200, {
+    "content-type": "application/json",
+    "content-disposition": 'attachment; filename="wiki-import-template.json"',
+  }),
+);
+
+// Plain text, not a download — the console's "Copy AI Prompt" button reads
+// this via fetch() and writes it to the clipboard directly.
+app.get("/templates/wiki-import-prompt.txt", (c) =>
+  c.body(WIKI_IMPORT_PROMPT, 200, { "content-type": "text/plain; charset=utf-8" }),
 );
 
 export default app;

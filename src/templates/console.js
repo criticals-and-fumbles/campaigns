@@ -17,10 +17,21 @@
  * too (api-campaign.js / api-dossier.js) — client-side scoping here is a
  * UX convenience, not the security boundary.
  */
-export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail, sanityProjectId, sanityDataset }) {
+export function renderConsolePage({
+  campaigns, dossiers, genreThemes, gmEmail, sanityProjectId, sanityDataset,
+  worlds, teamMembers, worldUnits, factions, keyFigures, magicItems, notablePlaces, loreEntries,
+}) {
   const initialCampaigns = JSON.stringify(campaigns).replace(/</g, "\\u003c");
   const initialDossiers = JSON.stringify(dossiers).replace(/</g, "\\u003c");
   const initialThemes = JSON.stringify(genreThemes).replace(/</g, "\\u003c");
+  const initialWorlds = JSON.stringify(worlds).replace(/</g, "\\u003c");
+  const initialTeamMembers = JSON.stringify(teamMembers).replace(/</g, "\\u003c");
+  const initialWorldUnits = JSON.stringify(worldUnits).replace(/</g, "\\u003c");
+  const initialFactions = JSON.stringify(factions).replace(/</g, "\\u003c");
+  const initialKeyFigures = JSON.stringify(keyFigures).replace(/</g, "\\u003c");
+  const initialMagicItems = JSON.stringify(magicItems).replace(/</g, "\\u003c");
+  const initialNotablePlaces = JSON.stringify(notablePlaces).replace(/</g, "\\u003c");
+  const initialLoreEntries = JSON.stringify(loreEntries).replace(/</g, "\\u003c");
 
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -41,6 +52,22 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail, s
       <div class="navitem" data-view="createCampaign">+ Create New Campaign</div>
       <div class="navitem sub" data-view="createDossier">+ Create Session / Dossier</div>
       <div class="navitem" data-view="campaigns">My Campaigns <span class="n" id="campaignCountTag">0</span></div>
+    </div>
+    <div class="navgroup">
+      <div class="label">WORLD BUILDING</div>
+      <div class="navitem" data-view="createWorldUnit">+ Create World Unit</div>
+      <div class="navitem" data-view="worldUnits">My World Units <span class="n" id="worldUnitCountTag">0</span></div>
+      <div class="navitem" data-view="createFaction">+ Create Faction</div>
+      <div class="navitem" data-view="factions">My Factions <span class="n" id="factionCountTag">0</span></div>
+      <div class="navitem" data-view="createKeyFigure">+ Create Key Figure</div>
+      <div class="navitem" data-view="keyFigures">My Key Figures <span class="n" id="keyFigureCountTag">0</span></div>
+      <div class="navitem" data-view="createMagicItem">+ Create Magic Item</div>
+      <div class="navitem" data-view="magicItems">My Magic Items <span class="n" id="magicItemCountTag">0</span></div>
+      <div class="navitem" data-view="createLoreEntry">+ Create Lore Entry</div>
+      <div class="navitem" data-view="loreEntries">My Lore Entries <span class="n" id="loreEntryCountTag">0</span></div>
+      <div class="navitem" data-view="createNotablePlace">+ Create Notable Place</div>
+      <div class="navitem" data-view="notablePlaces">My Notable Places <span class="n" id="notablePlaceCountTag">0</span></div>
+      <div class="navitem" data-view="bulkWiki">Bulk Wiki Import</div>
     </div>
     <div class="navgroup">
       <div class="label">VIEWS</div>
@@ -193,6 +220,147 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail, s
         <span class="savedflag" id="savedFlag">✓ Saved</span>
       </div>
     </div>
+
+    <!-- ============ WIKI MANUAL BUILDER ============ -->
+
+    <div id="worldUnitsView" style="display:none;">
+      <table><thead><tr><th>Name</th><th>World</th><th>Status</th><th>Last Edited By</th><th></th></tr></thead><tbody id="worldUnitGridBody"></tbody></table>
+    </div>
+    <div class="editor" id="createWorldUnitView">
+      <h2>NEW WORLD UNIT</h2>
+      ${worldOnlyFieldBlock("cwu")}
+      <div class="field"><label>Name *</label><input type="text" id="cwuName"></div>
+      ${worldUnitFieldsBlock("cwu")}
+      <div class="savebar"><button class="btn primary" id="cwuSubmit">Create World Unit</button><span class="savedflag" id="cwuFlag"></span></div>
+    </div>
+    <div class="editor" id="editWorldUnitView">
+      <h2>EDIT WORLD UNIT</h2>
+      <div class="field"><label>World</label><input type="text" id="ewuWorldTitle" readonly></div>
+      <div class="field"><label>Name *</label><input type="text" id="ewuName"></div>
+      ${worldUnitFieldsBlock("ewu")}
+      <p class="hint" id="ewuAudit"></p>
+      <div class="savebar"><button class="btn primary" id="ewuSave">Save World Unit</button><button class="btn" id="ewuCancel">← Back</button><span class="savedflag" id="ewuFlag"></span></div>
+    </div>
+
+    <div id="factionsView" style="display:none;">
+      <table><thead><tr><th>Name</th><th>Type</th><th>Last Edited By</th><th></th></tr></thead><tbody id="factionGridBody"></tbody></table>
+    </div>
+    <div class="editor" id="createFactionView">
+      <h2>NEW FACTION</h2>
+      ${worldUnitRefFieldsBlock("cfa")}
+      <div class="field"><label>Name *</label><input type="text" id="cfaName"></div>
+      ${factionFieldsBlock("cfa")}
+      <div class="savebar"><button class="btn primary" id="cfaSubmit">Create Faction</button><span class="savedflag" id="cfaFlag"></span></div>
+    </div>
+    <div class="editor" id="editFactionView">
+      <h2>EDIT FACTION</h2>
+      <div class="field"><label>Name *</label><input type="text" id="efaName"></div>
+      ${factionFieldsBlock("efa")}
+      <p class="hint" id="efaAudit"></p>
+      <div class="savebar"><button class="btn primary" id="efaSave">Save Faction</button><button class="btn" id="efaCancel">← Back</button><span class="savedflag" id="efaFlag"></span></div>
+    </div>
+
+    <div id="keyFiguresView" style="display:none;">
+      <table><thead><tr><th>Name</th><th>Status</th><th>Threat</th><th>Last Edited By</th><th></th></tr></thead><tbody id="keyFigureGridBody"></tbody></table>
+    </div>
+    <div class="editor" id="createKeyFigureView">
+      <h2>NEW KEY FIGURE</h2>
+      ${worldUnitRefFieldsBlock("ckf")}
+      <div class="field"><label>Name *</label><input type="text" id="ckfName"></div>
+      ${keyFigureFieldsBlock("ckf")}
+      <div class="savebar"><button class="btn primary" id="ckfSubmit">Create Key Figure</button><span class="savedflag" id="ckfFlag"></span></div>
+    </div>
+    <div class="editor" id="editKeyFigureView">
+      <h2>EDIT KEY FIGURE</h2>
+      <div class="field"><label>Name *</label><input type="text" id="ekfName"></div>
+      ${keyFigureFieldsBlock("ekf")}
+      <p class="hint" id="ekfAudit"></p>
+      <div class="savebar"><button class="btn primary" id="ekfSave">Save Key Figure</button><button class="btn" id="ekfCancel">← Back</button><span class="savedflag" id="ekfFlag"></span></div>
+    </div>
+
+    <div id="magicItemsView" style="display:none;">
+      <table><thead><tr><th>Name</th><th>Rarity</th><th>Last Edited By</th><th></th></tr></thead><tbody id="magicItemGridBody"></tbody></table>
+    </div>
+    <div class="editor" id="createMagicItemView">
+      <h2>NEW MAGIC ITEM</h2>
+      ${worldUnitRefFieldsBlock("cmi")}
+      <div class="field"><label>Name *</label><input type="text" id="cmiName"></div>
+      ${magicItemFieldsBlock("cmi")}
+      <div class="savebar"><button class="btn primary" id="cmiSubmit">Create Magic Item</button><span class="savedflag" id="cmiFlag"></span></div>
+    </div>
+    <div class="editor" id="editMagicItemView">
+      <h2>EDIT MAGIC ITEM</h2>
+      <div class="field"><label>Name *</label><input type="text" id="emiName"></div>
+      ${magicItemFieldsBlock("emi")}
+      <p class="hint" id="emiAudit"></p>
+      <div class="savebar"><button class="btn primary" id="emiSave">Save Magic Item</button><button class="btn" id="emiCancel">← Back</button><span class="savedflag" id="emiFlag"></span></div>
+    </div>
+
+    <div id="loreEntriesView" style="display:none;">
+      <table><thead><tr><th>Title</th><th>Category</th><th>Canon Status</th><th>Last Edited By</th><th></th></tr></thead><tbody id="loreEntryGridBody"></tbody></table>
+    </div>
+    <div class="editor" id="createLoreEntryView">
+      <h2>NEW LORE ENTRY</h2>
+      <div class="field"><label>World *</label><select id="cleWorld"></select></div>
+      <div class="field"><label>Title *</label><input type="text" id="cleTitle"></div>
+      <div class="field"><label>Unit</label><select id="cleUnit"><option value="">—</option></select></div>
+      ${loreEntryFieldsBlock("cle")}
+      <div class="savebar"><button class="btn primary" id="cleSubmit">Create Lore Entry</button><span class="savedflag" id="cleFlag"></span></div>
+    </div>
+    <div class="editor" id="editLoreEntryView">
+      <h2>EDIT LORE ENTRY</h2>
+      <div class="field"><label>World</label><input type="text" id="eleWorldTitle" readonly></div>
+      <div class="field"><label>Title *</label><input type="text" id="eleTitle"></div>
+      <div class="field"><label>Unit</label><select id="eleUnit"><option value="">—</option></select></div>
+      ${loreEntryFieldsBlock("ele")}
+      <p class="hint" id="eleAudit"></p>
+      <div class="savebar"><button class="btn primary" id="eleSave">Save Lore Entry</button><button class="btn" id="eleCancel">← Back</button><span class="savedflag" id="eleFlag"></span></div>
+    </div>
+
+    <div id="notablePlacesView" style="display:none;">
+      <table><thead><tr><th>Name</th><th>Type</th><th>Danger</th><th>Last Edited By</th><th></th></tr></thead><tbody id="notablePlaceGridBody"></tbody></table>
+    </div>
+    <div class="editor" id="createNotablePlaceView">
+      <h2>NEW NOTABLE PLACE</h2>
+      ${worldUnitRefFieldsBlock("cnp")}
+      <div class="field"><label>Name *</label><input type="text" id="cnpName"></div>
+      ${notablePlaceFieldsBlock("cnp")}
+      <div class="savebar"><button class="btn primary" id="cnpSubmit">Create Notable Place</button><span class="savedflag" id="cnpFlag"></span></div>
+    </div>
+    <div class="editor" id="editNotablePlaceView">
+      <h2>EDIT NOTABLE PLACE</h2>
+      <div class="field"><label>Name *</label><input type="text" id="enpName"></div>
+      ${notablePlaceFieldsBlock("enp")}
+      <p class="hint" id="enpAudit"></p>
+      <div class="savebar"><button class="btn primary" id="enpSave">Save Notable Place</button><button class="btn" id="enpCancel">← Back</button><span class="savedflag" id="enpFlag"></span></div>
+    </div>
+
+    <div id="bulkWikiView" style="display:none;">
+      <p class="hint">
+        Hand the downloaded template and prompt to your AI agent (Claude, ChatGPT, Gemini)
+        along with your raw notes — it sorts your notes into the template's shape.
+        Then pick which World Unit this import targets and upload the result.
+        Nothing in the file chooses the World Unit — that's always set here.
+      </p>
+      <div class="field">
+        <a class="btn" href="/console/templates/wiki-import.json">Download JSON Template</a>
+        <button class="btn" id="bwCopyPrompt">Copy AI Prompt</button>
+        <span class="savedflag" id="bwCopyFlag"></span>
+      </div>
+      <div class="field">
+        <label>Target World Unit *</label>
+        <select id="bwWorldUnit"></select>
+      </div>
+      <div class="field">
+        <label>Wiki Import JSON</label>
+        <input type="file" id="bwFile" accept=".json">
+      </div>
+      <div class="savebar">
+        <button class="btn primary" id="bwImport">Import</button>
+        <span class="savedflag" id="bwFlag"></span>
+      </div>
+      <div id="bwResults"></div>
+    </div>
   </main>
 </div>
 
@@ -209,6 +377,14 @@ export function renderConsolePage({ campaigns, dossiers, genreThemes, gmEmail, s
   const INITIAL_CAMPAIGNS = ${initialCampaigns};
   const INITIAL_DOSSIERS = ${initialDossiers};
   const INITIAL_THEMES = ${initialThemes};
+  const INITIAL_WORLDS = ${initialWorlds};
+  const INITIAL_TEAM_MEMBERS = ${initialTeamMembers};
+  const INITIAL_WORLD_UNITS = ${initialWorldUnits};
+  const INITIAL_FACTIONS = ${initialFactions};
+  const INITIAL_KEY_FIGURES = ${initialKeyFigures};
+  const INITIAL_MAGIC_ITEMS = ${initialMagicItems};
+  const INITIAL_NOTABLE_PLACES = ${initialNotablePlaces};
+  const INITIAL_LORE_ENTRIES = ${initialLoreEntries};
   const SANITY_PROJECT_ID = ${JSON.stringify(sanityProjectId || "")};
   const SANITY_DATASET = ${JSON.stringify(sanityDataset || "")};
   ${CONSOLE_JS}
@@ -320,6 +496,201 @@ function dossierFieldsBlock(prefix) {
         <button type="button" class="btn small" data-add-row="${prefix}Log:logEntry">+ Add Entry</button>
       </div>
       <p class="hint">Media gallery items (image/audio/video) aren't in this form yet — add those directly in Sanity Studio.</p>
+  `;
+}
+
+// ---- Wiki manual builder field blocks ----
+// World/Unit are rendered as plain <select> shells here (options filled
+// client-side from INITIAL_WORLDS/INITIAL_WORLD_UNITS via populateSelect())
+// — same "empty <select id=...> filled client-side" pattern
+// createCampaignView's Genre Theme select already uses.
+function worldUnitFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>dmOwner</label><select id="${prefix}DmOwner"></select></div>
+      <div class="field"><label>Overview</label><textarea id="${prefix}Overview" rows="4" placeholder="Markdown — paragraphs separated by a blank line."></textarea></div>
+      <div class="field">
+        <label>Development Status</label>
+        <select id="${prefix}DevelopmentStatus">
+          <option value="draft">Draft</option>
+          <option value="in-progress">In Progress</option>
+          <option value="established">Established</option>
+          <option value="canonical">Canonical</option>
+        </select>
+      </div>
+      <div class="field"><label>Colour Accent (hex)</label><input type="text" id="${prefix}ColourAccent" placeholder="#8B2E2E"></div>
+      <div class="field"><label>Page Footer CTA</label><textarea id="${prefix}PageFooterCTA" rows="2" placeholder="Markdown"></textarea></div>
+      <div class="field"><label>Map Image URL</label><input type="text" id="${prefix}MapImageUrl" placeholder="https://..."></div>
+  `;
+}
+
+// World-only select — for worldUnit itself, which belongs to a world but
+// not to another world unit.
+function worldOnlyFieldBlock(prefix) {
+  return `<div class="field"><label>World *</label><select id="${prefix}World"></select></div>`;
+}
+
+// World+Unit select pair — for faction/keyFigure/magicItem/notablePlace,
+// where both are optional per schema (unlike worldUnit.world/loreEntry.world).
+function worldUnitRefFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>World</label><select id="${prefix}World"><option value="">—</option></select></div>
+      <div class="field"><label>Unit</label><select id="${prefix}Unit"><option value="">—</option></select></div>
+  `;
+}
+
+function factionFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>Faction Type</label><input type="text" id="${prefix}FactionType" placeholder="e.g. smuggling ring, noble house"></div>
+      <div class="field"><label>Description</label><textarea id="${prefix}Description" rows="4" placeholder="Markdown"></textarea></div>
+      <div class="field"><label>Members (Key Figures)</label><select id="${prefix}Members" multiple size="5"></select></div>
+      <div class="field"><label>DM Notes (private)</label><textarea id="${prefix}DmNotes" rows="3" placeholder="Markdown"></textarea></div>
+  `;
+}
+
+function keyFigureFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>Also Known As</label><input type="text" id="${prefix}AlsoKnownAs"></div>
+      <div class="field">
+        <label>Status</label>
+        <select id="${prefix}Status">
+          <option value="alive">Alive</option>
+          <option value="dead">Dead</option>
+          <option value="unknown">Unknown</option>
+          <option value="missing">Missing</option>
+        </select>
+      </div>
+      <div class="field"><label>Faction</label><select id="${prefix}Faction"><option value="">—</option></select></div>
+      <div class="field"><label>Role</label><input type="text" id="${prefix}Role" placeholder="e.g. Ruler, Merchant, Villain, Ally"></div>
+      <div class="field">
+        <label>Threat Level</label>
+        <select id="${prefix}ThreatLevel">
+          <option value="friendly">Friendly</option>
+          <option value="neutral" selected>Neutral</option>
+          <option value="cautious">Cautious</option>
+          <option value="dangerous">Dangerous</option>
+          <option value="deadly">Deadly</option>
+        </select>
+      </div>
+      <div class="field"><label>Description</label><textarea id="${prefix}Description" rows="4" placeholder="Markdown"></textarea></div>
+      <div class="field">
+        <label class="checkline"><input type="checkbox" id="${prefix}HasStatBlock"> Has Stat Block</label>
+      </div>
+      <div id="${prefix}StatBlockFields" style="display:none;">
+        <div class="field">
+          <label>Size</label>
+          <select id="${prefix}SbSize">
+            <option value="">—</option>
+            <option>Tiny</option><option>Small</option><option>Medium</option>
+            <option>Large</option><option>Huge</option><option>Gargantuan</option>
+          </select>
+        </div>
+        <div class="field"><label>Creature Type</label><input type="text" id="${prefix}SbCreatureType" placeholder="humanoid, dragon, undead, beast, fiend, etc."></div>
+        <div class="field"><label>Alignment</label><input type="text" id="${prefix}SbAlignment" placeholder="e.g. Chaotic Evil"></div>
+        <div class="field"><label>Armor Class</label><input type="text" id="${prefix}SbAc" placeholder='e.g. 15 (studded leather)'></div>
+        <div class="field"><label>Hit Points</label><input type="text" id="${prefix}SbHp" placeholder='e.g. 58 (9d8+18)'></div>
+        <div class="field"><label>Speed</label><input type="text" id="${prefix}SbSpeed" placeholder='e.g. 30 ft., fly 60 ft.'></div>
+        <div class="field"><label>STR</label><input type="number" id="${prefix}SbStr"></div>
+        <div class="field"><label>DEX</label><input type="number" id="${prefix}SbDex"></div>
+        <div class="field"><label>CON</label><input type="number" id="${prefix}SbCon"></div>
+        <div class="field"><label>INT</label><input type="number" id="${prefix}SbInt"></div>
+        <div class="field"><label>WIS</label><input type="number" id="${prefix}SbWis"></div>
+        <div class="field"><label>CHA</label><input type="number" id="${prefix}SbCha"></div>
+        <div class="field"><label>Saving Throws</label><input type="text" id="${prefix}SbSavingThrows" placeholder='e.g. Dex +6, Con +13, Wis +7'></div>
+        <div class="field"><label>Skills</label><input type="text" id="${prefix}SbSkills"></div>
+        <div class="field"><label>Resistances</label><input type="text" id="${prefix}SbResistances"></div>
+        <div class="field"><label>Immunities</label><input type="text" id="${prefix}SbImmunities"></div>
+        <div class="field"><label>Vulnerabilities</label><input type="text" id="${prefix}SbVulnerabilities"></div>
+        <div class="field"><label>Condition Immunities</label><input type="text" id="${prefix}SbConditionImmunities"></div>
+        <div class="field"><label>Senses</label><input type="text" id="${prefix}SbSenses"></div>
+        <div class="field"><label>Passive Perception</label><input type="number" id="${prefix}SbPassivePerception"></div>
+        <div class="field"><label>Languages</label><input type="text" id="${prefix}SbLanguages"></div>
+        <div class="field"><label>Challenge Rating</label><input type="text" id="${prefix}SbChallengeRating" placeholder='supports fractions, e.g. "1/2"'></div>
+        <div class="field"><label>Traits</label><div class="repeater" id="${prefix}SbTraits"></div><button type="button" class="btn small" data-add-row="${prefix}SbTraits:namedTextItem">+ Add Trait</button></div>
+        <div class="field"><label>Actions</label><div class="repeater" id="${prefix}SbActions"></div><button type="button" class="btn small" data-add-row="${prefix}SbActions:namedTextItem">+ Add Action</button></div>
+        <div class="field"><label>Legendary Actions</label><div class="repeater" id="${prefix}SbLegendaryActions"></div><button type="button" class="btn small" data-add-row="${prefix}SbLegendaryActions:namedTextItem">+ Add Legendary Action</button></div>
+        <div class="field"><label>Reactions</label><div class="repeater" id="${prefix}SbReactions"></div><button type="button" class="btn small" data-add-row="${prefix}SbReactions:namedTextItem">+ Add Reaction</button></div>
+      </div>
+      <div class="field"><label>DM Notes (private)</label><textarea id="${prefix}DmNotes" rows="3" placeholder="Markdown"></textarea></div>
+  `;
+}
+
+function magicItemFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>Item Type</label><input type="text" id="${prefix}ItemType"></div>
+      <div class="field">
+        <label>Rarity</label>
+        <select id="${prefix}Rarity">
+          <option value="common" selected>Common</option>
+          <option value="uncommon">Uncommon</option>
+          <option value="rare">Rare</option>
+          <option value="very-rare">Very Rare</option>
+          <option value="legendary">Legendary</option>
+          <option value="artifact">Artifact</option>
+        </select>
+      </div>
+      <div class="field"><label>Current Holder (Key Figure)</label><select id="${prefix}CurrentHolder"><option value="">—</option></select></div>
+      <div class="field"><label>Found At (Notable Place)</label><select id="${prefix}FoundAt"><option value="">—</option></select></div>
+      <div class="field"><label>Lore</label><textarea id="${prefix}Lore" rows="4" placeholder="Markdown"></textarea></div>
+      <div class="field">
+        <label class="checkline"><input type="checkbox" id="${prefix}HasMechanics"> Has Mechanics</label>
+      </div>
+      <div id="${prefix}MechanicsFields" style="display:none;">
+        <div class="field"><label>Item Type Detail</label><input type="text" id="${prefix}MItemTypeDetail"></div>
+        <div class="field"><label>Attunement</label><input type="text" id="${prefix}MAttunement"></div>
+        <div class="field"><label>Mechanics Text</label><textarea id="${prefix}MText" rows="4"></textarea></div>
+      </div>
+      <div class="field"><label>DM Notes (private)</label><textarea id="${prefix}DmNotes" rows="3" placeholder="Markdown"></textarea></div>
+  `;
+}
+
+function loreEntryFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>Also Known As</label><input type="text" id="${prefix}AlsoKnownAs"></div>
+      <div class="field">
+        <label>Category</label>
+        <select id="${prefix}Category">
+          <option value="">—</option>
+          <option>Location</option><option>Faction</option><option>NPC</option>
+          <option>History</option><option>Creature</option><option>Artefact</option>
+          <option>Magic</option><option>Pantheon</option><option>Culture</option>
+        </select>
+      </div>
+      <div class="field"><label>Summary (max 300 chars)</label><textarea id="${prefix}Summary" rows="2" maxlength="300"></textarea></div>
+      <div class="field"><label>Body</label><textarea id="${prefix}Body" rows="5" placeholder="Markdown"></textarea></div>
+      <div class="field">
+        <label>Canon Status</label>
+        <select id="${prefix}CanonStatus">
+          <option value="canon" selected>Canon</option>
+          <option value="homebrew">Homebrew</option>
+          <option value="disputed">Disputed</option>
+          <option value="rumour">Rumour</option>
+          <option value="retconned">Retconned</option>
+          <option value="dm-eyes-only">DM Eyes Only</option>
+        </select>
+      </div>
+      <div class="field"><label>First Appeared</label><input type="text" id="${prefix}FirstAppeared" placeholder="e.g. Session 3"></div>
+      <div class="field"><label>Related Entries</label><select id="${prefix}RelatedEntries" multiple size="5"></select></div>
+      <div class="field"><label>Tags (comma-separated)</label><input type="text" id="${prefix}Tags"></div>
+      <div class="field"><label>Submitted By</label><select id="${prefix}SubmittedBy"><option value="">—</option></select></div>
+  `;
+}
+
+function notablePlaceFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>Place Type</label><input type="text" id="${prefix}PlaceType" placeholder="e.g. tavern, dungeon, temple, ruin, market"></div>
+      <div class="field">
+        <label>Danger Level</label>
+        <select id="${prefix}DangerLevel">
+          <option value="safe" selected>Safe</option>
+          <option value="low-risk">Low Risk</option>
+          <option value="dangerous">Dangerous</option>
+          <option value="deadly">Deadly</option>
+        </select>
+      </div>
+      <div class="field"><label>Description</label><textarea id="${prefix}Description" rows="4" placeholder="Markdown"></textarea></div>
+      <div class="field"><label>Key Figures</label><select id="${prefix}KeyFigures" multiple size="5"></select></div>
+      <div class="field"><label>Items</label><select id="${prefix}Items" multiple size="5"></select></div>
+      <div class="field"><label>DM Notes (private)</label><textarea id="${prefix}DmNotes" rows="3" placeholder="Markdown"></textarea></div>
   `;
 }
 
@@ -1112,6 +1483,738 @@ const CONSOLE_JS = `
     }catch(err){ flashStatus('CSV import failed: ' + err.message, 'err'); }
     e.target.value = '';
   });
+
+  // ========== WIKI MANUAL BUILDER ==========
+  // Six types (worldUnit/faction/keyFigure/magicItem/loreEntry/
+  // notablePlace) share the same generic field-kind collect/populate
+  // helpers below instead of six hand-copied versions of
+  // openEditor()/edSave() — 'text'/'select'/'checkbox' etc. cover every
+  // plain field; statBlock/mechanics (nested objects) and the two
+  // World/Unit reference selects are handled by dedicated code per type
+  // since they don't fit the flat-field-map shape. All six use
+  // createOrReplace server-side (see api-*.js) — re-submitting the same
+  // name under the same world/unit updates that document in place.
+  let worldUnits = INITIAL_WORLD_UNITS;
+  let factions = INITIAL_FACTIONS;
+  let keyFigures = INITIAL_KEY_FIGURES;
+  let magicItems = INITIAL_MAGIC_ITEMS;
+  let notablePlaces = INITIAL_NOTABLE_PLACES;
+  let loreEntries = INITIAL_LORE_ENTRIES;
+  const worlds = INITIAL_WORLDS;
+  const teamMembers = INITIAL_TEAM_MEMBERS;
+
+  function worldNameFor(id){ const w = worlds.find(x=>x._id===id); return w ? w.name : ''; }
+  function unitNameFor(id){ const u = worldUnits.find(x=>x._id===id); return u ? u.name : ''; }
+
+  function populateSelect(selectId, items, labelKey, allowEmpty){
+    const sel = document.getElementById(selectId);
+    if(!sel) return;
+    const opts = items.map(it=> \`<option value="\${it._id}">\${it[labelKey]}</option>\`);
+    sel.innerHTML = (allowEmpty ? '<option value="">—</option>' : '') + opts.join('');
+  }
+
+  function getFieldValue(kind, id){
+    const el = document.getElementById(id);
+    if(!el) return undefined;
+    if(kind === 'text' || kind === 'markdown') return el.value.trim();
+    if(kind === 'number') return el.value === '' ? null : Number(el.value);
+    if(kind === 'select') return el.value || undefined;
+    // refSelect: explicit null (not undefined) when cleared — undefined is
+    // dropped by JSON.stringify, so a PATCH clearing a reference would
+    // otherwise send a body with no "value" key at all and silently fail
+    // to unset the stale reference server-side.
+    if(kind === 'refSelect') return el.value || null;
+    if(kind === 'checkbox') return el.checked;
+    if(kind === 'multiSelect') return Array.from(el.selectedOptions).map(o=>o.value);
+    if(kind === 'commaList') return el.value.split(',').map(s=>s.trim()).filter(Boolean);
+    return el.value;
+  }
+
+  function setFieldValue(kind, id, value){
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(kind === 'multiSelect'){
+      const ids = new Set(value||[]);
+      Array.from(el.options).forEach(o=> o.selected = ids.has(o.value));
+      return;
+    }
+    if(kind === 'checkbox'){ el.checked = !!value; return; }
+    if(kind === 'commaList'){ el.value = (value||[]).join(', '); return; }
+    if(kind === 'number'){ el.value = value ?? ''; return; }
+    el.value = value ?? '';
+  }
+
+  function collectFieldMap(fieldMap, prefix){
+    const out = {};
+    fieldMap.forEach(({ field, idSuffix, kind })=>{ out[field] = getFieldValue(kind, prefix + idSuffix); });
+    return out;
+  }
+
+  function populateFieldMap(fieldMap, prefix, data){
+    fieldMap.forEach(({ field, idSuffix, kind })=>{ setFieldValue(kind, prefix + idSuffix, data[field]); });
+  }
+
+  async function patchWikiField(kind, id, field, value){
+    const res = await fetch('/api/' + kind + '/' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify({ field, value }),
+    });
+    if(!res.ok) throw new Error((await res.json()).error || res.statusText);
+  }
+
+  function auditLine(doc){
+    if(!doc.consoleEditedByEmail) return 'Not yet edited via this console.';
+    return 'Last edited via console by ' + doc.consoleEditedByEmail + (doc.consoleEditedAt ? ' at ' + new Date(doc.consoleEditedAt).toLocaleString() : '');
+  }
+
+  REPEATER_SHAPES.namedTextItem = [
+    { key: 'name', ph: 'Name' },
+    { key: 'text', ph: 'Text', type: 'textarea' },
+  ];
+
+  // ---------- WORLD UNIT ----------
+  const WORLD_UNIT_EDIT_MAP = [
+    { field: 'name', idSuffix: 'Name', kind: 'text' },
+    { field: 'dmOwner', idSuffix: 'DmOwner', kind: 'refSelect' },
+    { field: 'overview', idSuffix: 'Overview', kind: 'markdown' },
+    { field: 'developmentStatus', idSuffix: 'DevelopmentStatus', kind: 'select' },
+    { field: 'colourAccent', idSuffix: 'ColourAccent', kind: 'text' },
+    { field: 'pageFooterCTA', idSuffix: 'PageFooterCTA', kind: 'markdown' },
+    { field: 'mapImageUrl', idSuffix: 'MapImageUrl', kind: 'text' },
+  ];
+
+  function renderWorldUnitGrid(){
+    const body = document.getElementById('worldUnitGridBody');
+    body.innerHTML = worldUnits.map(u=> \`
+      <tr>
+        <td>\${u.name||''}</td>
+        <td style="font-size:10px; color:var(--text-dim);">\${worldNameFor(u.world)}</td>
+        <td style="font-size:10px; color:var(--text-dim);">\${u.developmentStatus||''}</td>
+        <td style="font-size:9px; color:var(--text-faint);">\${u.consoleEditedByEmail||'—'}</td>
+        <td><button class="rowbtn" data-edit-world-unit="\${u._id}">Edit</button></td>
+      </tr>
+    \`).join('');
+    document.getElementById('worldUnitCountTag').textContent = worldUnits.length;
+    body.querySelectorAll('[data-edit-world-unit]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openEditWorldUnit(btn.dataset.editWorldUnit));
+    });
+  }
+
+  document.getElementById('cwuSubmit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('cwuFlag');
+    const world = document.getElementById('cwuWorld').value;
+    const rest = collectFieldMap(WORLD_UNIT_EDIT_MAP, 'cwu');
+    if(!world || !rest.name){
+      flag.textContent = 'World and Name are required.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    try{
+      const res = await fetch('/api/world-unit', {
+        method: 'POST', headers: {'content-type':'application/json'},
+        body: JSON.stringify({ world, ...rest }),
+      });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      worldUnits.push({ _id: result.id, world, ...rest });
+      flag.textContent = '✓ Created.';
+      flag.className = 'savedflag show';
+      setTimeout(()=>switchView('worldUnits'), 900);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  let activeWorldUnitEditId = null;
+  function openEditWorldUnit(id){
+    const u = worldUnits.find(x=>x._id===id);
+    if(!u) return;
+    activeWorldUnitEditId = id;
+    document.getElementById('ewuWorldTitle').value = worldNameFor(u.world);
+    populateSelect('ewuDmOwner', teamMembers, 'handle', true);
+    populateFieldMap(WORLD_UNIT_EDIT_MAP, 'ewu', u);
+    document.getElementById('ewuAudit').textContent = auditLine(u);
+    document.getElementById('ewuFlag').className = 'savedflag';
+    switchView('editWorldUnit');
+  }
+  document.getElementById('ewuCancel').addEventListener('click', ()=> switchView('worldUnits'));
+  document.getElementById('ewuSave').addEventListener('click', async ()=>{
+    if(!activeWorldUnitEditId) return;
+    const flag = document.getElementById('ewuFlag');
+    const updates = collectFieldMap(WORLD_UNIT_EDIT_MAP, 'ewu');
+    try{
+      await Promise.all(Object.entries(updates).map(([field,value])=> patchWikiField('world-unit', activeWorldUnitEditId, field, value)));
+      const u = worldUnits.find(x=>x._id===activeWorldUnitEditId);
+      if(u) Object.assign(u, updates);
+      flag.textContent = '✓ Saved.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('worldUnits'), 700);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  // ---------- FACTION ----------
+  const FACTION_EDIT_MAP = [
+    { field: 'name', idSuffix: 'Name', kind: 'text' },
+    { field: 'factionType', idSuffix: 'FactionType', kind: 'text' },
+    { field: 'description', idSuffix: 'Description', kind: 'markdown' },
+    { field: 'members', idSuffix: 'Members', kind: 'multiSelect' },
+    { field: 'dmNotes', idSuffix: 'DmNotes', kind: 'markdown' },
+  ];
+
+  function renderFactionGrid(){
+    const body = document.getElementById('factionGridBody');
+    body.innerHTML = factions.map(f=> \`
+      <tr>
+        <td>\${f.name||''}</td>
+        <td style="font-size:10px; color:var(--text-dim);">\${f.factionType||''}</td>
+        <td style="font-size:9px; color:var(--text-faint);">\${f.consoleEditedByEmail||'—'}</td>
+        <td><button class="rowbtn" data-edit-faction="\${f._id}">Edit</button></td>
+      </tr>
+    \`).join('');
+    document.getElementById('factionCountTag').textContent = factions.length;
+    body.querySelectorAll('[data-edit-faction]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openEditFaction(btn.dataset.editFaction));
+    });
+  }
+
+  document.getElementById('cfaSubmit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('cfaFlag');
+    const world = document.getElementById('cfaWorld').value || undefined;
+    const unit = document.getElementById('cfaUnit').value || undefined;
+    const rest = collectFieldMap(FACTION_EDIT_MAP, 'cfa');
+    if(!rest.name){ flag.textContent = 'Name is required.'; flag.className = 'savedflag show err'; return; }
+    try{
+      const res = await fetch('/api/faction', {
+        method: 'POST', headers: {'content-type':'application/json'},
+        body: JSON.stringify({ world, unit, ...rest }),
+      });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      factions.push({ _id: result.id, world, unit, ...rest });
+      flag.textContent = '✓ Created.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('factions'), 900);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  let activeFactionEditId = null;
+  function openEditFaction(id){
+    const f = factions.find(x=>x._id===id);
+    if(!f) return;
+    activeFactionEditId = id;
+    populateSelect('efaMembers', keyFigures, 'name');
+    populateFieldMap(FACTION_EDIT_MAP, 'efa', f);
+    document.getElementById('efaAudit').textContent = auditLine(f);
+    document.getElementById('efaFlag').className = 'savedflag';
+    switchView('editFaction');
+  }
+  document.getElementById('efaCancel').addEventListener('click', ()=> switchView('factions'));
+  document.getElementById('efaSave').addEventListener('click', async ()=>{
+    if(!activeFactionEditId) return;
+    const flag = document.getElementById('efaFlag');
+    const updates = collectFieldMap(FACTION_EDIT_MAP, 'efa');
+    try{
+      await Promise.all(Object.entries(updates).map(([field,value])=> patchWikiField('faction', activeFactionEditId, field, value)));
+      const f = factions.find(x=>x._id===activeFactionEditId);
+      if(f) Object.assign(f, updates);
+      flag.textContent = '✓ Saved.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('factions'), 700);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  // ---------- KEY FIGURE (includes statBlock, handled separately) ----------
+  const KEY_FIGURE_EDIT_MAP = [
+    { field: 'name', idSuffix: 'Name', kind: 'text' },
+    { field: 'alsoKnownAs', idSuffix: 'AlsoKnownAs', kind: 'text' },
+    { field: 'status', idSuffix: 'Status', kind: 'select' },
+    { field: 'faction', idSuffix: 'Faction', kind: 'refSelect' },
+    { field: 'role', idSuffix: 'Role', kind: 'text' },
+    { field: 'threatLevel', idSuffix: 'ThreatLevel', kind: 'select' },
+    { field: 'description', idSuffix: 'Description', kind: 'markdown' },
+    { field: 'dmNotes', idSuffix: 'DmNotes', kind: 'markdown' },
+  ];
+  const STAT_BLOCK_MAP = [
+    { field: 'size', idSuffix: 'SbSize', kind: 'select' },
+    { field: 'creatureType', idSuffix: 'SbCreatureType', kind: 'text' },
+    { field: 'alignment', idSuffix: 'SbAlignment', kind: 'text' },
+    { field: 'ac', idSuffix: 'SbAc', kind: 'text' },
+    { field: 'hp', idSuffix: 'SbHp', kind: 'text' },
+    { field: 'speed', idSuffix: 'SbSpeed', kind: 'text' },
+    { field: 'savingThrows', idSuffix: 'SbSavingThrows', kind: 'text' },
+    { field: 'skills', idSuffix: 'SbSkills', kind: 'text' },
+    { field: 'resistances', idSuffix: 'SbResistances', kind: 'text' },
+    { field: 'immunities', idSuffix: 'SbImmunities', kind: 'text' },
+    { field: 'vulnerabilities', idSuffix: 'SbVulnerabilities', kind: 'text' },
+    { field: 'conditionImmunities', idSuffix: 'SbConditionImmunities', kind: 'text' },
+    { field: 'senses', idSuffix: 'SbSenses', kind: 'text' },
+    { field: 'passivePerception', idSuffix: 'SbPassivePerception', kind: 'number' },
+    { field: 'languages', idSuffix: 'SbLanguages', kind: 'text' },
+    { field: 'challengeRating', idSuffix: 'SbChallengeRating', kind: 'text' },
+  ];
+
+  function collectStatBlock(prefix){
+    const sb = collectFieldMap(STAT_BLOCK_MAP, prefix);
+    sb.abilities = {
+      str: getFieldValue('number', prefix+'SbStr'), dex: getFieldValue('number', prefix+'SbDex'),
+      con: getFieldValue('number', prefix+'SbCon'), int: getFieldValue('number', prefix+'SbInt'),
+      wis: getFieldValue('number', prefix+'SbWis'), cha: getFieldValue('number', prefix+'SbCha'),
+    };
+    sb.traits = collectRepeaterRows(prefix+'SbTraits');
+    sb.actions = collectRepeaterRows(prefix+'SbActions');
+    sb.legendaryActions = collectRepeaterRows(prefix+'SbLegendaryActions');
+    sb.reactions = collectRepeaterRows(prefix+'SbReactions');
+    return sb;
+  }
+  function populateStatBlock(prefix, sb){
+    sb = sb || {};
+    populateFieldMap(STAT_BLOCK_MAP, prefix, sb);
+    const ab = sb.abilities || {};
+    setFieldValue('number', prefix+'SbStr', ab.str); setFieldValue('number', prefix+'SbDex', ab.dex);
+    setFieldValue('number', prefix+'SbCon', ab.con); setFieldValue('number', prefix+'SbInt', ab.int);
+    setFieldValue('number', prefix+'SbWis', ab.wis); setFieldValue('number', prefix+'SbCha', ab.cha);
+    populateRepeater(prefix+'SbTraits', 'namedTextItem', sb.traits);
+    populateRepeater(prefix+'SbActions', 'namedTextItem', sb.actions);
+    populateRepeater(prefix+'SbLegendaryActions', 'namedTextItem', sb.legendaryActions);
+    populateRepeater(prefix+'SbReactions', 'namedTextItem', sb.reactions);
+  }
+  function wireStatBlockToggle(prefix){
+    const cb = document.getElementById(prefix+'HasStatBlock');
+    const section = document.getElementById(prefix+'StatBlockFields');
+    cb.addEventListener('change', ()=>{ section.style.display = cb.checked ? '' : 'none'; });
+  }
+  wireStatBlockToggle('ckf'); wireStatBlockToggle('ekf');
+
+  function renderKeyFigureGrid(){
+    const body = document.getElementById('keyFigureGridBody');
+    body.innerHTML = keyFigures.map(k=> \`
+      <tr>
+        <td>\${k.name||''}</td>
+        <td style="font-size:10px; color:var(--text-dim);">\${k.status||''}</td>
+        <td style="font-size:10px; color:var(--text-dim);">\${k.threatLevel||''}</td>
+        <td style="font-size:9px; color:var(--text-faint);">\${k.consoleEditedByEmail||'—'}</td>
+        <td><button class="rowbtn" data-edit-key-figure="\${k._id}">Edit</button></td>
+      </tr>
+    \`).join('');
+    document.getElementById('keyFigureCountTag').textContent = keyFigures.length;
+    body.querySelectorAll('[data-edit-key-figure]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openEditKeyFigure(btn.dataset.editKeyFigure));
+    });
+  }
+
+  document.getElementById('ckfSubmit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('ckfFlag');
+    const world = document.getElementById('ckfWorld').value || undefined;
+    const unit = document.getElementById('ckfUnit').value || undefined;
+    const rest = collectFieldMap(KEY_FIGURE_EDIT_MAP, 'ckf');
+    const hasStatBlock = getFieldValue('checkbox', 'ckfHasStatBlock');
+    if(!rest.name){ flag.textContent = 'Name is required.'; flag.className = 'savedflag show err'; return; }
+    try{
+      const body = { world, unit, ...rest, hasStatBlock };
+      if(hasStatBlock) body.statBlock = collectStatBlock('ckf');
+      const res = await fetch('/api/key-figure', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify(body) });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      keyFigures.push({ _id: result.id, ...body });
+      flag.textContent = '✓ Created.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('keyFigures'), 900);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  let activeKeyFigureEditId = null;
+  function openEditKeyFigure(id){
+    const k = keyFigures.find(x=>x._id===id);
+    if(!k) return;
+    activeKeyFigureEditId = id;
+    populateSelect('ekfFaction', factions, 'name', true);
+    populateFieldMap(KEY_FIGURE_EDIT_MAP, 'ekf', k);
+    setFieldValue('checkbox', 'ekfHasStatBlock', k.hasStatBlock);
+    document.getElementById('ekfStatBlockFields').style.display = k.hasStatBlock ? '' : 'none';
+    populateStatBlock('ekf', k.statBlock);
+    document.getElementById('ekfAudit').textContent = auditLine(k);
+    document.getElementById('ekfFlag').className = 'savedflag';
+    switchView('editKeyFigure');
+  }
+  document.getElementById('ekfCancel').addEventListener('click', ()=> switchView('keyFigures'));
+  document.getElementById('ekfSave').addEventListener('click', async ()=>{
+    if(!activeKeyFigureEditId) return;
+    const flag = document.getElementById('ekfFlag');
+    const updates = collectFieldMap(KEY_FIGURE_EDIT_MAP, 'ekf');
+    updates.hasStatBlock = getFieldValue('checkbox', 'ekfHasStatBlock');
+    updates.statBlock = updates.hasStatBlock ? collectStatBlock('ekf') : null;
+    try{
+      await Promise.all(Object.entries(updates).map(([field,value])=> patchWikiField('key-figure', activeKeyFigureEditId, field, value)));
+      const k = keyFigures.find(x=>x._id===activeKeyFigureEditId);
+      if(k) Object.assign(k, updates);
+      flag.textContent = '✓ Saved.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('keyFigures'), 700);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  // ---------- MAGIC ITEM (includes mechanics) ----------
+  const MAGIC_ITEM_EDIT_MAP = [
+    { field: 'name', idSuffix: 'Name', kind: 'text' },
+    { field: 'itemType', idSuffix: 'ItemType', kind: 'text' },
+    { field: 'rarity', idSuffix: 'Rarity', kind: 'select' },
+    { field: 'currentHolder', idSuffix: 'CurrentHolder', kind: 'refSelect' },
+    { field: 'foundAt', idSuffix: 'FoundAt', kind: 'refSelect' },
+    { field: 'lore', idSuffix: 'Lore', kind: 'markdown' },
+    { field: 'dmNotes', idSuffix: 'DmNotes', kind: 'markdown' },
+  ];
+  const MECHANICS_MAP = [
+    { field: 'itemTypeDetail', idSuffix: 'MItemTypeDetail', kind: 'text' },
+    { field: 'attunement', idSuffix: 'MAttunement', kind: 'text' },
+    { field: 'text', idSuffix: 'MText', kind: 'text' },
+  ];
+  function wireMechanicsToggle(prefix){
+    const cb = document.getElementById(prefix+'HasMechanics');
+    const section = document.getElementById(prefix+'MechanicsFields');
+    cb.addEventListener('change', ()=>{ section.style.display = cb.checked ? '' : 'none'; });
+  }
+  wireMechanicsToggle('cmi'); wireMechanicsToggle('emi');
+
+  function renderMagicItemGrid(){
+    const body = document.getElementById('magicItemGridBody');
+    body.innerHTML = magicItems.map(m=> \`
+      <tr>
+        <td>\${m.name||''}</td>
+        <td style="font-size:10px; color:var(--text-dim);">\${m.rarity||''}</td>
+        <td style="font-size:9px; color:var(--text-faint);">\${m.consoleEditedByEmail||'—'}</td>
+        <td><button class="rowbtn" data-edit-magic-item="\${m._id}">Edit</button></td>
+      </tr>
+    \`).join('');
+    document.getElementById('magicItemCountTag').textContent = magicItems.length;
+    body.querySelectorAll('[data-edit-magic-item]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openEditMagicItem(btn.dataset.editMagicItem));
+    });
+  }
+
+  document.getElementById('cmiSubmit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('cmiFlag');
+    const world = document.getElementById('cmiWorld').value || undefined;
+    const unit = document.getElementById('cmiUnit').value || undefined;
+    const rest = collectFieldMap(MAGIC_ITEM_EDIT_MAP, 'cmi');
+    const hasMechanics = getFieldValue('checkbox', 'cmiHasMechanics');
+    if(!rest.name){ flag.textContent = 'Name is required.'; flag.className = 'savedflag show err'; return; }
+    try{
+      const body = { world, unit, ...rest, hasMechanics };
+      if(hasMechanics) body.mechanics = collectFieldMap(MECHANICS_MAP, 'cmi');
+      const res = await fetch('/api/magic-item', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify(body) });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      magicItems.push({ _id: result.id, ...body });
+      flag.textContent = '✓ Created.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('magicItems'), 900);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  let activeMagicItemEditId = null;
+  function openEditMagicItem(id){
+    const m = magicItems.find(x=>x._id===id);
+    if(!m) return;
+    activeMagicItemEditId = id;
+    populateSelect('emiCurrentHolder', keyFigures, 'name', true);
+    populateSelect('emiFoundAt', notablePlaces, 'name', true);
+    populateFieldMap(MAGIC_ITEM_EDIT_MAP, 'emi', m);
+    setFieldValue('checkbox', 'emiHasMechanics', m.hasMechanics);
+    document.getElementById('emiMechanicsFields').style.display = m.hasMechanics ? '' : 'none';
+    populateFieldMap(MECHANICS_MAP, 'emi', m.mechanics || {});
+    document.getElementById('emiAudit').textContent = auditLine(m);
+    document.getElementById('emiFlag').className = 'savedflag';
+    switchView('editMagicItem');
+  }
+  document.getElementById('emiCancel').addEventListener('click', ()=> switchView('magicItems'));
+  document.getElementById('emiSave').addEventListener('click', async ()=>{
+    if(!activeMagicItemEditId) return;
+    const flag = document.getElementById('emiFlag');
+    const updates = collectFieldMap(MAGIC_ITEM_EDIT_MAP, 'emi');
+    updates.hasMechanics = getFieldValue('checkbox', 'emiHasMechanics');
+    updates.mechanics = updates.hasMechanics ? collectFieldMap(MECHANICS_MAP, 'emi') : null;
+    try{
+      await Promise.all(Object.entries(updates).map(([field,value])=> patchWikiField('magic-item', activeMagicItemEditId, field, value)));
+      const m = magicItems.find(x=>x._id===activeMagicItemEditId);
+      if(m) Object.assign(m, updates);
+      flag.textContent = '✓ Saved.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('magicItems'), 700);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  // ---------- LORE ENTRY ----------
+  const LORE_ENTRY_EDIT_MAP = [
+    { field: 'title', idSuffix: 'Title', kind: 'text' },
+    { field: 'unit', idSuffix: 'Unit', kind: 'refSelect' },
+    { field: 'alsoKnownAs', idSuffix: 'AlsoKnownAs', kind: 'text' },
+    { field: 'category', idSuffix: 'Category', kind: 'select' },
+    { field: 'summary', idSuffix: 'Summary', kind: 'text' },
+    { field: 'body', idSuffix: 'Body', kind: 'markdown' },
+    { field: 'canonStatus', idSuffix: 'CanonStatus', kind: 'select' },
+    { field: 'firstAppeared', idSuffix: 'FirstAppeared', kind: 'text' },
+    { field: 'relatedEntries', idSuffix: 'RelatedEntries', kind: 'multiSelect' },
+    { field: 'tags', idSuffix: 'Tags', kind: 'commaList' },
+    { field: 'submittedBy', idSuffix: 'SubmittedBy', kind: 'refSelect' },
+  ];
+
+  function renderLoreEntryGrid(){
+    const body = document.getElementById('loreEntryGridBody');
+    body.innerHTML = loreEntries.map(l=> \`
+      <tr>
+        <td>\${l.title||''}</td>
+        <td style="font-size:10px; color:var(--text-dim);">\${l.category||''}</td>
+        <td style="font-size:10px; color:var(--text-dim);">\${l.canonStatus||''}</td>
+        <td style="font-size:9px; color:var(--text-faint);">\${l.consoleEditedByEmail||'—'}</td>
+        <td><button class="rowbtn" data-edit-lore-entry="\${l._id}">Edit</button></td>
+      </tr>
+    \`).join('');
+    document.getElementById('loreEntryCountTag').textContent = loreEntries.length;
+    body.querySelectorAll('[data-edit-lore-entry]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openEditLoreEntry(btn.dataset.editLoreEntry));
+    });
+  }
+
+  document.getElementById('cleSubmit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('cleFlag');
+    const world = document.getElementById('cleWorld').value;
+    const rest = collectFieldMap(LORE_ENTRY_EDIT_MAP, 'cle');
+    if(!world || !rest.title){ flag.textContent = 'World and Title are required.'; flag.className = 'savedflag show err'; return; }
+    try{
+      const res = await fetch('/api/lore-entry', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({ world, ...rest }) });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      loreEntries.push({ _id: result.id, world, ...rest });
+      flag.textContent = '✓ Created.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('loreEntries'), 900);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  let activeLoreEntryEditId = null;
+  function openEditLoreEntry(id){
+    const l = loreEntries.find(x=>x._id===id);
+    if(!l) return;
+    activeLoreEntryEditId = id;
+    document.getElementById('eleWorldTitle').value = worldNameFor(l.world);
+    populateSelect('eleUnit', worldUnits, 'name', true);
+    populateSelect('eleRelatedEntries', loreEntries.filter(x=>x._id!==id), 'title');
+    populateSelect('eleSubmittedBy', teamMembers, 'handle', true);
+    populateFieldMap(LORE_ENTRY_EDIT_MAP, 'ele', l);
+    document.getElementById('eleAudit').textContent = auditLine(l);
+    document.getElementById('eleFlag').className = 'savedflag';
+    switchView('editLoreEntry');
+  }
+  document.getElementById('eleCancel').addEventListener('click', ()=> switchView('loreEntries'));
+  document.getElementById('eleSave').addEventListener('click', async ()=>{
+    if(!activeLoreEntryEditId) return;
+    const flag = document.getElementById('eleFlag');
+    const updates = collectFieldMap(LORE_ENTRY_EDIT_MAP, 'ele');
+    try{
+      await Promise.all(Object.entries(updates).map(([field,value])=> patchWikiField('lore-entry', activeLoreEntryEditId, field, value)));
+      const l = loreEntries.find(x=>x._id===activeLoreEntryEditId);
+      if(l) Object.assign(l, updates);
+      flag.textContent = '✓ Saved.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('loreEntries'), 700);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  // ---------- NOTABLE PLACE ----------
+  const NOTABLE_PLACE_EDIT_MAP = [
+    { field: 'name', idSuffix: 'Name', kind: 'text' },
+    { field: 'placeType', idSuffix: 'PlaceType', kind: 'text' },
+    { field: 'dangerLevel', idSuffix: 'DangerLevel', kind: 'select' },
+    { field: 'description', idSuffix: 'Description', kind: 'markdown' },
+    { field: 'keyFigures', idSuffix: 'KeyFigures', kind: 'multiSelect' },
+    { field: 'items', idSuffix: 'Items', kind: 'multiSelect' },
+    { field: 'dmNotes', idSuffix: 'DmNotes', kind: 'markdown' },
+  ];
+
+  function renderNotablePlaceGrid(){
+    const body = document.getElementById('notablePlaceGridBody');
+    body.innerHTML = notablePlaces.map(p=> \`
+      <tr>
+        <td>\${p.name||''}</td>
+        <td style="font-size:10px; color:var(--text-dim);">\${p.placeType||''}</td>
+        <td style="font-size:10px; color:var(--text-dim);">\${p.dangerLevel||''}</td>
+        <td style="font-size:9px; color:var(--text-faint);">\${p.consoleEditedByEmail||'—'}</td>
+        <td><button class="rowbtn" data-edit-notable-place="\${p._id}">Edit</button></td>
+      </tr>
+    \`).join('');
+    document.getElementById('notablePlaceCountTag').textContent = notablePlaces.length;
+    body.querySelectorAll('[data-edit-notable-place]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openEditNotablePlace(btn.dataset.editNotablePlace));
+    });
+  }
+
+  document.getElementById('cnpSubmit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('cnpFlag');
+    const world = document.getElementById('cnpWorld').value || undefined;
+    const unit = document.getElementById('cnpUnit').value || undefined;
+    const rest = collectFieldMap(NOTABLE_PLACE_EDIT_MAP, 'cnp');
+    if(!rest.name){ flag.textContent = 'Name is required.'; flag.className = 'savedflag show err'; return; }
+    try{
+      const res = await fetch('/api/notable-place', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({ world, unit, ...rest }) });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      notablePlaces.push({ _id: result.id, world, unit, ...rest });
+      flag.textContent = '✓ Created.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('notablePlaces'), 900);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  let activeNotablePlaceEditId = null;
+  function openEditNotablePlace(id){
+    const p = notablePlaces.find(x=>x._id===id);
+    if(!p) return;
+    activeNotablePlaceEditId = id;
+    populateSelect('enpKeyFigures', keyFigures, 'name');
+    populateSelect('enpItems', magicItems, 'name');
+    populateFieldMap(NOTABLE_PLACE_EDIT_MAP, 'enp', p);
+    document.getElementById('enpAudit').textContent = auditLine(p);
+    document.getElementById('enpFlag').className = 'savedflag';
+    switchView('editNotablePlace');
+  }
+  document.getElementById('enpCancel').addEventListener('click', ()=> switchView('notablePlaces'));
+  document.getElementById('enpSave').addEventListener('click', async ()=>{
+    if(!activeNotablePlaceEditId) return;
+    const flag = document.getElementById('enpFlag');
+    const updates = collectFieldMap(NOTABLE_PLACE_EDIT_MAP, 'enp');
+    try{
+      await Promise.all(Object.entries(updates).map(([field,value])=> patchWikiField('notable-place', activeNotablePlaceEditId, field, value)));
+      const p = notablePlaces.find(x=>x._id===activeNotablePlaceEditId);
+      if(p) Object.assign(p, updates);
+      flag.textContent = '✓ Saved.'; flag.className = 'savedflag show';
+      setTimeout(()=>switchView('notablePlaces'), 700);
+    }catch(err){ flag.textContent = 'Failed: ' + err.message; flag.className = 'savedflag show err'; }
+  });
+
+  // ---------- WIKI VIEWS registration ----------
+  Object.assign(VIEWS, {
+    worldUnits: { panel: 'worldUnitsView', title: 'My World Units', toolbar: false },
+    createWorldUnit: { panel: 'createWorldUnitView', title: 'Create World Unit', toolbar: false },
+    editWorldUnit: { panel: 'editWorldUnitView', title: 'Edit World Unit', toolbar: false },
+    factions: { panel: 'factionsView', title: 'My Factions', toolbar: false },
+    createFaction: { panel: 'createFactionView', title: 'Create Faction', toolbar: false },
+    editFaction: { panel: 'editFactionView', title: 'Edit Faction', toolbar: false },
+    keyFigures: { panel: 'keyFiguresView', title: 'My Key Figures', toolbar: false },
+    createKeyFigure: { panel: 'createKeyFigureView', title: 'Create Key Figure', toolbar: false },
+    editKeyFigure: { panel: 'editKeyFigureView', title: 'Edit Key Figure', toolbar: false },
+    magicItems: { panel: 'magicItemsView', title: 'My Magic Items', toolbar: false },
+    createMagicItem: { panel: 'createMagicItemView', title: 'Create Magic Item', toolbar: false },
+    editMagicItem: { panel: 'editMagicItemView', title: 'Edit Magic Item', toolbar: false },
+    loreEntries: { panel: 'loreEntriesView', title: 'My Lore Entries', toolbar: false },
+    createLoreEntry: { panel: 'createLoreEntryView', title: 'Create Lore Entry', toolbar: false },
+    editLoreEntry: { panel: 'editLoreEntryView', title: 'Edit Lore Entry', toolbar: false },
+    notablePlaces: { panel: 'notablePlacesView', title: 'My Notable Places', toolbar: false },
+    createNotablePlace: { panel: 'createNotablePlaceView', title: 'Create Notable Place', toolbar: false },
+    editNotablePlace: { panel: 'editNotablePlaceView', title: 'Edit Notable Place', toolbar: false },
+    bulkWiki: { panel: 'bulkWikiView', title: 'Bulk Wiki Import', toolbar: false },
+  });
+  [
+    'createWorldUnitView','editWorldUnitView','createFactionView','editFactionView',
+    'createKeyFigureView','editKeyFigureView','createMagicItemView','editMagicItemView',
+    'createLoreEntryView','editLoreEntryView','createNotablePlaceView','editNotablePlaceView',
+  ].forEach(p=> EDITOR_PANELS.add(p));
+
+  document.getElementById('bwCopyPrompt').addEventListener('click', async ()=>{
+    const flag = document.getElementById('bwCopyFlag');
+    try{
+      const res = await fetch('/console/templates/wiki-import-prompt.txt');
+      const text = await res.text();
+      await navigator.clipboard.writeText(text);
+      flag.textContent = '✓ Copied.';
+      flag.className = 'savedflag show';
+    }catch(err){
+      flag.textContent = 'Copy failed — see /console/templates/wiki-import-prompt.txt';
+      flag.className = 'savedflag show err';
+    }
+  });
+
+  // Renders the per-item report as a real table via DOM APIs (not
+  // innerHTML string-concat) — document names/error reasons here can
+  // contain arbitrary text a GM typed or an AI agent generated, so this
+  // avoids any HTML-injection risk from that content.
+  function renderBulkWikiResults(data){
+    const container = document.getElementById('bwResults');
+    container.innerHTML = '';
+    const summary = document.createElement('p');
+    summary.className = 'hint';
+    summary.textContent = \`Created \${data.created}, updated \${data.updated}, failed \${data.failed}.\`;
+    container.appendChild(summary);
+
+    if(data.report && data.report.length){
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      thead.innerHTML = '<tr><th>Type</th><th>Name</th><th>Status</th><th>Reason</th></tr>';
+      table.appendChild(thead);
+      const tbody = document.createElement('tbody');
+      data.report.forEach(r=>{
+        const tr = document.createElement('tr');
+        [r.type, r.name, r.status, r.reason || ''].forEach(text=>{
+          const td = document.createElement('td');
+          td.textContent = text;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+
+    if(data.warnings && data.warnings.length){
+      const warnHeading = document.createElement('p');
+      warnHeading.className = 'hint';
+      warnHeading.textContent = 'Warnings (entry still imported, this field/reference was dropped):';
+      container.appendChild(warnHeading);
+      const ul = document.createElement('ul');
+      data.warnings.forEach(w=>{
+        const li = document.createElement('li');
+        li.textContent = w;
+        ul.appendChild(li);
+      });
+      container.appendChild(ul);
+    }
+  }
+
+  document.getElementById('bwImport').addEventListener('click', async ()=>{
+    const flag = document.getElementById('bwFlag');
+    const worldUnitId = document.getElementById('bwWorldUnit').value;
+    const fileInput = document.getElementById('bwFile');
+    const file = fileInput.files[0];
+    if(!worldUnitId){ flag.textContent = 'Pick a target World Unit first.'; flag.className = 'savedflag show err'; return; }
+    if(!file){ flag.textContent = 'Choose a JSON file first.'; flag.className = 'savedflag show err'; return; }
+
+    const form = new FormData();
+    form.append('file', file);
+    form.append('worldUnitId', worldUnitId);
+
+    flag.textContent = 'Importing…';
+    flag.className = 'savedflag show';
+    try{
+      const res = await fetch('/api/import/wiki', { method: 'POST', body: form });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || res.statusText);
+      flag.textContent = '✓ Import complete.';
+      flag.className = 'savedflag show';
+      renderBulkWikiResults(data);
+    }catch(err){
+      flag.textContent = 'Import failed: ' + err.message;
+      flag.className = 'savedflag show err';
+    }
+  });
+
+  // Re-populate the relevant selects/grid each time a WORLD BUILDING view
+  // is switched into — mirrors switchView()'s existing
+  // populateThemeSelect()/populateCampaignSelect() calls for create*.
+  const _origSwitchView = switchView;
+  switchView = function(view){
+    _origSwitchView(view);
+    if(view === 'worldUnits') renderWorldUnitGrid();
+    if(view === 'factions') renderFactionGrid();
+    if(view === 'keyFigures') renderKeyFigureGrid();
+    if(view === 'magicItems') renderMagicItemGrid();
+    if(view === 'loreEntries') renderLoreEntryGrid();
+    if(view === 'notablePlaces') renderNotablePlaceGrid();
+    if(view === 'createWorldUnit'){ populateSelect('cwuWorld', worlds, 'name'); populateSelect('cwuDmOwner', teamMembers, 'handle', true); }
+    if(view === 'createFaction'){ populateSelect('cfaWorld', worlds, 'name', true); populateSelect('cfaUnit', worldUnits, 'name', true); populateSelect('cfaMembers', keyFigures, 'name'); }
+    if(view === 'createKeyFigure'){ populateSelect('ckfWorld', worlds, 'name', true); populateSelect('ckfUnit', worldUnits, 'name', true); populateSelect('ckfFaction', factions, 'name', true); }
+    if(view === 'createMagicItem'){ populateSelect('cmiWorld', worlds, 'name', true); populateSelect('cmiUnit', worldUnits, 'name', true); populateSelect('cmiCurrentHolder', keyFigures, 'name', true); populateSelect('cmiFoundAt', notablePlaces, 'name', true); }
+    if(view === 'createLoreEntry'){ populateSelect('cleWorld', worlds, 'name'); populateSelect('cleUnit', worldUnits, 'name', true); populateSelect('cleRelatedEntries', loreEntries, 'title'); populateSelect('cleSubmittedBy', teamMembers, 'handle', true); }
+    if(view === 'createNotablePlace'){ populateSelect('cnpWorld', worlds, 'name', true); populateSelect('cnpUnit', worldUnits, 'name', true); populateSelect('cnpKeyFigures', keyFigures, 'name'); populateSelect('cnpItems', magicItems, 'name'); }
+    if(view === 'bulkWiki'){ populateSelect('bwWorldUnit', worldUnits, 'name'); document.getElementById('bwResults').innerHTML = ''; document.getElementById('bwFlag').textContent = ''; }
+  };
 
   renderGrid();
 `;
