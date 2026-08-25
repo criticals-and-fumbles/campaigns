@@ -65,7 +65,7 @@ function mediaThumb(item) {
   return `<div class="gitem">${inner}<div class="gtag">${esc(item.caption || item.kind)}</div></div>`;
 }
 
-export function renderDossierPage({ dossier, campaign, theme, embedded }) {
+export function renderDossierPage({ dossier, campaign, theme, embedded, colorMode = "dark" }) {
   const labels = resolveLabels(theme);
   const motifKey = resolveMotif(theme);
   const code = dossier.code || "";
@@ -132,7 +132,7 @@ export function renderDossierPage({ dossier, campaign, theme, embedded }) {
     .join("\n");
 
   return `<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="${colorMode}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -283,7 +283,7 @@ ${BASE_JS}
 
 const BASE_CSS = `
   *{box-sizing:border-box; margin:0; padding:0;}
-  html{scroll-behavior:smooth;}
+  html{scroll-behavior:smooth; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
   body{background:var(--bg); color:var(--text); font-family:var(--font-body); overflow-x:hidden; transition:background .6s ease, color .6s ease; position:relative;}
   #particles{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.8;}
   .grain{position:fixed; inset:0; z-index:1; pointer-events:none; mix-blend-mode:overlay; opacity:.05;
@@ -411,6 +411,10 @@ const BASE_JS = `
     html.setAttribute('data-theme', theme);
     if(label) label.textContent = theme === 'light' ? 'LIGHT' : 'DARK';
     makeParticles();
+    // Shared with www.criticalsandfumbles.com via a cookie scoped to the
+    // parent domain (localStorage can't cross subdomains) — same cookie
+    // name/domain cnf-website's ThemeProvider writes.
+    document.cookie = 'cnf-theme=' + theme + '; domain=.criticalsandfumbles.com; path=/; max-age=31536000; SameSite=Lax; Secure';
   };
   if(toggle){
     toggle.addEventListener('click', ()=>{
@@ -523,7 +527,7 @@ const BASE_JS = `
  * panel. The most recent session (dossiers is already sorted
  * most-recent-first by the caller's GROQ query) auto-selects on load.
  */
-export function renderCampaignIndexPage({ campaign, dossiers, theme }) {
+export function renderCampaignIndexPage({ campaign, dossiers, theme, colorMode = "dark" }) {
   const labels = resolveLabels(theme);
   const themeVars = themeToCssVars(theme);
   const slugJson = JSON.stringify(campaign.slug?.current || "");
@@ -540,7 +544,7 @@ export function renderCampaignIndexPage({ campaign, dossiers, theme }) {
     .join("\n");
 
   return `<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="${colorMode}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -562,6 +566,7 @@ ${themeVars}
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 html,body{height:100%;}
+html{-webkit-text-size-adjust:100%; text-size-adjust:100%;}
 body{background:var(--bg); color:var(--text); font-family:var(--font-body); overflow:hidden;}
 
 .app{height:100vh; height:100dvh; display:flex; flex-direction:column;}
@@ -765,8 +770,13 @@ html[data-theme="light"] .icon-btn .icon-moon{display:block;}
     }
   }
   themeToggle.addEventListener('click', ()=>{
-    htmlEl.setAttribute('data-theme', currentTheme() === 'light' ? 'dark' : 'light');
+    const next = currentTheme() === 'light' ? 'dark' : 'light';
+    htmlEl.setAttribute('data-theme', next);
     syncFrameTheme();
+    // Shared with www.criticalsandfumbles.com — see setDossierTheme's
+    // matching comment in the dossier page template for why this needs
+    // a cookie rather than localStorage.
+    document.cookie = 'cnf-theme=' + next + '; domain=.criticalsandfumbles.com; path=/; max-age=31536000; SameSite=Lax; Secure';
   });
 
   function renderDetail(item){

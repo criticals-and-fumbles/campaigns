@@ -1,9 +1,20 @@
 import { Hono } from "hono";
+import { getCookie } from "hono/cookie";
 import { query } from "../lib/sanity.js";
 import { renderDossierPage, renderCampaignIndexPage } from "../templates/dossier.js";
 import { urlFor } from "../lib/sanity-image.js";
 
 const app = new Hono();
+
+// Shared with cnf-website's ThemeProvider.tsx (COOKIE_NAME there) via a
+// cookie scoped to the parent domain — localStorage can't cross
+// subdomains, cookies scoped to .criticalsandfumbles.com can. This is
+// read-only here (this Worker doesn't set it — only the main site and
+// this repo's own client-side toggles do, both writing the same name).
+const COLOR_MODE_COOKIE = "cnf-theme";
+function resolveColorMode(c) {
+  return getCookie(c, COLOR_MODE_COOKIE) === "light" ? "light" : "dark";
+}
 
 const CAMPAIGN_QUERY = `*[_type == "campaign" && slug.current == $slug][0]{
   _id, title, slug, genre, system, status, gmNames, heroImage, hook,
@@ -126,7 +137,7 @@ function socialIconsBlock(siteLinks) {
 // Everything downstream of a campaign — its session index and the
 // dossier page itself — is genre-themed instead (renderCampaignIndexPage/
 // renderDossierPage, via theme.js), NOT run through this shell.
-function pageShell(title, bodyInner, siteLinks) {
+function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
   const nav = SITE_NAV_LINKS.map(
     (l) => `<a href="${escapeHtml(l.href)}"${l.current ? ' class="current"' : ""}>${escapeHtml(l.label)}</a>`,
   ).join("\n");
@@ -137,7 +148,7 @@ function pageShell(title, bodyInner, siteLinks) {
     .join("\n");
 
   return `<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="${colorMode}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -162,7 +173,7 @@ function pageShell(title, bodyInner, siteLinks) {
     --emerald:#1a7a45; --amber:#b36a1a; --magenta:#c4306a;
   }
   *{box-sizing:border-box;}
-  html{font-size:18px;}
+  html{font-size:18px; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
   body{margin:0; background:var(--bg); color:var(--text); font-family:var(--font-body); font-size:1.125rem;}
   a{color:inherit;}
   .container{max-width:1440px; margin:0 auto; padding:4rem 1rem;}
@@ -385,7 +396,12 @@ ${bodyInner}
   function toggleTheme(){
     var html = document.documentElement;
     var isLight = html.getAttribute('data-theme') === 'light';
-    html.setAttribute('data-theme', isLight ? 'dark' : 'light');
+    var next = isLight ? 'dark' : 'light';
+    html.setAttribute('data-theme', next);
+    // Shared with www.criticalsandfumbles.com via a cookie scoped to the
+    // parent domain — same cookie name/domain cnf-website's ThemeProvider
+    // writes; localStorage can't cross subdomains.
+    document.cookie = 'cnf-theme=' + next + '; domain=.criticalsandfumbles.com; path=/; max-age=31536000; SameSite=Lax; Secure';
   }
   document.getElementById('siteThemeToggle').addEventListener('click', toggleTheme);
   document.getElementById('siteThemeToggleMobile').addEventListener('click', toggleTheme);
@@ -415,7 +431,10 @@ ${bodyInner}
 }
 
 function brandTitle() {
-  return `<h1><span class="emerald">Criticals</span> <span class="amber">&amp;</span> <span class="magenta">Fumbles</span></h1>`;
+  // Plain text, no color spans — inherits body's var(--text), so it
+  // already follows the same light/dark colors as the rest of the page
+  // without any new CSS needed.
+  return `<h1>Campaign Logs</h1>`;
 }
 
 // GET / — public campaign directory. Only campaigns the owning DM has
@@ -483,7 +502,7 @@ app.get("/", async (c) => {
     </aside>
   </div>`;
 
-  return c.html(pageShell("Campaigns — Criticals & Fumbles", body, siteLinks));
+  return c.html(pageShell("Campaign Logs", body, siteLinks, resolveColorMode(c)));
 });
 
 // GET /:campaignSlug/:dossierCode — the dossier page itself. A dossier
@@ -503,6 +522,7 @@ app.get("/:campaignSlug/:dossierCode", async (c) => {
     campaign: dossier.campaign,
     theme: dossier.campaign?.theme,
     embedded: c.req.query("embed") === "1",
+    colorMode: resolveColorMode(c),
   });
   return c.html(html);
 });
@@ -518,7 +538,9 @@ app.get("/:campaignSlug", async (c) => {
 
   const dossiers = await query(c.env, CAMPAIGN_DOSSIERS_QUERY, { slug: campaignSlug });
 
-  return c.html(renderCampaignIndexPage({ campaign, dossiers, theme: campaign.theme }));
+  return c.html(
+    renderCampaignIndexPage({ campaign, dossiers, theme: campaign.theme, colorMode: resolveColorMode(c) }),
+  );
 });
 
 // Coarse relative-time label ("2 hours ago", "3 days ago") for the
