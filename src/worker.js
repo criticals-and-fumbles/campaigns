@@ -19,6 +19,7 @@ import apiNotablePlaceRoutes from "./routes/api-notable-place.js";
 import apiImportWikiRoutes from "./routes/api-import-wiki.js";
 import apiMeTeamMemberRoutes from "./routes/api-me-team-member.js";
 import apiMeArticlesRoutes from "./routes/api-me-articles.js";
+import apiAdminRoutes from "./routes/api-admin.js";
 
 const app = new Hono();
 
@@ -56,6 +57,7 @@ app.route("/api/notable-place", apiNotablePlaceRoutes);
 app.route("/api/import/wiki", apiImportWikiRoutes);
 app.route("/api/me/team-member", apiMeTeamMemberRoutes);
 app.route("/api/me/articles", apiMeArticlesRoutes);
+app.route("/api/admin", apiAdminRoutes);
 
 // Public dossier/campaign routes last — most permissive matcher.
 app.route("/", dossierRoutes);

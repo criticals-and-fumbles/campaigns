@@ -63,6 +63,12 @@ export function renderConsolePage({
       <div class="navitem" data-view="createArticle">+ Write Article</div>
       <div class="navitem" data-view="myArticles">My Articles <span class="n" id="myArticleCountTag">0</span></div>
     </div>
+    ${myTeamMember?.tier === "Horsemen" ? `
+    <div class="navgroup">
+      <div class="label">ADMIN</div>
+      <div class="navitem" data-view="adminLink">Link Team Members</div>
+    </div>
+    ` : ""}
     <div class="navgroup collapsible collapsed" id="worldBuildingGroup">
       <div class="label collapse-toggle"><span>WORLD BUILDING</span><span class="chev">▸</span></div>
       <div class="sublabel">Create</div>
@@ -322,6 +328,34 @@ export function renderConsolePage({
         <button class="btn" id="eaCancel">← Back</button>
         <span class="savedflag" id="eaFlag"></span>
       </div>
+    </div>
+
+    <!-- ============ ADMIN ============ -->
+
+    <div id="adminLinkView" style="display:none;">
+      <p class="hint">
+        Links a DM's Cloudflare Access login email to a team member document
+        — only the HMAC of the email is ever stored, never the email itself
+        (see lib/identity.js). Re-linking a member that's already linked
+        overwrites the old link. New team members and tier changes still
+        happen in Sanity Studio — not here.
+      </p>
+      <div class="field">
+        <label>Team Member</label>
+        <select id="alMember"></select>
+      </div>
+      <div class="field">
+        <label>Their Login Email</label>
+        <input type="email" id="alEmail" placeholder="dm@example.com">
+      </div>
+      <div class="savebar">
+        <button class="btn primary" id="alLink">Link</button>
+        <span class="savedflag" id="alFlag"></span>
+      </div>
+      <table style="margin-top:24px;">
+        <thead><tr><th>Handle</th><th>Real Name</th><th>Tier</th><th>Linked</th><th></th></tr></thead>
+        <tbody id="adminMemberGridBody"></tbody>
+      </table>
     </div>
 
     <!-- ============ WIKI MANUAL BUILDER ============ -->
@@ -1965,6 +1999,96 @@ const CONSOLE_JS = `
     if(result.ok){ const article = myArticles.find(a=>a._id===activeArticleId); if(article) article.coverImage = value; }
   });
 
+  // ========== ADMIN ==========
+  // Only rendered/reachable at all when myTeamMember.tier === 'Horsemen'
+  // (see the nav item's server-side conditional above) — but every
+  // /api/admin/* route re-checks this itself, same "console hiding is a
+  // convenience, not the boundary" rule as everywhere else in this app.
+  let adminMembers = [];
+
+  async function loadAdminMembers(){
+    const flag = document.getElementById('alFlag');
+    try{
+      const res = await fetch('/api/admin/team-members');
+      const body = await res.json();
+      if(!res.ok) throw new Error(body.error || res.statusText);
+      adminMembers = body.members;
+      populateSelect('alMember', adminMembers, 'handle');
+      renderAdminMemberGrid();
+    }catch(err){
+      flag.textContent = 'Failed to load team members: ' + err.message;
+      flag.className = 'savedflag show err';
+    }
+  }
+
+  function renderAdminMemberGrid(){
+    const tbody = document.getElementById('adminMemberGridBody');
+    tbody.innerHTML = '';
+    adminMembers.forEach(m=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = \`
+        <td>\${m.handle||''}</td>
+        <td style="font-family:var(--font-mono); font-size:1rem; color:var(--text-dim);">\${m.realName||''}</td>
+        <td style="font-family:var(--font-mono); font-size:1rem; color:var(--text-dim);">\${m.tier||''}</td>
+        <td style="font-family:var(--font-mono); font-size:1rem; color:var(--text-dim);">\${m.linked ? '✓ linked' : '—'}</td>
+        <td>\${m.linked ? '<button class="rowbtn danger" data-unlink="'+m._id+'">UNLINK</button>' : ''}</td>
+      \`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll('[data-unlink]').forEach(btn=>{
+      btn.addEventListener('click', ()=>unlinkMember(btn.dataset.unlink));
+    });
+  }
+
+  document.getElementById('alLink').addEventListener('click', async ()=>{
+    const flag = document.getElementById('alFlag');
+    const teamMemberId = document.getElementById('alMember').value;
+    const email = document.getElementById('alEmail').value.trim();
+    if(!teamMemberId || !email){
+      flag.textContent = 'Pick a team member and enter their email.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    flag.textContent = 'Linking…';
+    flag.className = 'savedflag show';
+    try{
+      const res = await fetch('/api/admin/link-team-member', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify({ email, teamMemberId }),
+      });
+      const body = await res.json();
+      if(!res.ok) throw new Error(body.error || res.statusText);
+      flag.textContent = '✓ Linked.';
+      flag.className = 'savedflag show';
+      document.getElementById('alEmail').value = '';
+      await loadAdminMembers();
+    }catch(err){
+      flag.textContent = 'Failed: ' + err.message;
+      flag.className = 'savedflag show err';
+    }
+  });
+
+  async function unlinkMember(teamMemberId){
+    if(!confirm('Unlink this team member? They will lose console access until relinked.')) return;
+    const flag = document.getElementById('alFlag');
+    try{
+      const res = await fetch('/api/admin/unlink-team-member', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify({ teamMemberId }),
+      });
+      const body = await res.json();
+      if(!res.ok) throw new Error(body.error || res.statusText);
+      flag.textContent = '✓ Unlinked.';
+      flag.className = 'savedflag show';
+      await loadAdminMembers();
+    }catch(err){
+      flag.textContent = 'Failed: ' + err.message;
+      flag.className = 'savedflag show err';
+    }
+  }
+
   // ========== WIKI MANUAL BUILDER ==========
   // Six types (worldUnit/faction/keyFigure/magicItem/loreEntry/
   // notablePlace) share the same generic field-kind collect/populate
@@ -2586,6 +2710,7 @@ const CONSOLE_JS = `
     createArticle: { panel: 'createArticleView', title: 'New Article', toolbar: false },
     myArticles: { panel: 'myArticlesView', title: 'My Articles', toolbar: false },
     editArticle: { panel: 'editArticleView', title: 'Article Detail', toolbar: false },
+    adminLink: { panel: 'adminLinkView', title: 'Link Team Members', toolbar: false },
   });
   [
     'createWorldUnitView','editWorldUnitView','createFactionView','editFactionView',
@@ -2712,6 +2837,7 @@ const CONSOLE_JS = `
       document.getElementById('caFlag').className = 'savedflag';
     }
     if(view === 'editArticle') populateSelect('eaWorlds', worlds, 'name');
+    if(view === 'adminLink'){ document.getElementById('alFlag').className = 'savedflag'; loadAdminMembers(); }
   };
 
   renderGrid();

@@ -13,16 +13,18 @@
  * hash can't be reversed or even confirmed against a guessed email, so
  * the public dataset carries no recoverable trace of anyone's address.
  *
- * Linking a real DM's email to their document is a one-off admin action
- * — see scripts/link-team-member.js — not something this app's console
- * ever writes itself.
+ * Linking a real DM's email to their document was originally a one-off
+ * CLI action (scripts/link-team-member.js) — as of the admin panel
+ * (routes/api-admin.js, gated on tier === "Horsemen", see lib/admin.js)
+ * it can also be done through the console by an admin. Either path
+ * computes the hash the same way and never stores the plain email.
  */
 
 import { query } from "./sanity.js";
 
 const MY_TEAM_MEMBER_QUERY = `*[_type == "teamMember" && ownerEmailHash == $hash][0]{
   _id, handle, realName, dndClass, race, alignment, stats, backstory,
-  signatureMove, socialLinks, avatar
+  signatureMove, socialLinks, avatar, tier
 }`;
 
 /** Same normalization on both the write side (scripts/link-team-member.js)
