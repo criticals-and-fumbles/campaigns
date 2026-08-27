@@ -17,6 +17,8 @@ import apiMagicItemRoutes from "./routes/api-magic-item.js";
 import apiLoreEntryRoutes from "./routes/api-lore-entry.js";
 import apiNotablePlaceRoutes from "./routes/api-notable-place.js";
 import apiImportWikiRoutes from "./routes/api-import-wiki.js";
+import apiMeTeamMemberRoutes from "./routes/api-me-team-member.js";
+import apiMeArticlesRoutes from "./routes/api-me-articles.js";
 
 const app = new Hono();
 
@@ -52,6 +54,8 @@ app.route("/api/magic-item", apiMagicItemRoutes);
 app.route("/api/lore-entry", apiLoreEntryRoutes);
 app.route("/api/notable-place", apiNotablePlaceRoutes);
 app.route("/api/import/wiki", apiImportWikiRoutes);
+app.route("/api/me/team-member", apiMeTeamMemberRoutes);
+app.route("/api/me/articles", apiMeArticlesRoutes);
 
 // Public dossier/campaign routes last — most permissive matcher.
 app.route("/", dossierRoutes);

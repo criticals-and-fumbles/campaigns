@@ -20,6 +20,7 @@
 export function renderConsolePage({
   campaigns, dossiers, genreThemes, gmEmail, sanityProjectId, sanityDataset,
   worlds, teamMembers, worldUnits, factions, keyFigures, magicItems, notablePlaces, loreEntries,
+  myTeamMember, myArticles,
 }) {
   const initialCampaigns = JSON.stringify(campaigns).replace(/</g, "\\u003c");
   const initialDossiers = JSON.stringify(dossiers).replace(/</g, "\\u003c");
@@ -32,6 +33,8 @@ export function renderConsolePage({
   const initialMagicItems = JSON.stringify(magicItems).replace(/</g, "\\u003c");
   const initialNotablePlaces = JSON.stringify(notablePlaces).replace(/</g, "\\u003c");
   const initialLoreEntries = JSON.stringify(loreEntries).replace(/</g, "\\u003c");
+  const initialMyTeamMember = JSON.stringify(myTeamMember || null).replace(/</g, "\\u003c");
+  const initialMyArticles = JSON.stringify(myArticles || []).replace(/</g, "\\u003c");
 
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -52,6 +55,12 @@ export function renderConsolePage({
       <div class="navitem" data-view="createCampaign">+ Create New Campaign</div>
       <div class="navitem sub" data-view="createDossier">+ Create Session / Dossier</div>
       <div class="navitem" data-view="campaigns">My Campaigns <span class="n" id="campaignCountTag">0</span></div>
+    </div>
+    <div class="navgroup">
+      <div class="label">MY PROFILE</div>
+      <div class="navitem" data-view="myProfile">Edit My Bio</div>
+      <div class="navitem" data-view="createArticle">+ Write Article</div>
+      <div class="navitem" data-view="myArticles">My Articles <span class="n" id="myArticleCountTag">0</span></div>
     </div>
     <div class="navgroup collapsible collapsed" id="worldBuildingGroup">
       <div class="label collapse-toggle"><span>WORLD BUILDING</span><span class="chev">▸</span></div>
@@ -239,6 +248,81 @@ export function renderConsolePage({
       </div>
     </div>
 
+    <!-- ============ MY PROFILE / ARTICLES ============ -->
+
+    <div class="editor" id="myProfileView">
+      <h2>MY BIO</h2>
+      <p class="hint" id="mpUnlinkedHint" style="display:none;">
+        No profile is linked to your login yet — ask an admin to link your
+        Cloudflare Access email to a Team Member document before you can
+        edit your bio here.
+      </p>
+      <div id="mpForm">
+        <div class="field"><label>Handle</label><input type="text" id="mpHandle" readonly></div>
+        <div class="field"><label>Real Name</label><input type="text" id="mpRealName"></div>
+        <div class="field"><label>D&amp;D Class</label><input type="text" id="mpDndClass"></div>
+        <div class="field"><label>Race</label><input type="text" id="mpRace"></div>
+        <div class="field">
+          <label>Alignment</label>
+          <select id="mpAlignment">
+            ${["Lawful Good","Neutral Good","Chaotic Good","Lawful Neutral","True Neutral","Chaotic Neutral","Lawful Evil","Neutral Evil","Chaotic Evil","Unaligned"].map(a=>`<option value="${a}">${a}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label>Stats (1–20)</label>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="number" id="mpCharisma" placeholder="Charisma" min="1" max="20" style="flex:1;">
+            <input type="number" id="mpWisdom" placeholder="Wisdom" min="1" max="20" style="flex:1;">
+            <input type="number" id="mpIntelligence" placeholder="Intelligence" min="1" max="20" style="flex:1;">
+            <input type="number" id="mpLuck" placeholder="Luck" min="1" max="20" style="flex:1;">
+          </div>
+        </div>
+        <div class="field"><label>Backstory</label><textarea id="mpBackstory" rows="4"></textarea></div>
+        <div class="field"><label>Signature Move</label><input type="text" id="mpSignatureMove"></div>
+        <div class="field">
+          <label>Social Links</label>
+          <div class="repeater" id="mpSocialLinks"></div>
+          <button type="button" class="btn small" data-add-row="mpSocialLinks:socialLink">+ Add Link</button>
+        </div>
+        ${heroImageFieldBlock("mp", "Avatar")}
+        <div class="savebar">
+          <button class="btn primary" id="mpSave">Save My Bio</button>
+          <span class="savedflag" id="mpFlag"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="myArticlesView" style="display:none;">
+      <p class="hint" id="maUnlinkedHint" style="display:none;">
+        No profile is linked to your login yet — ask an admin to link
+        your account before you can author articles.
+      </p>
+      <table>
+        <thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Read Time</th><th></th></tr></thead>
+        <tbody id="myArticleGridBody"></tbody>
+      </table>
+    </div>
+
+    <div class="editor" id="createArticleView">
+      <h2>NEW ARTICLE</h2>
+      ${articleFieldsBlock("ca")}
+      <div class="savebar">
+        <button class="btn primary" id="caSubmit">Save as Draft</button>
+        <span class="savedflag" id="caFlag"></span>
+      </div>
+    </div>
+
+    <div class="editor" id="editArticleView">
+      <h2 id="eaTitleHeading">ARTICLE — DETAIL</h2>
+      <p class="field-tip" id="eaStatusNote"></p>
+      ${articleFieldsBlock("ea")}
+      <div class="savebar">
+        <button class="btn primary" id="eaSave">Save Changes</button>
+        <button class="btn" id="eaCancel">← Back</button>
+        <span class="savedflag" id="eaFlag"></span>
+      </div>
+    </div>
+
     <!-- ============ WIKI MANUAL BUILDER ============ -->
 
     <div id="worldUnitsView" style="display:none;">
@@ -406,6 +490,8 @@ export function renderConsolePage({
   const INITIAL_MAGIC_ITEMS = ${initialMagicItems};
   const INITIAL_NOTABLE_PLACES = ${initialNotablePlaces};
   const INITIAL_LORE_ENTRIES = ${initialLoreEntries};
+  const INITIAL_MY_TEAM_MEMBER = ${initialMyTeamMember};
+  const INITIAL_MY_ARTICLES = ${initialMyArticles};
   const SANITY_PROJECT_ID = ${JSON.stringify(sanityProjectId || "")};
   const SANITY_DATASET = ${JSON.stringify(sanityDataset || "")};
   ${CONSOLE_JS}
@@ -436,10 +522,40 @@ function escapeHtml(s) {
 // Shared by every form with a hero image (campaign create/edit, dossier
 // create/edit) — one upload/preview/replace widget, `prefix`-addressed so
 // wireImageUpload() (client-side) can hook up any of them generically.
-function heroImageFieldBlock(prefix) {
+// Mirrors cnf-website's sanity/schemas/constants.ts ARTICLE_CATEGORIES —
+// no shared package between the two repos (same situation as the design
+// tokens, see CLAUDE.md § Visual design), kept in sync by hand.
+const ARTICLE_CATEGORIES = [
+  "Campaign Craft", "Classes", "Combat", "Reviews",
+  "World Building", "Player Tips", "DM Advice", "Lore & Theory",
+];
+
+function articleFieldsBlock(prefix) {
+  return `
+      <div class="field"><label>Title *</label><input type="text" id="${prefix}Title"></div>
+      <div class="field"><label>Excerpt</label><textarea id="${prefix}Excerpt" rows="2" maxlength="200"></textarea></div>
+      <div class="field">
+        <label>Category</label>
+        <select id="${prefix}Category">
+          <option value="">—</option>
+          ${ARTICLE_CATEGORIES.map((c) => `<option value="${c}">${c}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field"><label>Tags (comma-separated)</label><input type="text" id="${prefix}Tags"></div>
+      <div class="field"><label>Worlds</label><select id="${prefix}Worlds" multiple size="4"></select></div>
+      ${heroImageFieldBlock(prefix, "Cover Image")}
+      <div class="field">
+        <p class="field-tip">Blank line between paragraphs. **bold** and *italic* are supported; headings and lists aren't (they'll save as plain text) — same conversion the Wiki import uses.</p>
+        <label>Body</label>
+        <textarea id="${prefix}Body" rows="12"></textarea>
+      </div>
+  `;
+}
+
+function heroImageFieldBlock(prefix, label) {
   return `
       <div class="field">
-        <label>Hero Image (max 500KB — auto-downscaled/recompressed to WebP before upload)</label>
+        <label>${label || "Hero Image"} (max 500KB — auto-downscaled/recompressed to WebP before upload)</label>
         <div class="imgfield">
           <div class="thumb" id="${prefix}ThumbPreview">NONE</div>
           <input type="file" id="${prefix}ImageInput" accept="image/*" style="display:none;">
@@ -815,6 +931,8 @@ const CONSOLE_JS = `
   let campaigns = INITIAL_CAMPAIGNS;
   let dossiers = INITIAL_DOSSIERS;
   const themes = INITIAL_THEMES;
+  let myTeamMember = INITIAL_MY_TEAM_MEMBER;
+  let myArticles = INITIAL_MY_ARTICLES;
   let activeId = null;
 
   const gridBody = document.getElementById('gridBody');
@@ -1614,6 +1732,238 @@ const CONSOLE_JS = `
   // toolbar 2026-08-27 — UI only; /api/export.csv and /api/import/csv
   // routes are untouched server-side in case this needs to come back.
 
+  // ========== MY PROFILE / ARTICLES ==========
+  // Both scoped server-side by the caller's OWN resolved teamMember _id
+  // (see lib/identity.js) — myTeamMember is null if this login isn't
+  // linked to a profile yet, which every view/handler here has to
+  // degrade gracefully for rather than assume it exists.
+  REPEATER_SHAPES.socialLink = [
+    { key: 'platform', ph: 'Platform', type: 'select', options: ['Discord','Twitter','Twitch','Instagram','YouTube'] },
+    { key: 'url', ph: 'URL' },
+  ];
+
+  const MP_FIELD_MAP = [
+    { field: 'realName', idSuffix: 'RealName', kind: 'text' },
+    { field: 'dndClass', idSuffix: 'DndClass', kind: 'text' },
+    { field: 'race', idSuffix: 'Race', kind: 'text' },
+    { field: 'alignment', idSuffix: 'Alignment', kind: 'select' },
+    { field: 'backstory', idSuffix: 'Backstory', kind: 'text' },
+    { field: 'signatureMove', idSuffix: 'SignatureMove', kind: 'text' },
+  ];
+
+  function renderMyProfileForm(){
+    const unlinkedHint = document.getElementById('mpUnlinkedHint');
+    const form = document.getElementById('mpForm');
+    if(!myTeamMember){
+      unlinkedHint.style.display = '';
+      form.style.display = 'none';
+      return;
+    }
+    unlinkedHint.style.display = 'none';
+    form.style.display = '';
+    document.getElementById('mpHandle').value = myTeamMember.handle || '';
+    populateFieldMap(MP_FIELD_MAP, 'mp', myTeamMember);
+    const stats = myTeamMember.stats || {};
+    document.getElementById('mpCharisma').value = stats.charisma ?? '';
+    document.getElementById('mpWisdom').value = stats.wisdom ?? '';
+    document.getElementById('mpIntelligence').value = stats.intelligence ?? '';
+    document.getElementById('mpLuck').value = stats.luck ?? '';
+    populateRepeater('mpSocialLinks', 'socialLink', myTeamMember.socialLinks);
+    renderExistingThumb('mp', myTeamMember.avatar);
+    document.getElementById('mpSizeWarn').textContent = '';
+    document.getElementById('mpFlag').className = 'savedflag';
+  }
+
+  document.getElementById('mpSave').addEventListener('click', async ()=>{
+    if(!myTeamMember) return;
+    const flag = document.getElementById('mpFlag');
+    const updates = collectFieldMap(MP_FIELD_MAP, 'mp');
+    updates.stats = {
+      charisma: document.getElementById('mpCharisma').value === '' ? undefined : Number(document.getElementById('mpCharisma').value),
+      wisdom: document.getElementById('mpWisdom').value === '' ? undefined : Number(document.getElementById('mpWisdom').value),
+      intelligence: document.getElementById('mpIntelligence').value === '' ? undefined : Number(document.getElementById('mpIntelligence').value),
+      luck: document.getElementById('mpLuck').value === '' ? undefined : Number(document.getElementById('mpLuck').value),
+    };
+    updates.socialLinks = collectRepeaterRows('mpSocialLinks');
+    flag.textContent = 'Saving…';
+    flag.className = 'savedflag show';
+    const results = await Promise.all(Object.entries(updates).map(([field, value])=> patchMyTeamMember(field, value, true)));
+    const failures = results.filter(r=>!r.ok);
+    if(failures.length === 0){
+      Object.assign(myTeamMember, updates);
+      flag.textContent = '✓ Saved';
+      flag.className = 'savedflag show';
+      setTimeout(()=>flag.classList.remove('show'), 1600);
+    } else {
+      flag.textContent = failures.map(f=>\`\${f.field}: \${f.error}\`).join(' · ');
+      flag.className = 'savedflag show err';
+    }
+  });
+
+  async function patchMyTeamMember(field, value, silent){
+    try{
+      const res = await fetch('/api/me/team-member', {
+        method: 'PATCH',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify({ field, value }),
+      });
+      const resBody = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(resBody.error || \`HTTP \${res.status}\`);
+      if(!silent){ myTeamMember[field] = value; }
+      return { ok: true };
+    }catch(err){
+      return { ok: false, field, error: err.message };
+    }
+  }
+
+  wireImageUpload('mp', async (assetId)=>{
+    if(!myTeamMember) return;
+    const value = { _type: 'image', asset: { _type: 'reference', _ref: assetId } };
+    const result = await patchMyTeamMember('avatar', value);
+    if(result.ok) myTeamMember.avatar = value;
+  });
+
+  // ---------- MY ARTICLES (list + create + edit) ----------
+  const ARTICLE_FIELD_MAP = [
+    { field: 'title', idSuffix: 'Title', kind: 'text' },
+    { field: 'excerpt', idSuffix: 'Excerpt', kind: 'text' },
+    { field: 'category', idSuffix: 'Category', kind: 'select' },
+    { field: 'tags', idSuffix: 'Tags', kind: 'commaList' },
+    { field: 'worlds', idSuffix: 'Worlds', kind: 'multiSelect' },
+    { field: 'body', idSuffix: 'Body', kind: 'markdown' },
+  ];
+
+  function renderMyArticleGrid(){
+    const tbody = document.getElementById('myArticleGridBody');
+    const unlinkedHint = document.getElementById('maUnlinkedHint');
+    unlinkedHint.style.display = myTeamMember ? 'none' : '';
+    tbody.innerHTML = '';
+    myArticles.forEach(a=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = \`
+        <td>\${a.title||''}</td>
+        <td style="font-family:var(--font-mono); font-size:1rem; color:var(--text-dim);">\${a.category||''}</td>
+        <td style="font-family:var(--font-mono); font-size:1rem; color:var(--text-dim);">\${a.status||''}</td>
+        <td style="font-family:var(--font-mono); font-size:1rem; color:var(--text-dim);">\${a.readTimeMinutes ? a.readTimeMinutes + ' min' : ''}</td>
+        <td><button class="rowbtn" data-open-article="\${a._id}">OPEN →</button></td>
+      \`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('myArticleCountTag').textContent = myArticles.length;
+    tbody.querySelectorAll('[data-open-article]').forEach(btn=>{
+      btn.addEventListener('click', ()=>openArticleEditor(btn.dataset.openArticle));
+    });
+  }
+
+  document.getElementById('caSubmit').addEventListener('click', async ()=>{
+    const flag = document.getElementById('caFlag');
+    if(!myTeamMember){
+      flag.textContent = 'No profile linked to your login yet — ask an admin to link one.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    const body = collectFieldMap(ARTICLE_FIELD_MAP, 'ca');
+    if(!body.title){
+      flag.textContent = 'Title is required.';
+      flag.className = 'savedflag show err';
+      return;
+    }
+    if(caCoverImageAsset) body.coverImageAssetId = caCoverImageAsset;
+    try{
+      const res = await fetch('/api/me/articles', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      if(!res.ok) throw new Error(result.error || res.statusText);
+      myArticles.unshift({ _id: result.id, title: body.title, category: body.category, status: 'draft', readTimeMinutes: null });
+      flag.textContent = '✓ Saved as draft.';
+      flag.className = 'savedflag show';
+      ['caTitle','caExcerpt','caTags','caBody'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('caCategory').value = '';
+      Array.from(document.getElementById('caWorlds').options).forEach(o=>o.selected=false);
+      caCoverImageAsset = null;
+      renderExistingThumb('ca', null);
+      document.getElementById('caSizeWarn').textContent = '';
+      setTimeout(()=>switchView('myArticles'), 900);
+    }catch(err){
+      flag.textContent = 'Failed: ' + err.message;
+      flag.className = 'savedflag show err';
+    }
+  });
+
+  let caCoverImageAsset = null;
+  wireImageUpload('ca', async (assetId)=>{ caCoverImageAsset = assetId; });
+
+  let activeArticleId = null;
+
+  function openArticleEditor(id){
+    const article = myArticles.find(a=>a._id===id);
+    if(!article) return;
+    activeArticleId = id;
+    document.getElementById('eaTitleHeading').textContent = (article.title||article._id) + ' — DETAIL';
+    document.getElementById('eaStatusNote').textContent =
+      article.status === 'published'
+        ? 'Published — content edits here still require Studio review to reflect the change publicly if the site caches it.'
+        : 'Draft — not visible on the public site until a Studio admin publishes it.';
+    // Populate the Worlds <select>'s <option>s before prefilling it —
+    // setFieldValue('multiSelect', ...) marks options selected by
+    // iterating el.options, which is empty until this runs.
+    populateSelect('eaWorlds', worlds, 'name');
+    populateFieldMap(ARTICLE_FIELD_MAP, 'ea', article);
+    renderExistingThumb('ea', article.coverImage);
+    document.getElementById('eaSizeWarn').textContent = '';
+    document.getElementById('eaFlag').className = 'savedflag';
+    switchView('editArticle');
+  }
+
+  document.getElementById('eaCancel').addEventListener('click', ()=> switchView('myArticles'));
+
+  document.getElementById('eaSave').addEventListener('click', async ()=>{
+    if(!activeArticleId) return;
+    const flag = document.getElementById('eaFlag');
+    const updates = collectFieldMap(ARTICLE_FIELD_MAP, 'ea');
+    flag.textContent = 'Saving…';
+    flag.className = 'savedflag show';
+    const results = await Promise.all(Object.entries(updates).map(([field, value])=> patchMyArticle(activeArticleId, field, value, true)));
+    const failures = results.filter(r=>!r.ok);
+    if(failures.length === 0){
+      const article = myArticles.find(a=>a._id===activeArticleId);
+      if(article) Object.assign(article, updates);
+      renderMyArticleGrid();
+      flag.textContent = '✓ Saved';
+      flag.className = 'savedflag show';
+      setTimeout(()=>flag.classList.remove('show'), 1600);
+    } else {
+      flag.textContent = failures.map(f=>\`\${f.field}: \${f.error}\`).join(' · ');
+      flag.className = 'savedflag show err';
+    }
+  });
+
+  async function patchMyArticle(id, field, value, silent){
+    try{
+      const res = await fetch('/api/me/articles/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify({ field, value }),
+      });
+      const resBody = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(resBody.error || \`HTTP \${res.status}\`);
+      if(!silent){ const article = myArticles.find(a=>a._id===id); if(article) article[field] = value; }
+      return { ok: true, field };
+    }catch(err){
+      return { ok: false, field, error: err.message };
+    }
+  }
+
+  wireImageUpload('ea', async (assetId)=>{
+    if(!activeArticleId) return;
+    const value = { _type: 'image', asset: { _type: 'reference', _ref: assetId } };
+    const result = await patchMyArticle(activeArticleId, 'coverImage', value);
+    if(result.ok){ const article = myArticles.find(a=>a._id===activeArticleId); if(article) article.coverImage = value; }
+  });
+
   // ========== WIKI MANUAL BUILDER ==========
   // Six types (worldUnit/faction/keyFigure/magicItem/loreEntry/
   // notablePlace) share the same generic field-kind collect/populate
@@ -2231,11 +2581,16 @@ const CONSOLE_JS = `
     createNotablePlace: { panel: 'createNotablePlaceView', title: 'Create Notable Place', toolbar: false },
     editNotablePlace: { panel: 'editNotablePlaceView', title: 'Edit Notable Place', toolbar: false },
     bulkWiki: { panel: 'bulkWikiView', title: 'Wiki', toolbar: false },
+    myProfile: { panel: 'myProfileView', title: 'My Bio', toolbar: false },
+    createArticle: { panel: 'createArticleView', title: 'New Article', toolbar: false },
+    myArticles: { panel: 'myArticlesView', title: 'My Articles', toolbar: false },
+    editArticle: { panel: 'editArticleView', title: 'Article Detail', toolbar: false },
   });
   [
     'createWorldUnitView','editWorldUnitView','createFactionView','editFactionView',
     'createKeyFigureView','editKeyFigureView','createMagicItemView','editMagicItemView',
     'createLoreEntryView','editLoreEntryView','createNotablePlaceView','editNotablePlaceView',
+    'myProfileView','createArticleView','editArticleView',
   ].forEach(p=> EDITOR_PANELS.add(p));
 
   document.getElementById('bwCopyPrompt').addEventListener('click', async ()=>{
@@ -2344,6 +2699,18 @@ const CONSOLE_JS = `
     if(view === 'createLoreEntry'){ populateSelect('cleWorld', worlds, 'name'); populateSelect('cleUnit', worldUnits, 'name', true); populateSelect('cleRelatedEntries', loreEntries, 'title'); populateSelect('cleSubmittedBy', teamMembers, 'handle', true); }
     if(view === 'createNotablePlace'){ populateSelect('cnpWorld', worlds, 'name', true); populateSelect('cnpUnit', worldUnits, 'name', true); populateSelect('cnpKeyFigures', keyFigures, 'name'); populateSelect('cnpItems', magicItems, 'name'); }
     if(view === 'bulkWiki'){ populateSelect('bwWorld', worlds, 'name'); document.getElementById('bwResults').innerHTML = ''; document.getElementById('bwFlag').textContent = ''; }
+    if(view === 'myProfile') renderMyProfileForm();
+    if(view === 'myArticles') renderMyArticleGrid();
+    if(view === 'createArticle'){
+      populateSelect('caWorlds', worlds, 'name');
+      ['caTitle','caExcerpt','caTags','caBody'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('caCategory').value = '';
+      caCoverImageAsset = null;
+      renderExistingThumb('ca', null);
+      document.getElementById('caSizeWarn').textContent = '';
+      document.getElementById('caFlag').className = 'savedflag';
+    }
+    if(view === 'editArticle') populateSelect('eaWorlds', worlds, 'name');
   };
 
   renderGrid();

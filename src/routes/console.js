@@ -8,6 +8,7 @@ import {
   WIKI_IMPORT_PROMPT,
 } from "../lib/import-templates.js";
 import { blocksToMarkdown } from "../lib/portable-text.js";
+import { resolveMyTeamMember } from "../lib/identity.js";
 
 const app = new Hono();
 
@@ -92,6 +93,11 @@ function convertBlocksToMarkdown(docs, fields) {
   return docs;
 }
 
+const MY_ARTICLES_QUERY = `*[_type == "article" && author._ref == $authorId] | order(_createdAt desc){
+  _id, title, slug, excerpt, category, tags, coverImage, body, status, publishedAt, readTimeMinutes,
+  "worlds": worlds[]._ref
+}`;
+
 app.get("/", async (c) => {
   const email = c.get("gmEmail");
   const [
@@ -106,6 +112,7 @@ app.get("/", async (c) => {
     magicItems,
     notablePlaces,
     loreEntries,
+    myTeamMember,
   ] = await Promise.all([
     query(c.env, MY_CAMPAIGNS_QUERY, { email }),
     query(c.env, MY_DOSSIERS_QUERY, { email }),
@@ -118,7 +125,15 @@ app.get("/", async (c) => {
     query(c.env, MAGIC_ITEMS_QUERY),
     query(c.env, NOTABLE_PLACES_QUERY),
     query(c.env, LORE_ENTRIES_QUERY),
+    // Not every DM is linked to a teamMember doc yet (see lib/identity.js)
+    // — the console has to render fine either way, so this resolves to
+    // null rather than throwing, and myArticles is fetched only if it did.
+    resolveMyTeamMember(c.env, email),
   ]);
+
+  const myArticles = myTeamMember
+    ? await query(c.env, MY_ARTICLES_QUERY, { authorId: myTeamMember._id })
+    : [];
 
   convertBlocksToMarkdown(worldUnits, ["overview", "pageFooterCTA"]);
   convertBlocksToMarkdown(factions, ["description", "dmNotes"]);
@@ -126,6 +141,7 @@ app.get("/", async (c) => {
   convertBlocksToMarkdown(magicItems, ["lore", "dmNotes"]);
   convertBlocksToMarkdown(notablePlaces, ["description", "dmNotes"]);
   convertBlocksToMarkdown(loreEntries, ["body"]);
+  convertBlocksToMarkdown(myArticles, ["body"]);
 
   const html = renderConsolePage({
     campaigns,
@@ -139,6 +155,8 @@ app.get("/", async (c) => {
     magicItems,
     notablePlaces,
     loreEntries,
+    myTeamMember,
+    myArticles,
     gmEmail: email,
     sanityProjectId: c.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
     sanityDataset: c.env.NEXT_PUBLIC_SANITY_DATASET,
