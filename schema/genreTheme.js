@@ -147,6 +147,7 @@ export default defineType({
           { title: "Parchment Map (fantasy)", value: "parchment-map" },
           { title: "Static Scan (horror)", value: "static-scan" },
           { title: "Grid Scan (modern)", value: "grid-scan" },
+          { title: "End of Broadcast (apocalyptic)", value: "end-of-broadcast" },
         ],
       },
     }),

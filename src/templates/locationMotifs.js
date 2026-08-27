@@ -6,10 +6,15 @@
  * animation, no JS needed for any of these — matches the original
  * radar-sweep implementation's own simplicity.
  *
- *   radar-sweep    — sci-fi: rotating sonar sweep + concentric rings + ping
- *   parchment-map  — fantasy: wavering compass needle + candlelit glow
- *   static-scan    — horror: VHS-style tracking bar + glitch flicker
- *   grid-scan      — modern: GPS/security grid + scanning line + reticle
+ *   radar-sweep      — sci-fi: rotating sonar sweep + concentric rings + ping
+ *   parchment-map    — fantasy: wavering compass needle + candlelit glow
+ *   static-scan      — horror: VHS-style tracking bar + glitch flicker
+ *   grid-scan        — modern: GPS/security grid + scanning line + reticle
+ *   end-of-broadcast — apocalyptic: dense flickering TV static + rolling
+ *                      bar + a "NO SIGNAL" caption blinking through it,
+ *                      much more literal/full-bleed than static-scan's
+ *                      subtle VHS tracking — a distinct look, not a
+ *                      louder version of an existing one.
  *
  * Each entry provides `html` (the .mapbox inner markup) and `css`
  * (.mapbox-scoped rules — the container's own size/position/overflow
@@ -90,6 +95,27 @@ export const LOCATION_MOTIFS = {
       .mapbox .reticle::before,.mapbox .reticle::after{content:''; position:absolute; background:var(--accent-b);}
       .mapbox .reticle::before{left:50%; top:-6px; width:1px; height:6px;}
       .mapbox .reticle::after{top:50%; left:-6px; width:6px; height:1px;}
+    `,
+  },
+
+  "end-of-broadcast": {
+    html: `
+      <div class="tvstatic"></div>
+      <div class="tvrollbar"></div>
+      <div class="tvsignal">NO SIGNAL</div>
+    `,
+    css: `
+      .mapbox{background:#000;}
+      .mapbox .tvstatic{position:absolute; inset:-4%; opacity:.55; mix-blend-mode:screen;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+        background-size:140px 140px; animation:tvflicker .1s steps(2) infinite;}
+      @keyframes tvflicker{0%{transform:translate(0,0);}50%{transform:translate(-3%,2%);}100%{transform:translate(2%,-2%);}}
+      .mapbox .tvrollbar{position:absolute; left:0; right:0; height:35%; background:linear-gradient(rgba(255,255,255,.18), transparent); mix-blend-mode:screen; animation:tvroll 2.4s linear infinite;}
+      @keyframes tvroll{0%{top:-35%;}100%{top:100%;}}
+      .mapbox .tvsignal{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+        font-family:var(--font-mono); font-size:11px; letter-spacing:5px; color:#fff;
+        text-shadow:2px 0 var(--accent-b), -2px 0 var(--accent-a); animation:tvblink 2.8s steps(1) infinite;}
+      @keyframes tvblink{0%,100%{opacity:0;}4%{opacity:1;}9%{opacity:0;}68%{opacity:0;}73%{opacity:.85;}78%{opacity:0;}}
     `,
   },
 };
