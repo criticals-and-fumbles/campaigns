@@ -278,10 +278,22 @@ export function renderConsolePage({
         <div class="field">
           <label>Stats (1–20)</label>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <input type="number" id="mpCharisma" placeholder="Charisma" min="1" max="20" style="flex:1;">
-            <input type="number" id="mpWisdom" placeholder="Wisdom" min="1" max="20" style="flex:1;">
-            <input type="number" id="mpIntelligence" placeholder="Intelligence" min="1" max="20" style="flex:1;">
-            <input type="number" id="mpLuck" placeholder="Luck" min="1" max="20" style="flex:1;">
+            <div style="flex:1; min-width:90px;">
+              <label>Charisma</label>
+              <input type="number" id="mpCharisma" min="1" max="20">
+            </div>
+            <div style="flex:1; min-width:90px;">
+              <label>Wisdom</label>
+              <input type="number" id="mpWisdom" min="1" max="20">
+            </div>
+            <div style="flex:1; min-width:90px;">
+              <label>Intelligence</label>
+              <input type="number" id="mpIntelligence" min="1" max="20">
+            </div>
+            <div style="flex:1; min-width:90px;">
+              <label>Luck</label>
+              <input type="number" id="mpLuck" min="1" max="20">
+            </div>
           </div>
         </div>
         <div class="field"><label>Backstory</label><textarea id="mpBackstory" rows="4"></textarea></div>
@@ -932,8 +944,8 @@ const CONSOLE_CSS = `
   .field-tip{font-family:var(--font-body); font-size:.82rem; font-style:italic; color:var(--text-dim); margin:0 0 6px; line-height:1.4;}
   .field [contenteditable="true"]{background:var(--panel-2); border:1px solid var(--line); padding:10px 12px; font-size:.92rem; line-height:1.6; outline:none;}
   .field [contenteditable="true"]:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
-  .field input[type=text], .field select, .field textarea{width:100%; max-width:420px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 12px; font-family:var(--font-body); font-size:.92rem; outline:none;}
-  .field input[type=text]:focus, .field select:focus, .field textarea:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
+  .field input[type=text], .field input[type=number], .field input[type=email], .field select, .field textarea{width:100%; max-width:420px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 12px; font-family:var(--font-body); font-size:.92rem; outline:none; box-sizing:border-box;}
+  .field input[type=text]:focus, .field input[type=number]:focus, .field input[type=email]:focus, .field select:focus, .field textarea:focus{border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
   .hint{font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); margin-top:14px;}
   .back-link{display:inline-block; font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); text-decoration:none; margin-bottom:6px;}
   .back-link:hover{color:var(--emerald);}
