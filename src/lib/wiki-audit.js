@@ -2,20 +2,18 @@
  * Shared audit-trail stamping for the six Wiki manual-builder routes
  * (worldUnit, faction, keyFigure, magicItem, loreEntry, notablePlace).
  *
- * Unlike dossier/campaign, these routes have NO ownership scoping (any
- * Cloudflare-Access console GM may create/edit any of these — a
- * deliberate decision, since teamMember has no email field to check
- * world.dms/worldUnit.dmOwner against). consoleEditedByEmail/
- * consoleEditedAt are the only record of who touched a document and
- * when — real tracking without a rollback UI yet, per that decision.
- * Both fields are excluded from every public-facing GROQ query in
- * cnf-website (verified against sanity/lib/queries.ts) — never add them
- * to a public projection.
- *
- * lastEditedBy (reference -> teamMember) is a separate, pre-existing
- * schema field these routes deliberately never touch — there is no way
- * to resolve a Cf-Access email to a teamMember document, so it's left
- * alone rather than guessed at.
+ * These routes are now access-controlled (see lib/world-access.js) —
+ * only a world's collaborators (world.dms) or a unit's owner
+ * (worldUnit.dmOwner) may create/edit. Before lib/identity.js existed
+ * there was no way to resolve a Cf-Access email to a teamMember
+ * document at all, so consoleEditedByEmail/consoleEditedAt were the
+ * only record of who touched a document — still stamped for that raw
+ * audit trail. lastEditedBy (reference -> teamMember) can now also be
+ * set correctly, since the caller's teamMemberId is already resolved by
+ * the access check that runs before this. Both consoleEdited* fields
+ * are excluded from every public-facing GROQ query in cnf-website
+ * (verified against sanity/lib/queries.ts) — never add them to a
+ * public projection.
  */
 export const WIKI_SERVER_MANAGED_FIELDS = ["consoleEditedByEmail", "consoleEditedAt", "lastEditedBy"];
 
@@ -24,10 +22,14 @@ export function rejectServerManagedField(field) {
 }
 
 /** Strips any client-supplied server-managed fields from a create body
- * and returns the audit stamp to merge in alongside it. */
-export function stampAudit(gmEmail) {
+ * and returns the audit stamp to merge in alongside it. teamMemberId is
+ * the caller's own resolved id (from requireWorldCollaborator) — omit
+ * only if truly unresolvable, which shouldn't happen for a request that
+ * already passed the access check. */
+export function stampAudit(gmEmail, teamMemberId) {
   return {
     consoleEditedByEmail: gmEmail,
     consoleEditedAt: new Date().toISOString(),
+    ...(teamMemberId ? { lastEditedBy: { _type: "reference", _ref: teamMemberId } } : {}),
   };
 }

@@ -3,6 +3,7 @@ import { query, mutate, createOrReplace } from "../lib/sanity.js";
 import { wikiDocId } from "../lib/slug.js";
 import { markdownToBlocks } from "../lib/portable-text.js";
 import { rejectServerManagedField, stampAudit } from "../lib/wiki-audit.js";
+import { requireWorldCollaborator } from "../lib/world-access.js";
 
 const app = new Hono();
 
@@ -16,6 +17,9 @@ app.post("/", async (c) => {
   const input = await c.req.json();
   if (!input.world) return c.json({ error: "world is required" }, 400);
   if (!input.title) return c.json({ error: "title is required" }, 400);
+
+  const { member, error } = await requireWorldCollaborator(c, input.world, input.unit);
+  if (error) return error;
 
   const doc = {
     _id: wikiDocId("loreEntry", input.world, input.unit, input.title),
@@ -36,7 +40,7 @@ app.post("/", async (c) => {
       : undefined,
     tags: Array.isArray(input.tags) && input.tags.length ? input.tags : undefined,
     submittedBy: input.submittedBy ? { _type: "reference", _ref: input.submittedBy } : undefined,
-    ...stampAudit(c.get("gmEmail")),
+    ...stampAudit(c.get("gmEmail"), member._id),
   };
 
   try {
@@ -59,8 +63,11 @@ app.patch("/:id", async (c) => {
     return c.json({ error: `"world" cannot be reassigned after creation` }, 400);
   }
 
-  const exists = await query(c.env, `*[_id == $id][0]._id`, { id });
-  if (!exists) return c.notFound();
+  const existing = await query(c.env, `*[_id == $id][0]{ "world": world._ref, "unit": unit._ref }`, { id });
+  if (!existing) return c.notFound();
+
+  const { member, error } = await requireWorldCollaborator(c, existing.world, existing.unit);
+  if (error) return error;
 
   let setValue = value;
   if (field === "body") setValue = markdownToBlocks(value);
@@ -72,7 +79,7 @@ app.patch("/:id", async (c) => {
 
   try {
     const result = await mutate(c.env, [
-      { patch: { id, set: { [field]: setValue, ...stampAudit(c.get("gmEmail")) } } },
+      { patch: { id, set: { [field]: setValue, ...stampAudit(c.get("gmEmail"), member._id) } } },
     ]);
     return c.json({ ok: true, result });
   } catch (err) {
