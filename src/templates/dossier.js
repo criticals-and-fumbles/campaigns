@@ -644,7 +644,11 @@ html[data-theme="light"] .icon-btn .icon-moon{display:block;}
    internally, rather than being capped at a fixed height that leaves
    empty space beneath it on tall/widescreen viewports. */
 .detail-pane{flex:1; min-width:0; overflow:hidden; padding:clamp(20px,3vw,44px); display:flex; flex-direction:column;}
-.detail-inner{max-width:920px; width:100%; margin:0 auto; display:flex; flex-direction:column; flex:1; min-height:0;}
+/* No max-width here on purpose — the iframe's own document (renderDossierPage's
+   .wrap) already caps its prose at a readable width internally, so capping this
+   outer wrapper too just doubled up and left a growing empty gutter on wide
+   screens instead of letting the iframe fill the pane. */
+.detail-inner{width:100%; margin:0 auto; display:flex; flex-direction:column; flex:1; min-height:0;}
 
 .detail-title{font-family:var(--font-display); font-size:clamp(1.3rem,2.4vw,1.9rem); letter-spacing:1px; margin-bottom:6px; flex-shrink:0;}
 .detail-meta{font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-dim); margin-bottom:22px; display:flex; gap:18px; flex-wrap:wrap; flex-shrink:0;}
@@ -708,7 +712,6 @@ html[data-theme="light"] .icon-btn .icon-moon{display:block;}
   .stage{max-width:1900px;}
   .list-pane{width:clamp(300px, 18vw, 380px);}
   .detail-pane{padding:56px;}
-  .detail-inner{max-width:1040px;}
 }
 .grain{position:fixed; inset:0; z-index:1; pointer-events:none; mix-blend-mode:overlay; opacity:.05;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
