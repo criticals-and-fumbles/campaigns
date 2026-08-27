@@ -26,10 +26,31 @@ app.patch("/:id", async (c) => {
     return c.json({ error: `"campaign" cannot be reassigned after creation` }, 400);
   }
 
-  const owner = await query(c.env, `*[_id == $id][0].campaign->ownerEmail`, { id });
-  if (owner === null || owner === undefined) return c.notFound();
-  if (owner !== c.get("gmEmail")) {
+  const current = await query(c.env, `*[_id == $id][0]{ "ownerEmail": campaign->ownerEmail, "campaignRef": campaign._ref }`, { id });
+  if (!current) return c.notFound();
+  if (current.ownerEmail !== c.get("gmEmail")) {
     return c.json({ error: "Forbidden — you do not own this dossier's campaign" }, 403);
+  }
+
+  // The public dossier route looks documents up by `code` (scoped to the
+  // parent campaign), not by _id — see routes/dossier.js's DOSSIER_QUERY.
+  // _id is fixed at creation from the *original* campaignSlug+code and
+  // never re-derived, so `code` is safe to edit afterward, but two
+  // dossiers in the same campaign ending up with the same `code` would
+  // make that lookup silently pick one and hide the other. Guard it here
+  // since the frontend has no visibility into sibling dossiers' codes.
+  if (field === "code") {
+    if (!value || !String(value).trim()) {
+      return c.json({ error: "Code cannot be empty" }, 400);
+    }
+    const clash = await query(
+      c.env,
+      `*[_type == "dossier" && campaign._ref == $campaignRef && code == $code && _id != $id][0]._id`,
+      { campaignRef: current.campaignRef, code: value, id },
+    );
+    if (clash) {
+      return c.json({ error: `Another dossier in this campaign already uses code "${value}"` }, 409);
+    }
   }
 
   const patch = {
@@ -45,6 +66,27 @@ app.patch("/:id", async (c) => {
   try {
     const result = await mutate(c.env, [{ patch }]);
     return c.json({ ok: true, result });
+  } catch (err) {
+    return c.json({ error: err.message }, 502);
+  }
+});
+
+// DELETE /api/dossier/:id — same ownership check as PATCH (the requester
+// must own the dossier's *campaign*, dossiers have no owner field of
+// their own). Hard delete — no soft-delete/undo, so the console prompts
+// for confirmation before ever calling this.
+app.delete("/:id", async (c) => {
+  const id = decodeURIComponent(c.req.param("id"));
+
+  const owner = await query(c.env, `*[_id == $id][0].campaign->ownerEmail`, { id });
+  if (owner === null || owner === undefined) return c.notFound();
+  if (owner !== c.get("gmEmail")) {
+    return c.json({ error: "Forbidden — you do not own this dossier's campaign" }, 403);
+  }
+
+  try {
+    await mutate(c.env, [{ delete: { id } }]);
+    return c.json({ ok: true });
   } catch (err) {
     return c.json({ error: err.message }, 502);
   }

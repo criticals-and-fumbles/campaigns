@@ -90,18 +90,21 @@ export function renderConsolePage({
     <div class="topbar">
       <h1 id="viewTitle">Dossier</h1>
       <div class="toolbar" id="bulkToolbar">
-        <button class="btn" id="exportXml">Export XML</button>
+        <a class="btn secondary" href="/console/templates/dossiers.xml">Download XML Template</a>
         <button class="btn" id="importXmlBtn">Import XML</button>
         <input type="file" id="importXml" accept=".xml">
-        <a class="btn" href="/console/templates/dossiers.xml">Download XML Template</a>
-        <button class="btn" id="exportCsv">Export Objectives CSV</button>
-        <button class="btn" id="importCsvBtn">Import Objectives CSV</button>
-        <input type="file" id="importCsv" accept=".csv">
-        <a class="btn" href="/console/templates/objectives.csv">Download CSV Template</a>
+        <button class="btn primary" id="exportXml">Export XML</button>
       </div>
     </div>
+    <p class="hint" id="bulkHint">
+      Download the template, fill in one &lt;dossier&gt; block per session (campaignSlug must
+      match one of your own campaigns), then Import XML to create-or-update by dossier code —
+      existing dossiers with the same code get overwritten, not duplicated. Export XML gives you
+      everything currently in this table, in the same format, as a starting point for edits.
+    </p>
 
     <div class="status" id="statusLine">Ready.</div>
+    <div id="xmlResults"></div>
 
     <div id="bulkView">
       <table>
@@ -215,13 +218,18 @@ export function renderConsolePage({
 
     <div class="editor" id="editorPanel">
       <h2 id="editorTitle">DOSSIER — DETAIL</h2>
-      <div class="field"><label>Code</label><input type="text" id="edCode" readonly></div>
+      <div class="field">
+        <label>Code</label>
+        <input type="text" id="edCode">
+        <p class="field-tip">Changing this changes the dossier's public URL — anyone with the old link gets a 404. Must be unique within this campaign.</p>
+      </div>
       <div class="field"><label>Campaign</label><input type="text" id="edCampaignTitle" readonly></div>
       <div class="field"><label>Title *</label><input type="text" id="edTitle"></div>
       ${dossierFieldsBlock("ed")}
       <div class="savebar">
         <button class="btn primary" id="edSave">Save Session</button>
         <button class="btn" id="closeEditor">← Back</button>
+        <button class="btn danger" id="edDelete">Delete Dossier</button>
         <span class="savedflag" id="savedFlag">✓ Saved</span>
       </div>
     </div>
@@ -743,10 +751,14 @@ const CONSOLE_CSS = `
   .btn{font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; padding:9px 14px; border:1px solid var(--line-strong); background:var(--panel); color:var(--text-dim); cursor:pointer; display:inline-block; text-decoration:none; box-sizing:border-box;}
   .btn:hover{border-color:var(--emerald); color:var(--emerald);}
   .btn.primary{border-color:var(--pink); color:var(--pink);}
+  .btn.secondary{border-color:transparent; background:none; color:var(--text-faint);}
+  .btn.secondary:hover{border-color:var(--emerald);}
+  .btn.danger{border-color:var(--danger); color:var(--danger);}
+  .btn.danger:hover{background:var(--danger); color:var(--bg);}
   input[type=file]{display:none;}
   .status{font-family:var(--font-mono); font-size:10px; color:var(--text-dim); margin-bottom:14px; min-height:16px;}
   .status.ok{color:var(--emerald);}
-  .status.err{color:var(--danger);}
+  .status.err{color:var(--danger); font-weight:bold;}
   table{width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line);}
   thead th{text-align:left; font-family:var(--font-mono); font-size:9.5px; letter-spacing:1.5px; color:var(--text-faint); padding:10px 12px; border-bottom:1px solid var(--line-strong); background:var(--panel-2); position:sticky; top:0;}
   tbody td{padding:9px 12px; border-bottom:1px solid var(--line); font-size:.85rem; color:var(--text);}
@@ -754,6 +766,8 @@ const CONSOLE_CSS = `
   td[contenteditable="true"]{cursor:text; outline:none;}
   td[contenteditable="true"]:focus{background:rgba(255,79,174,.08); box-shadow:inset 0 0 0 1px var(--pink);}
   .rowbtn{font-family:var(--font-mono); font-size:9px; color:var(--text-dim); border:1px solid var(--line); background:none; padding:4px 8px; cursor:pointer;}
+  .rowbtn.danger{color:var(--danger); border-color:var(--danger);}
+  .rowbtn.danger:hover{background:var(--danger); color:var(--bg);}
   .editor{display:none; background:var(--panel); border:1px solid var(--line-strong); margin-top:18px; padding:22px;}
   .editor.open{display:block;}
   .editor h2{font-family:var(--font-display); font-size:1rem; letter-spacing:2px; margin-bottom:16px; color:var(--emerald);}
@@ -849,6 +863,8 @@ const CONSOLE_JS = `
     else el.style.display = '';
     viewTitle.textContent = target.title;
     bulkToolbar.style.display = target.toolbar ? '' : 'none';
+    document.getElementById('bulkHint').style.display = target.toolbar ? '' : 'none';
+    document.getElementById('xmlResults').style.display = target.toolbar ? '' : 'none';
     document.querySelectorAll('.navitem[data-view]').forEach(n=>n.classList.toggle('active', n.dataset.view===view));
     if(view === 'campaigns') renderCampaignGrid();
     if(view === 'createCampaign') populateThemeSelect();
@@ -876,7 +892,10 @@ const CONSOLE_JS = `
         <td style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">\${campaignTitleFor(d.campaignId)}</td>
         <td contenteditable="true" data-id="\${d._id}" data-field="location">\${d.location||''}</td>
         <td style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">\${done} / \${total} done</td>
-        <td><button class="rowbtn" data-open="\${d._id}">OPEN →</button></td>
+        <td>
+          <button class="rowbtn" data-open="\${d._id}">OPEN →</button>
+          <button class="rowbtn danger" data-delete="\${d._id}">DELETE</button>
+        </td>
       \`;
       gridBody.appendChild(tr);
     });
@@ -887,21 +906,54 @@ const CONSOLE_JS = `
     gridBody.querySelectorAll('[data-open]').forEach(btn=>{
       btn.addEventListener('click', ()=>openEditor(btn.dataset.open));
     });
+    gridBody.querySelectorAll('[data-delete]').forEach(btn=>{
+      btn.addEventListener('click', ()=>deleteDossier(btn.dataset.delete));
+    });
   }
 
-  async function patchDossierField(id, field, value){
+  // Shared by the grid's row DELETE button and the single-dossier
+  // editor's Delete Dossier button — hard delete, no undo, so this is
+  // the one confirmation gate both entry points go through.
+  async function deleteDossier(id){
+    const d = dossiers.find(x=>x._id===id);
+    const label = d ? (d.code || d.title || id) : id;
+    if(!confirm(\`Delete dossier "\${label}"? This cannot be undone.\`)) return;
+    try{
+      const res = await fetch('/api/dossier/' + encodeURIComponent(id), { method: 'DELETE' });
+      const body = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(body.error || \`HTTP \${res.status}\`);
+      dossiers = dossiers.filter(x=>x._id!==id);
+      renderGrid();
+      if(activeId === id){ navSingle.style.display = 'none'; switchView('bulk'); }
+      flashStatus(\`Deleted "\${label}".\`, 'ok');
+    }catch(err){
+      flashStatus(\`Delete failed: \${err.message}\`, 'err');
+    }
+  }
+
+  // Returns {ok, error} rather than throwing/swallowing — callers doing a
+  // single field's save (grid inline-edit-on-blur) want the old flash-
+  // and-forget behavior; edSave's bulk multi-field save needs to know
+  // exactly which field(s) failed and why before it can honestly report
+  // "Saved" (previously it always did, even when every patch had failed,
+  // because this function never propagated its own caught errors).
+  async function patchDossierField(id, field, value, opts){
+    const silent = opts && opts.silent;
     try{
       const res = await fetch('/api/dossier/' + encodeURIComponent(id), {
         method: 'PATCH',
         headers: {'content-type':'application/json'},
         body: JSON.stringify({ field, value }),
       });
-      if(!res.ok) throw new Error((await res.json()).error || res.statusText);
+      const body = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(body.error || \`HTTP \${res.status}\`);
       const d = dossiers.find(x=>x._id===id);
       if(d) d[field] = value;
-      flashStatus('Saved ' + field + ' → ' + id, 'ok');
+      if(!silent) flashStatus('Saved ' + field + ' → ' + id, 'ok');
+      return { ok: true };
     }catch(err){
-      flashStatus('Save failed: ' + err.message, 'err');
+      if(!silent) flashStatus('Save failed: ' + err.message, 'err');
+      return { ok: false, field, error: err.message };
     }
   }
 
@@ -1266,6 +1318,7 @@ const CONSOLE_JS = `
   // and save (edSave) so the two can never drift out of sync with each
   // other. Repeater fields use their REPEATER_SHAPES name as the "kind".
   const DOSSIER_FIELD_MAP = [
+    { field: 'code', id: 'edCode', kind: 'text' },
     { field: 'title', id: 'edTitle', kind: 'text' },
     { field: 'classification', id: 'edClassification', kind: 'text' },
     { field: 'distribution', id: 'edDistribution', kind: 'text' },
@@ -1307,6 +1360,9 @@ const CONSOLE_JS = `
     navSingle.style.display = 'none';
     switchView('bulk');
   });
+  document.getElementById('edDelete').addEventListener('click', ()=>{
+    if(activeId) deleteDossier(activeId);
+  });
 
   document.getElementById('edSave').addEventListener('click', async ()=>{
     if(!activeId) return;
@@ -1315,18 +1371,28 @@ const CONSOLE_JS = `
     DOSSIER_FIELD_MAP.forEach(({ field, id, kind })=>{
       updates[field] = kind === 'text' ? document.getElementById(id).value.trim() : collectRepeaterRows(id);
     });
-    try{
-      await Promise.all(Object.entries(updates).map(([field, value])=>
-        patchDossierField(activeId, field, value)
-      ));
+    flag.textContent = 'Saving…';
+    flag.className = 'savedflag show';
+    // silent:true — 12 fields patching in parallel would otherwise race
+    // to overwrite each other's flashStatus lines; edSave reports one
+    // consolidated result instead once every patch has settled.
+    const results = await Promise.all(Object.entries(updates).map(([field, value])=>
+      patchDossierField(activeId, field, value, { silent: true })
+    ));
+    renderGrid();
+    const failures = results.filter(r=>!r.ok);
+    if(failures.length === 0){
       flag.textContent = '✓ Saved';
-      flag.classList.add('show');
+      flag.className = 'savedflag show';
       setTimeout(()=>flag.classList.remove('show'), 1600);
-      renderGrid();
-    }catch(err){
-      flag.textContent = 'Save failed: ' + err.message;
-      flag.classList.add('show', 'err');
-      setTimeout(()=>flag.classList.remove('show','err'), 2400);
+      const d = dossiers.find(x=>x._id===activeId);
+      if(d){ navSingle.textContent = 'Editing: ' + (d.code||d._id); document.getElementById('editorTitle').textContent = (d.code||d._id) + ' — DETAIL'; }
+    } else {
+      // No auto-clear timeout on failure — an error a GM can't act on
+      // because it vanished in a couple seconds is the exact complaint
+      // this fix addresses. It stays until the next save attempt.
+      flag.textContent = failures.map(f=>\`\${f.field}: \${f.error}\`).join(' · ');
+      flag.className = 'savedflag show err';
     }
   });
 
@@ -1464,42 +1530,83 @@ const CONSOLE_JS = `
   });
 
   // ---------- XML EXPORT / IMPORT ----------
+  // renderXmlResults / clearXmlResults: mirrors renderBulkWikiResults'
+  // pattern (persistent summary + per-row failure table, not a one-line
+  // flashStatus that the next unrelated action or a page reload wipes
+  // out before it's readable) — added 2026-08-27 after a GM reported a
+  // failed import's error had no actionable detail and vanished almost
+  // immediately (it was being clobbered by the unconditional reload
+  // right below it, even on partial failure).
+  function clearXmlResults(){
+    document.getElementById('xmlResults').innerHTML = '';
+  }
+  function renderXmlResults(data){
+    const container = document.getElementById('xmlResults');
+    container.innerHTML = '';
+    const summary = document.createElement('p');
+    summary.className = 'hint';
+    summary.textContent = \`Created \${data.created}, updated \${data.updated}, failed \${data.failed}.\`;
+    container.appendChild(summary);
+
+    if(data.failures && data.failures.length){
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      thead.innerHTML = '<tr><th>Code</th><th>Reason</th></tr>';
+      table.appendChild(thead);
+      const tbody = document.createElement('tbody');
+      data.failures.forEach(f=>{
+        const tr = document.createElement('tr');
+        [f.code, f.reason].forEach(text=>{
+          const td = document.createElement('td');
+          td.textContent = text;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+  }
+
   document.getElementById('exportXml').addEventListener('click', async ()=>{
     window.location.href = '/api/export.xml';
   });
   document.getElementById('importXmlBtn').addEventListener('click', ()=> document.getElementById('importXml').click());
   document.getElementById('importXml').addEventListener('change', async (e)=>{
     const file = e.target.files[0]; if(!file) return;
+    clearXmlResults();
+    flashStatus('Importing…', '');
     try{
       const form = new FormData();
       form.append('file', file);
       const res = await fetch('/api/import', { method:'POST', body: form });
-      const body = await res.json();
-      if(!res.ok) throw new Error(body.error || res.statusText);
-      flashStatus(\`Imported \${body.imported} dossiers (\${body.created} created, \${body.updated} updated\${body.failed?', ' + body.failed + ' failed':''}).\`, body.failed ? 'err' : 'ok');
-      window.location.reload();
-    }catch(err){ flashStatus('XML import failed: ' + err.message, 'err'); }
+      // A 502/500 from an upstream failure (or any non-JSON error page)
+      // must not surface as a raw "Unexpected token < in JSON" — that's
+      // exactly the kind of non-actionable message this fix is for.
+      const body = await res.json().catch(()=>null);
+      if(!body) throw new Error(\`Server returned an unreadable response (HTTP \${res.status}). Try again — if it persists, the file may be malformed.\`);
+      if(!res.ok) throw new Error(body.error || \`HTTP \${res.status}\`);
+
+      renderXmlResults(body);
+      if(body.failed > 0){
+        flashStatus(\`Imported with \${body.failed} failure\${body.failed===1?'':'s'} — see details below.\`, 'err');
+        // Deliberately no reload here: a reload would wipe the failure
+        // detail above before the GM can read which codes failed and
+        // why. Whatever DID succeed is already live in Sanity; the grid
+        // just won't reflect it until the next reload/navigation.
+      } else {
+        flashStatus(\`Imported \${body.imported} dossiers (\${body.created} created, \${body.updated} updated).\`, 'ok');
+        window.location.reload();
+      }
+    }catch(err){
+      flashStatus('XML import failed: ' + err.message, 'err');
+    }
     e.target.value = '';
   });
 
-  // ---------- CSV EXPORT / IMPORT (objectives) ----------
-  document.getElementById('exportCsv').addEventListener('click', ()=>{
-    window.location.href = '/api/export.csv?collection=objectives';
-  });
-  document.getElementById('importCsvBtn').addEventListener('click', ()=> document.getElementById('importCsv').click());
-  document.getElementById('importCsv').addEventListener('change', async (e)=>{
-    const file = e.target.files[0]; if(!file) return;
-    try{
-      const form = new FormData();
-      form.append('file', file);
-      const res = await fetch('/api/import/csv?collection=objectives', { method:'POST', body: form });
-      const body = await res.json();
-      if(!res.ok) throw new Error(body.error || res.statusText);
-      flashStatus(\`Bulk-updated \${body.updatedDossiers} dossiers' objectives from CSV.\`, 'ok');
-      window.location.reload();
-    }catch(err){ flashStatus('CSV import failed: ' + err.message, 'err'); }
-    e.target.value = '';
-  });
+  // CSV export/import (objectives) buttons removed from the Dossier
+  // toolbar 2026-08-27 — UI only; /api/export.csv and /api/import/csv
+  // routes are untouched server-side in case this needs to come back.
 
   // ========== WIKI MANUAL BUILDER ==========
   // Six types (worldUnit/faction/keyFigure/magicItem/loreEntry/
