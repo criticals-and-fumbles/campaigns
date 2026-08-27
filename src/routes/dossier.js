@@ -203,7 +203,14 @@ function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
   /* "not more than a quarter of the card" — capped at 25% width, with a
      sane minimum so it doesn't collapse to nothing on a narrow card. */
   .card-image{flex:0 0 25%; max-width:25%; min-width:120px; aspect-ratio:4/3; background:#0c1a10; overflow:hidden;}
-  .card-image img{width:100%; height:100%; object-fit:cover;}
+  /* contain, not cover — a campaign's hero image can be any aspect ratio
+     (banner-wide, portrait, whatever a DM uploaded) and this card's box
+     is a fixed 4/3. cover was cropping a meaningful chunk of the image
+     on anything that didn't already happen to match 4/3 (e.g. an
+     ultra-wide banner lost roughly half its width off each side).
+     contain scales the whole image down to fit instead, letterboxed
+     against the box's own background rather than cropped. */
+  .card-image img{width:100%; height:100%; object-fit:contain;}
   .card-body{flex:1; min-width:0; display:flex; flex-direction:column; gap:.6rem; padding:1.25rem 1.5rem;}
   .badge-row{display:flex; flex-wrap:wrap; align-items:center; gap:.5rem;}
   .badge{border:1px solid var(--emerald); color:var(--emerald); font-family:var(--font-ui); font-size:.875rem; padding:.25rem 1rem; border-radius:999px;}
