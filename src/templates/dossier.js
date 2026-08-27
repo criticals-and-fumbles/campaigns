@@ -291,6 +291,9 @@ const BASE_CSS = `
   .scanlines{position:fixed; inset:0; z-index:2; pointer-events:none; background:repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.12) 3px, rgba(0,0,0,0) 4px); animation:scandrift 9s linear infinite; opacity:.35;}
   @keyframes scandrift{0%{background-position-y:0;}100%{background-position-y:200px;}}
   .vignette{position:fixed; inset:0; z-index:2; pointer-events:none; background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,.55) 100%);}
+  /* Vignette is a dark-mode-only effect — darkening the edges of an
+     already-light page just muddies it, it doesn't read as atmosphere. */
+  html[data-theme="light"] .vignette{opacity:0;}
   #boot{position:fixed; inset:0; z-index:999; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; font-family:var(--font-mono); color:var(--accent-a); transition:opacity .8s ease, visibility .8s ease;}
   #boot.hide{opacity:0; visibility:hidden;}
   #boot .bootbar{width:min(420px,70vw); height:3px; background:rgba(255,255,255,.08); position:relative; overflow:hidden;}
@@ -569,7 +572,7 @@ html,body{height:100%;}
 html{-webkit-text-size-adjust:100%; text-size-adjust:100%;}
 body{background:var(--bg); color:var(--text); font-family:var(--font-body); overflow:hidden;}
 
-.app{height:100vh; height:100dvh; display:flex; flex-direction:column;}
+.app{position:relative; z-index:5; height:100vh; height:100dvh; display:flex; flex-direction:column;}
 
 /* ---------- TOPBAR ---------- */
 .topbar{
@@ -707,9 +710,20 @@ html[data-theme="light"] .icon-btn .icon-moon{display:block;}
   .detail-pane{padding:56px;}
   .detail-inner{max-width:1040px;}
 }
+.grain{position:fixed; inset:0; z-index:1; pointer-events:none; mix-blend-mode:overlay; opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+.scanlines{position:fixed; inset:0; z-index:2; pointer-events:none; background:repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.12) 3px, rgba(0,0,0,0) 4px); animation:scandrift 9s linear infinite; opacity:.35;}
+@keyframes scandrift{0%{background-position-y:0;}100%{background-position-y:200px;}}
+.vignette{position:fixed; inset:0; z-index:2; pointer-events:none; background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,.55) 100%);}
+/* Vignette is a dark-mode-only effect — see dossier.js's same rule. */
+html[data-theme="light"] .vignette{opacity:0;}
 </style>
 </head>
 <body>
+
+<div class="grain"></div>
+<div class="scanlines"></div>
+<div class="vignette"></div>
 
 <div class="app" id="app" data-deck="closed">
   <header class="topbar">
