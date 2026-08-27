@@ -42,18 +42,26 @@ by design — see Schema Safety Protocol below).
 
 ## Ownership model — campaigns are DM-scoped, not shared
 
-Added 2026-08-19. A campaign's `ownerEmail` (`schema/campaign.js`) is set
-once, server-side, from the creating DM's `Cf-Access-Authenticated-User-
-Email` (see `src/routes/api-campaign.js`'s POST handler) — never
+Added 2026-08-19, migrated to a hashed field 2026-08-28. A campaign's
+`ownerEmailHash` (`schema/campaign.js`) is set once, server-side, at
+creation (see `src/routes/api-campaign.js`'s POST handler) — never
 client-supplied, never patchable afterward (`PATCH /api/campaign/:id`
-explicitly rejects `field: "ownerEmail"`, same pattern dossier's
-`lastEditedBy` already used). Dossiers have no owner field of their own —
-they inherit access from their parent campaign via `campaign->ownerEmail`,
-checked with a query at the top of every dossier PATCH/POST handler.
+explicitly rejects `field: "ownerEmail"` and `"ownerEmailHash"`, same
+pattern dossier's `lastEditedBy` already used). It's an HMAC-SHA256 of
+the creating DM's `Cf-Access-Authenticated-User-Email`, keyed by a
+Worker-only secret — see `lib/identity.js`, built for the same reason as
+`teamMember.ownerEmailHash`: this dataset is publicly readable with no
+auth, so a plaintext email field is scrapable by anyone. The original
+plaintext `ownerEmail` field still exists on older documents as a
+legacy/transition value but nothing reads it anymore — do not add a new
+comparison against it. Dossiers have no owner field of their own — they
+inherit access from their parent campaign via `campaign->ownerEmailHash`,
+checked (hashing the caller's email first) at the top of every dossier
+PATCH/POST/DELETE handler.
 
 **This is enforced server-side on every mutating route, not just hidden
 in the console UI** — `console.js`'s scoped queries (campaigns/dossiers
-`WHERE ownerEmail == $email`) are a UX convenience, not the security
+`WHERE ownerEmailHash == $hash`) are a UX convenience, not the security
 boundary. A DM's own browser calling `/api/campaign/:id` or
 `/api/dossier/:id` for a document they don't own gets a 403 regardless of
 what the console UI shows them. The bulk XML/CSV export/import routes
@@ -66,7 +74,7 @@ touching it.
 publish/unpublish, not ownership. Defaults to `false` server-side (`POST
 /api/campaign` falls back to hidden if the client omits it) so a DM can
 build a campaign out before it appears on the public directory, but
-unlike `ownerEmail` it's not creation-only or immutable — the client MAY
+unlike ownership it's not creation-only or immutable — the client MAY
 opt into `visible: true` at creation time (the console's "Publish
 immediately" checkbox, added 2026-08-19 for discoverability — the
 toggle in "My Campaigns" existed first but wasn't obvious enough on its

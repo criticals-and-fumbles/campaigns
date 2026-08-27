@@ -114,7 +114,15 @@ export default defineType({
       title: "Owner (DM) Email",
       type: "string",
       description:
-        "The Cf-Access-Authenticated-User-Email of the DM who created this campaign. Set once, server-side, at creation (see src/routes/api-campaign.js) — never editable directly, here or through the console. Scopes console visibility/edit access: a DM only sees and can edit campaigns (and their dossiers) where this matches their own Access identity.",
+        "Legacy plaintext — being phased out in favor of ownerEmailHash (this dataset is publicly readable with no auth, same reasoning as teamMember.ownerEmailHash). No longer read by any app logic; kept only until existing campaigns are confirmed working via the hash.",
+      readOnly: true,
+    }),
+    defineField({
+      name: "ownerEmailHash",
+      title: "Owner (DM) Email Hash",
+      type: "string",
+      description:
+        "HMAC-SHA256 of the owning DM's Cf-Access email, same scheme as teamMember.ownerEmailHash (see lib/identity.js) — replaces ownerEmail as the actual scoping mechanism. Set once, server-side, at creation.",
       readOnly: true,
     }),
     defineField({

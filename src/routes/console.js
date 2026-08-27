@@ -8,23 +8,24 @@ import {
   WIKI_IMPORT_PROMPT,
 } from "../lib/import-templates.js";
 import { blocksToMarkdown } from "../lib/portable-text.js";
-import { resolveMyTeamMember } from "../lib/identity.js";
+import { resolveMyTeamMember, hashEmail } from "../lib/identity.js";
 
 const app = new Hono();
 
-// Both scoped to the requesting DM's own campaigns (ownerEmail == gmEmail)
-// — see CLAUDE.md § ownership. Dossiers are scoped via their campaign
-// reference since dossiers carry no owner field of their own.
-// Full editable field set — the console's Edit Campaign panel needs
-// every field it can PATCH, not just what the read-only table displays.
-const MY_CAMPAIGNS_QUERY = `*[_type == "campaign" && ownerEmail == $email] | order(title asc){
+// Both scoped to the requesting DM's own campaigns (ownerEmailHash ==
+// hash of gmEmail) — see CLAUDE.md § ownership. Dossiers are scoped via
+// their campaign reference since dossiers carry no owner field of their
+// own. Full editable field set — the console's Edit Campaign panel
+// needs every field it can PATCH, not just what the read-only table
+// displays.
+const MY_CAMPAIGNS_QUERY = `*[_type == "campaign" && ownerEmailHash == $hash] | order(title asc){
   _id, title, slug, genre, system, status, gmNames, hook, motto, signOff,
   visible, heroImage, "theme": theme._ref
 }`;
 
 // Same reasoning — the single dossier editor edits every schema field
 // (see schema/dossier.js), so it needs every field fetched up front.
-const MY_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->ownerEmail == $email] | order(_createdAt desc){
+const MY_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->ownerEmailHash == $hash] | order(_createdAt desc){
   _id, code, title, classification, distribution, sessionLabel, location,
   overview, heroImage, quickFacts, locationFacts, statTiles,
   threatAssessment, objectives, log,
@@ -100,6 +101,7 @@ const MY_ARTICLES_QUERY = `*[_type == "article" && author._ref == $authorId] | o
 
 app.get("/", async (c) => {
   const email = c.get("gmEmail");
+  const hash = await hashEmail(c.env, email);
   const [
     campaigns,
     dossiers,
@@ -114,8 +116,8 @@ app.get("/", async (c) => {
     loreEntries,
     myTeamMember,
   ] = await Promise.all([
-    query(c.env, MY_CAMPAIGNS_QUERY, { email }),
-    query(c.env, MY_DOSSIERS_QUERY, { email }),
+    query(c.env, MY_CAMPAIGNS_QUERY, { hash }),
+    query(c.env, MY_DOSSIERS_QUERY, { hash }),
     query(c.env, GENRE_THEMES_QUERY),
     query(c.env, WORLDS_QUERY),
     query(c.env, TEAM_MEMBERS_QUERY),

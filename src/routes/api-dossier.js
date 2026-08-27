@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { query, mutate } from "../lib/sanity.js";
+import { hashEmail } from "../lib/identity.js";
 
 const app = new Hono();
 
@@ -12,8 +13,8 @@ function dossierDocId(campaignSlug, code) {
 // different fields of the same document don't clobber each other).
 // lastEditedBy/lastEditedAt are always set alongside the requested field,
 // server-side, from the Cf-Access identity — never client-supplied.
-// Ownership check: the requester must be the ownerEmail of the dossier's
-// *campaign*, not the dossier itself — dossiers have no owner field of
+// Ownership check: the requester must hash-match the ownerEmailHash of
+// the dossier's *campaign*, not the dossier itself — dossiers have no owner field of
 // their own, they inherit access from their parent campaign.
 app.patch("/:id", async (c) => {
   const id = decodeURIComponent(c.req.param("id"));
@@ -26,9 +27,9 @@ app.patch("/:id", async (c) => {
     return c.json({ error: `"campaign" cannot be reassigned after creation` }, 400);
   }
 
-  const current = await query(c.env, `*[_id == $id][0]{ "ownerEmail": campaign->ownerEmail, "campaignRef": campaign._ref }`, { id });
+  const current = await query(c.env, `*[_id == $id][0]{ "ownerEmailHash": campaign->ownerEmailHash, "campaignRef": campaign._ref }`, { id });
   if (!current) return c.notFound();
-  if (current.ownerEmail !== c.get("gmEmail")) {
+  if (current.ownerEmailHash !== (await hashEmail(c.env, c.get("gmEmail")))) {
     return c.json({ error: "Forbidden — you do not own this dossier's campaign" }, 403);
   }
 
@@ -78,9 +79,9 @@ app.patch("/:id", async (c) => {
 app.delete("/:id", async (c) => {
   const id = decodeURIComponent(c.req.param("id"));
 
-  const owner = await query(c.env, `*[_id == $id][0].campaign->ownerEmail`, { id });
+  const owner = await query(c.env, `*[_id == $id][0].campaign->ownerEmailHash`, { id });
   if (owner === null || owner === undefined) return c.notFound();
-  if (owner !== c.get("gmEmail")) {
+  if (owner !== (await hashEmail(c.env, c.get("gmEmail")))) {
     return c.json({ error: "Forbidden — you do not own this dossier's campaign" }, 403);
   }
 
@@ -93,7 +94,7 @@ app.delete("/:id", async (c) => {
 });
 
 // POST /api/dossier — body: { campaign: <campaign _id>, code, title, ... }.
-// campaign must be one of the caller's own (ownerEmail == gmEmail) —
+// campaign must be one of the caller's own (ownerEmailHash matches) —
 // otherwise a GM could publish dossiers into another DM's campaign.
 app.post("/", async (c) => {
   const doc = await c.req.json();
@@ -101,11 +102,11 @@ app.post("/", async (c) => {
   if (!doc.code) return c.json({ error: "code is required" }, 400);
   if (!doc.title) return c.json({ error: "title is required" }, 400);
 
-  const campaign = await query(c.env, `*[_id == $id][0]{ ownerEmail, "slug": slug.current }`, {
+  const campaign = await query(c.env, `*[_id == $id][0]{ ownerEmailHash, "slug": slug.current }`, {
     id: doc.campaign,
   });
   if (!campaign) return c.json({ error: "No such campaign" }, 404);
-  if (campaign.ownerEmail !== c.get("gmEmail")) {
+  if (campaign.ownerEmailHash !== (await hashEmail(c.env, c.get("gmEmail")))) {
     return c.json({ error: "Forbidden — you do not own this campaign" }, 403);
   }
 

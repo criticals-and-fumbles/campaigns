@@ -12,7 +12,8 @@
  * once at render time), nothing persisted client-side across reloads.
  *
  * campaigns/dossiers are already scoped server-side to this GM's own
- * campaigns (ownerEmail == gmEmail) — see src/routes/console.js. Every
+ * campaigns (ownerEmailHash matches a hash of gmEmail) — see
+ * src/routes/console.js. Every
  * write the client makes is re-checked against that ownership server-side
  * too (api-campaign.js / api-dossier.js) — client-side scoping here is a
  * UX convenience, not the security boundary.

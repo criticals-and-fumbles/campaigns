@@ -1,14 +1,15 @@
 import { Hono } from "hono";
 import { query, mutate } from "../lib/sanity.js";
 import { parseDossiersXml } from "../lib/xml.js";
+import { hashEmail } from "../lib/identity.js";
 
 const app = new Hono();
 
 // Scoped to the caller's own campaigns — an XML row targeting a campaign
 // slug the caller doesn't own fails per-row (see the loop below) rather
 // than silently importing into someone else's campaign.
-const MY_CAMPAIGN_SLUGS = `*[_type == "campaign" && ownerEmail == $email]{ _id, "slug": slug.current }`;
-const MY_EXISTING_DOSSIER_IDS = `*[_type == "dossier" && campaign->ownerEmail == $email]{ _id, code, "campaignSlug": campaign->slug.current }`;
+const MY_CAMPAIGN_SLUGS = `*[_type == "campaign" && ownerEmailHash == $hash]{ _id, "slug": slug.current }`;
+const MY_EXISTING_DOSSIER_IDS = `*[_type == "dossier" && campaign->ownerEmailHash == $hash]{ _id, code, "campaignSlug": campaign->slug.current }`;
 
 function dossierDocId(campaignSlug, code) {
   return `dossier.${campaignSlug}.${code}`.replace(/[^a-zA-Z0-9._-]/g, "-");
@@ -33,10 +34,10 @@ app.post("/", async (c) => {
     return c.json({ error: `Malformed XML: ${err.message}` }, 400);
   }
 
-  const email = c.get("gmEmail");
+  const hash = await hashEmail(c.env, c.get("gmEmail"));
   const [campaigns, existing] = await Promise.all([
-    query(c.env, MY_CAMPAIGN_SLUGS, { email }),
-    query(c.env, MY_EXISTING_DOSSIER_IDS, { email }),
+    query(c.env, MY_CAMPAIGN_SLUGS, { hash }),
+    query(c.env, MY_EXISTING_DOSSIER_IDS, { hash }),
   ]);
   const campaignBySlug = new Map(campaigns.map((cmp) => [cmp.slug, cmp._id]));
   const existingKeys = new Set(existing.map((d) => `${d.campaignSlug}::${d.code}`));

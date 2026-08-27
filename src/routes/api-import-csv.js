@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { query, mutate } from "../lib/sanity.js";
 import { parseObjectivesCsv } from "../lib/csv.js";
+import { hashEmail } from "../lib/identity.js";
 
 const app = new Hono();
 
@@ -26,8 +27,8 @@ app.post("/", async (c) => {
   // another DM's dossier.
   const dossiers = await query(
     c.env,
-    `*[_type == "dossier" && code in $codes && campaign->ownerEmail == $email]{ _id, code }`,
-    { codes: [...byDossierCode.keys()], email: c.get("gmEmail") },
+    `*[_type == "dossier" && code in $codes && campaign->ownerEmailHash == $hash]{ _id, code }`,
+    { codes: [...byDossierCode.keys()], hash: await hashEmail(c.env, c.get("gmEmail")) },
   );
   const idByCode = new Map(dossiers.map((d) => [d.code, d._id]));
 

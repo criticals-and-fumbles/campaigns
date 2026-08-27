@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { query } from "../lib/sanity.js";
 import { objectivesToCsv } from "../lib/csv.js";
+import { hashEmail } from "../lib/identity.js";
 
 const app = new Hono();
 
@@ -15,8 +16,8 @@ app.get("/", async (c) => {
 
   const dossiers = await query(
     c.env,
-    `*[_type == "dossier" && campaign->ownerEmail == $email]{ _id, code, objectives }`,
-    { email: c.get("gmEmail") },
+    `*[_type == "dossier" && campaign->ownerEmailHash == $hash]{ _id, code, objectives }`,
+    { hash: await hashEmail(c.env, c.get("gmEmail")) },
   );
   const csv = objectivesToCsv(dossiers);
 
