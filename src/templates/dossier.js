@@ -299,7 +299,7 @@ const BASE_CSS = `
   #boot .bootbar{width:min(420px,70vw); height:3px; background:rgba(255,255,255,.08); position:relative; overflow:hidden;}
   #boot .bootbar::after{content:''; position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg,var(--accent-a),var(--accent-b)); animation:bootfill 2.4s cubic-bezier(.3,.9,.4,1) forwards;}
   @keyframes bootfill{0%{width:0%}100%{width:100%}}
-  #themeToggle{position:fixed; top:18px; right:18px; z-index:60; display:flex; align-items:center; gap:10px; background:rgba(0,0,0,.4); border:1px solid var(--accent-a); padding:8px 14px; cursor:pointer; font-family:var(--font-mono); font-size:10px; letter-spacing:2px; color:var(--text); backdrop-filter:blur(6px);}
+  #themeToggle{position:fixed; top:18px; right:18px; z-index:60; display:flex; align-items:center; gap:10px; background:rgba(0,0,0,.4); border:1px solid var(--accent-a); padding:8px 14px; cursor:pointer; font-family:var(--font-mono); font-size:1rem; letter-spacing:2px; color:var(--text); backdrop-filter:blur(6px);}
   #themeToggle .dot{width:8px; height:8px; border-radius:50%; background:var(--accent-a); box-shadow:0 0 8px var(--accent-a);}
   .wrap{position:relative; z-index:5; max-width:1180px; margin:0 auto; padding:90px 24px 120px;}
   .frame{position:relative; border:1px solid rgba(255,255,255,.12);}
@@ -311,21 +311,21 @@ const BASE_CSS = `
   header.classbar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; padding:14px 20px; margin-bottom:26px; background:rgba(255,255,255,.03); border-top:2px solid var(--accent-b); border-bottom:1px solid rgba(255,255,255,.08);}
   .classbar .left{display:flex; align-items:center; gap:12px;}
   .classbar .badge{width:34px; height:34px; border:1px solid var(--accent-a); border-radius:50%; display:flex; align-items:center; justify-content:center; position:relative;}
-  .classbar .orgtext{font-family:var(--font-mono); font-size:10px; letter-spacing:3px; color:var(--text); opacity:.7; line-height:1.5;}
+  .classbar .orgtext{font-family:var(--font-mono); font-size:1rem; letter-spacing:3px; color:var(--text); opacity:.7; line-height:1.5;}
   .classbar .orgtext b{color:var(--text); font-family:var(--font-display); letter-spacing:1px; opacity:1;}
-  .classbar .right{display:flex; gap:22px; font-family:var(--font-mono); font-size:10px; color:var(--text); opacity:.7; letter-spacing:1px; text-align:right;}
+  .classbar .right{display:flex; gap:22px; font-family:var(--font-mono); font-size:1rem; color:var(--text); opacity:.7; letter-spacing:1px; text-align:right;}
   .classbar .right .k{color:var(--accent-b); opacity:1;}
   .titleblock{margin:34px 0 40px; text-align:center;}
-  .titleblock .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:8px; color:var(--accent-a); display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:14px;}
+  .titleblock .eyebrow{font-family:var(--font-mono); font-size:1rem; letter-spacing:8px; color:var(--accent-a); display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:14px;}
   .titleblock .eyebrow::before,.titleblock .eyebrow::after{content:''; height:1px; width:60px; background:linear-gradient(90deg,transparent,var(--accent-a));}
   .titleblock .eyebrow::after{background:linear-gradient(90deg,var(--accent-a),transparent);}
   h1.title{font-family:var(--font-display); font-weight:900; text-transform:uppercase; font-size:clamp(2rem,6vw,4.2rem); letter-spacing:2px; line-height:1.05; color:var(--text); position:relative; display:inline-block;}
   h1.title .glitch-layer{position:absolute; inset:0; color:var(--accent-b); opacity:0;}
   h1.title.glitching .glitch-layer{opacity:.7; animation:glitchmove .18s steps(2) 3;}
   @keyframes glitchmove{0%{clip-path:inset(0 0 80% 0); transform:translate(-4px,-1px)}50%{clip-path:inset(40% 0 30% 0); transform:translate(4px,1px)}100%{clip-path:inset(80% 0 0 0); transform:translate(-2px,0)}}
-  .subtitle{font-family:var(--font-mono); font-size:12px; letter-spacing:3px; color:var(--text); opacity:.6; margin-top:10px;}
+  .subtitle{font-family:var(--font-mono); font-size:1rem; letter-spacing:3px; color:var(--text); opacity:.6; margin-top:10px;}
   nav.tabs{position:sticky; top:0; z-index:40; display:flex; gap:2px; flex-wrap:wrap; justify-content:center; margin:0 -24px 40px; padding:12px 24px; background:linear-gradient(180deg, var(--bg) 60%, transparent); backdrop-filter:blur(8px);}
-  nav.tabs a{font-family:var(--font-mono); font-size:10.5px; letter-spacing:2px; color:var(--text); opacity:.6; text-decoration:none; padding:8px 14px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.02); text-transform:uppercase; transition:.25s;}
+  nav.tabs a{font-family:var(--font-mono); font-size:1rem; letter-spacing:2px; color:var(--text); opacity:.6; text-decoration:none; padding:8px 14px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.02); text-transform:uppercase; transition:.25s;}
   nav.tabs a:hover{opacity:1; color:var(--bg); background:var(--accent-a); border-color:var(--accent-a);}
   /* On narrow viewports (phones, or this page embedded in the session
      browser's constrained iframe) the sticky section nav eats screen
@@ -335,14 +335,14 @@ const BASE_CSS = `
   section{margin-bottom:56px; opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
   section.in{opacity:1; transform:translateY(0);}
   .sechead{display:flex; align-items:baseline; gap:14px; margin-bottom:18px;}
-  .sechead .num{font-family:var(--font-mono); color:var(--accent-b); font-size:13px;}
+  .sechead .num{font-family:var(--font-mono); color:var(--accent-b); font-size:1rem;}
   .sechead h2{font-family:var(--font-display); text-transform:uppercase; font-size:1.15rem; letter-spacing:3px; color:var(--text);}
   .sechead .rule{flex:1; height:1px; background:linear-gradient(90deg,rgba(255,255,255,.2),transparent);}
   .panel{background:rgba(255,255,255,.03); padding:22px; position:relative;}
   .grid-2{display:grid; grid-template-columns:1.3fr 1fr; gap:20px;}
   @media(max-width:820px){.grid-2{grid-template-columns:1fr;}}
   p.body-copy{font-size:1rem; line-height:1.75; color:var(--text); opacity:.85; margin-bottom:14px;}
-  .kv{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:11.5px;}
+  .kv{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:1rem;}
   .kv span:first-child{color:var(--text); opacity:.5; letter-spacing:1px;}
   .kv span:last-child{color:var(--accent-a);}
   /* Container only — background + moving parts are genre-driven, see
@@ -350,47 +350,47 @@ const BASE_CSS = `
      right after BASE_CSS, near the top of renderDossierPage's markup). */
   .mapbox{height:220px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;}
   .feed{aspect-ratio:16/8; position:relative; overflow:hidden; background:linear-gradient(135deg,rgba(0,0,0,.3),rgba(255,255,255,.03)); display:flex; align-items:center; justify-content:center;}
-  .feed .feedlabel{position:absolute; top:12px; left:12px; font-family:var(--font-mono); font-size:10px; letter-spacing:2px; color:var(--accent-a); display:flex; align-items:center; gap:6px; z-index:2;}
+  .feed .feedlabel{position:absolute; top:12px; left:12px; font-family:var(--font-mono); font-size:1rem; letter-spacing:2px; color:var(--accent-a); display:flex; align-items:center; gap:6px; z-index:2;}
   .feed .feedlabel .rec{width:7px; height:7px; border-radius:50%; background:#ff4f6a; animation:blink 1.1s steps(2) infinite;}
   @keyframes blink{50%{opacity:.15}}
   .threat-row{display:grid; grid-template-columns:200px 1fr 70px; align-items:center; gap:16px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.1);}
-  .threat-row .label{font-family:var(--font-mono); font-size:11.5px; letter-spacing:1px; color:var(--text);}
+  .threat-row .label{font-family:var(--font-mono); font-size:1rem; letter-spacing:1px; color:var(--text);}
   .meter{height:8px; background:rgba(255,255,255,.08); position:relative; overflow:hidden; clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);}
   .meter i{position:absolute; inset:0; width:0%; background:linear-gradient(90deg,var(--accent-a),var(--accent-b)); transition:width 1.4s cubic-bezier(.2,.8,.2,1);}
   .meter.high i{background:linear-gradient(90deg,#ffb84f,#ff4f6a);}
   .meter.vhigh i{background:linear-gradient(90deg,#ff4f6a,var(--accent-b));}
-  .threat-row .pct{font-family:var(--font-mono); font-size:11px; color:var(--text); opacity:.6; text-align:right;}
+  .threat-row .pct{font-family:var(--font-mono); font-size:1rem; color:var(--text); opacity:.6; text-align:right;}
   .stattiles{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:18px;}
   @media(max-width:700px){.stattiles{grid-template-columns:repeat(2,1fr);}}
   .pstat{background:rgba(255,255,255,.03); padding:16px; text-align:center; border-top:2px solid var(--accent-a);}
   .pstat .val{font-family:var(--font-display); font-size:1.6rem; color:var(--accent-b);}
-  .pstat .lbl{font-family:var(--font-mono); font-size:10px; color:var(--text); opacity:.6; letter-spacing:1px; margin-top:4px;}
+  .pstat .lbl{font-family:var(--font-mono); font-size:1rem; color:var(--text); opacity:.6; letter-spacing:1px; margin-top:4px;}
   .obj{display:grid; grid-template-columns:44px 1fr auto; gap:16px; align-items:start; padding:18px; background:rgba(255,255,255,.03); margin-bottom:10px; border-left:2px solid rgba(255,255,255,.15); transition:.3s; transform:translateX(-12px); opacity:0;}
   .obj.in{transform:translateX(0); opacity:1;}
   .obj .idx{font-family:var(--font-display); font-size:1.4rem; color:var(--accent-a); opacity:.6;}
-  .obj h3{font-family:var(--font-body); font-weight:700; letter-spacing:1px; text-transform:uppercase; font-size:.98rem; margin-bottom:6px;}
-  .obj p{color:var(--text); opacity:.7; font-size:.9rem; line-height:1.5;}
-  .tag{font-family:var(--font-mono); font-size:9.5px; letter-spacing:2px; padding:5px 10px; border:1px solid; white-space:nowrap; height:fit-content;}
+  .obj h3{font-family:var(--font-body); font-weight:700; letter-spacing:1px; text-transform:uppercase; font-size:1rem; margin-bottom:6px;}
+  .obj p{color:var(--text); opacity:.7; font-size:1rem; line-height:1.5;}
+  .tag{font-family:var(--font-mono); font-size:1rem; letter-spacing:2px; padding:5px 10px; border:1px solid; white-space:nowrap; height:fit-content;}
   .tag.primary{color:var(--accent-b); border-color:var(--accent-b);}
   .tag.secondary{color:#ffb84f; border-color:#ffb84f;}
   .tag.tertiary{color:var(--accent-a); border-color:var(--accent-a);}
   .gallery{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
   @media(max-width:820px){.gallery{grid-template-columns:repeat(2,1fr);}}
   .gitem{aspect-ratio:1; position:relative; overflow:hidden; background:rgba(255,255,255,.03); cursor:pointer;}
-  .gitem .gtag{position:absolute; bottom:8px; left:8px; font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--accent-a); z-index:2;}
+  .gitem .gtag{position:absolute; bottom:8px; left:8px; font-family:var(--font-mono); font-size:1rem; letter-spacing:1px; color:var(--accent-a); z-index:2;}
   .gitem .gicon{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:var(--text); opacity:.3;}
   .audiolog{display:flex; align-items:center; gap:16px; padding:16px 20px; background:rgba(255,255,255,.03);}
   .playbtn{width:38px; height:38px; border-radius:50%; border:1px solid var(--accent-a); display:flex; align-items:center; justify-content:center; color:var(--accent-a); cursor:pointer; flex-shrink:0;}
   .waveform{display:flex; align-items:center; gap:3px; height:30px; flex:1;}
   .waveform span{width:3px; background:linear-gradient(180deg,var(--accent-a),var(--accent-b)); animation:wave 1.2s ease-in-out infinite; border-radius:2px;}
   @keyframes wave{0%,100%{height:20%;}50%{height:100%;}}
-  .audiolog .meta{font-family:var(--font-mono); font-size:10px; color:var(--text); opacity:.6; letter-spacing:1px; white-space:nowrap;}
-  .logline{display:grid; grid-template-columns:110px 1fr; gap:16px; padding:10px 0; border-bottom:1px dotted rgba(255,255,255,.12); font-size:.92rem;}
-  .logline .ts{font-family:var(--font-mono); color:var(--accent-b); font-size:10.5px; padding-top:2px;}
+  .audiolog .meta{font-family:var(--font-mono); font-size:1rem; color:var(--text); opacity:.6; letter-spacing:1px; white-space:nowrap;}
+  .logline{display:grid; grid-template-columns:auto 1fr; gap:16px; padding:10px 0; border-bottom:1px dotted rgba(255,255,255,.12); font-size:1rem;}
+  .logline .ts{font-family:var(--font-mono); color:var(--accent-b); font-size:1rem; padding-top:2px;}
   .logline .entry{color:var(--text); opacity:.75;}
   footer{text-align:center; padding:50px 20px 10px; position:relative; z-index:5;}
-  footer .quote{font-family:var(--font-mono); font-style:italic; color:var(--text); opacity:.7; font-size:.9rem; max-width:520px; margin:0 auto 8px;}
-  footer .sig{font-family:var(--font-mono); font-size:10px; color:var(--text); opacity:.5; letter-spacing:3px;}
+  footer .quote{font-family:var(--font-mono); font-style:italic; color:var(--text); opacity:.7; font-size:1rem; max-width:520px; margin:0 auto 8px;}
+  footer .sig{font-family:var(--font-mono); font-size:1rem; color:var(--text); opacity:.5; letter-spacing:3px;}
   footer .starlogo{width:26px; height:26px; margin:0 auto 16px; position:relative;}
   footer .starlogo::before{content:'\\2726'; color:var(--accent-a); font-size:22px; display:block; text-align:center; animation:pulse 3s ease-in-out infinite;}
   @keyframes pulse{0%,100%{opacity:.5; transform:scale(1);}50%{opacity:1; transform:scale(1.15);}}
