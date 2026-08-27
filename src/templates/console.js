@@ -138,6 +138,11 @@ export function renderConsolePage({
     <div class="editor" id="editCampaignView">
       <h2>EDIT CAMPAIGN</h2>
       <div class="field"><label>Title *</label><input type="text" id="ecTitle"></div>
+      <div class="field">
+        <label>Slug</label>
+        <input type="text" id="ecSlug" readonly>
+        <p class="field-tip">Fixed at creation — this is the campaign's public URL path. Share it with your players as-is.</p>
+      </div>
       <div class="field"><label>Genre * (matches a Genre Theme below)</label><input type="text" id="ecGenre"></div>
       <div class="field"><label>System</label><input type="text" id="ecSystem"></div>
       <div class="field">
@@ -1054,6 +1059,7 @@ const CONSOLE_JS = `
     activeCampaignEditId = id;
     populateThemeSelect('ecTheme');
     document.getElementById('ecTitle').value = cmp.title || '';
+    document.getElementById('ecSlug').value = location.origin + '/' + (cmp.slug?.current || '');
     document.getElementById('ecGenre').value = cmp.genre || '';
     document.getElementById('ecSystem').value = cmp.system || '';
     document.getElementById('ecStatus').value = cmp.status || 'active';
