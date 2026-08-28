@@ -27,9 +27,14 @@ function esc(s) {
 }
 
 function kvRows(rows) {
-  return (rows || [])
-    .map((r) => `<div class="kv"><span>${esc(r.label)}</span><span>${esc(r.value)}</span></div>`)
+  if (!rows || rows.length === 0) return "";
+  const cells = rows
+    .map(
+      (r) =>
+        `<span class="kv-label">${esc(r.label)}</span><span class="kv-value">${esc(r.value)}</span>`,
+    )
     .join("\n");
+  return `<div class="kvtable">${cells}</div>`;
 }
 
 function meterLevelClass(level) {
@@ -71,7 +76,25 @@ export function renderDossierPage({ dossier, campaign, theme, embedded, colorMod
   const code = dossier.code || "";
   const bootTitle = theme?.loadingScreen?.bootTitle || "LOADING";
   const bootSubtitle = theme?.loadingScreen?.bootSubtitle || "PLEASE WAIT";
-  const motif = renderMotif(motifKey, bootTitle, bootSubtitle, code);
+  // A genreTheme can opt out of the built-in animated SVG motif and
+  // supply a static decorative image instead (loadingScreen.customImage,
+  // Studio-only field — see genreTheme schema comment). When set, this
+  // replaces the boot screen's symbol entirely; bootTitle/bootSubtitle/
+  // the progress bar are unchanged either way, so it's a drop-in visual
+  // swap, not a different boot flow. Falls back to the normal per-genre
+  // motif when unset (every theme today).
+  const customImageUrl = theme?.loadingScreen?.customImage
+    ? urlFor(theme.loadingScreen.customImage).width(320).height(320).url()
+    : null;
+  const motif = customImageUrl ? null : renderMotif(motifKey, bootTitle, bootSubtitle, code);
+  const bootHtml = customImageUrl
+    ? `
+      <div class="boot-symbol"><img src="${esc(customImageUrl)}" alt="" /></div>
+      <div class="glyph">${esc(bootTitle)}</div>
+      <div class="bootbar"></div>
+      <div class="bootline">${esc(bootSubtitle)} · ${esc(code)}</div>
+    `
+    : motif.html;
   const locationMotif = renderLocationMotif(resolveLocationMotif(theme));
 
   const heroUrl = dossier.heroImage
@@ -149,7 +172,7 @@ export function renderDossierPage({ dossier, campaign, theme, embedded, colorMod
 <style>
 ${themeToCssVars(theme)}
 ${BASE_CSS}
-${motif.css}
+${customImageUrl ? CUSTOM_BOOT_IMAGE_CSS : motif.css}
 ${locationMotif.css}
 ${theme?.ornateBorders ? ORNATE_BORDERS_CSS : ""}
 </style>
@@ -157,7 +180,7 @@ ${theme?.ornateBorders ? ORNATE_BORDERS_CSS : ""}
 <body${theme?.ornateBorders ? ' class="ornate"' : ""}>
 
 <div id="boot">
-  ${motif.html}
+  ${bootHtml}
 </div>
 
 <canvas id="particles"></canvas>
@@ -288,7 +311,7 @@ ${embedded ? "" : `<button id="themeToggle"><span class="dot"></span><span id="t
 </footer>
 
 <script>
-${motif.js}
+${motif ? motif.js || "" : ""}
 ${BASE_JS}
 </script>
 </body>
@@ -372,9 +395,25 @@ const BASE_CSS = `
   .grid-2{display:grid; grid-template-columns:1.3fr 1fr; gap:20px;}
   @media(max-width:820px){.grid-2{grid-template-columns:1fr;}}
   p.body-copy{font-size:1rem; line-height:1.75; color:var(--text); opacity:.85; margin-bottom:14px;}
-  .kv{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:1rem;}
-  .kv span:first-child{color:var(--text); opacity:.5; letter-spacing:1px;}
-  .kv span:last-child{color:var(--accent-a);}
+  /* Real 2-column table via CSS Grid, not the old flex space-between
+     row-by-row layout — with space-between, each row's own label width
+     pushed its value to a different starting x-position per row (a
+     "KNOWN SETTLEMENT" row's value landed nowhere near a "NORTH" row's),
+     which read as misaligned/unprofessional. Grid auto-sizes the label
+     column to the WIDEST label across every row in the same .kvtable, so
+     every value column starts at one consistent x — this is the fix for
+     the dossier text-alignment issue reported 2026-08-28. */
+  .kvtable{display:grid; grid-template-columns:max-content minmax(0,1fr); column-gap:20px;}
+  .kv-label{padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:1rem; color:var(--text); opacity:.5; letter-spacing:1px; white-space:nowrap;}
+  .kv-value{padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:1rem; color:var(--accent-a); word-break:break-word;}
+  @media(max-width:480px){
+    /* Very narrow viewports: the widest label can crowd the value
+       column past readability — drop to a stacked label-over-value
+       layout instead of a strict 2-column table. */
+    .kvtable{grid-template-columns:1fr;}
+    .kv-label{border-bottom:none; padding-bottom:0;}
+    .kv-value{padding-top:2px;}
+  }
   /* Container only — background + moving parts are genre-driven, see
      templates/locationMotifs.js (injected into the page style block
      right after BASE_CSS, near the top of renderDossierPage's markup). */
@@ -452,6 +491,23 @@ const ORNATE_BORDERS_CSS = `
   body.ornate header.classbar{border-top:3px double var(--accent-a); border-bottom:1px solid rgba(212,175,55,.25);}
   body.ornate .sechead .rule{height:2px; background:linear-gradient(90deg, var(--accent-a), rgba(212,175,55,.1), transparent);}
   body.ornate .titleblock .eyebrow::before, body.ornate .titleblock .eyebrow::after{background:linear-gradient(90deg, transparent, var(--accent-a));}
+`;
+
+// Boot screen treatment for a genreTheme's optional loadingScreen.customImage
+// (see renderDossierPage's customImageUrl). Deliberately generic — no
+// per-motif JS, no genre-specific keyframe name — so it's a safe default
+// for whatever image a theme ends up uploading: a slow pulse + a
+// theme-accent-tinted glow keeps a plain static image from feeling inert
+// next to the other motifs' animation, without trying to guess what's IN
+// the image. .glyph/.bootline here mirror the typography every other
+// motif already uses for bootTitle/bootSubtitle, just not tied to any
+// one motif's own rules.
+const CUSTOM_BOOT_IMAGE_CSS = `
+  #boot .boot-symbol{width:120px; height:120px; margin-bottom:4px; animation:bootimagepulse 3s ease-in-out infinite;}
+  #boot .boot-symbol img{width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 0 18px var(--accent-a));}
+  @keyframes bootimagepulse{0%,100%{opacity:.75; transform:scale(1);}50%{opacity:1; transform:scale(1.045);}}
+  #boot .glyph{font-size:13px; letter-spacing:3px; opacity:.7; font-family:var(--font-mono);}
+  #boot .bootline{font-size:10.5px; color:var(--text-dim); letter-spacing:1.5px; font-family:var(--font-mono);}
 `;
 
 const BASE_JS = `

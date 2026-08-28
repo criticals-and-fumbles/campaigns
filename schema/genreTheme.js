@@ -134,6 +134,13 @@ export default defineType({
         }),
         defineField({ name: "bootTitle", title: "Boot Title", type: "string" }),
         defineField({ name: "bootSubtitle", title: "Boot Subtitle", type: "string" }),
+        defineField({
+          name: "customImage",
+          title: "Custom Boot Image (replaces the animated motif)",
+          type: "image",
+          description:
+            'Optional. When set, the boot screen shows this image (with a subtle pulse/glow) instead of the "motif" animation above — motif is ignored for this theme once an image is set. Leave unset to keep the built-in animated motif. A square-ish image with a transparent or dark background works best; it renders at roughly 120×120px. Studio-only field — not editable from the console.',
+        }),
       ],
     }),
     defineField({
