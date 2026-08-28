@@ -232,6 +232,29 @@ session auto-selects on load so the right pane isn't empty by default.
 
 ## Lessons learned
 
+**A raw mutations API `set` on a nested object field replaces the WHOLE
+object, not just the keys you list — hit this for real 2026-08-29.**
+Patching `genreTheme.ancient-asia-default`'s `loadingScreen.motif`
+directly via `data/mutate` with `{"set":{"loadingScreen":{"motif":"naga"}}}`
+silently wiped that theme's existing `bootTitle`/`bootSubtitle` — `set`
+with a nested object value overwrites the entire `loadingScreen` object
+with exactly what you gave it, it doesn't merge. Caught immediately by
+this protocol's own "verify after" step (re-querying the document showed
+`bootTitle`/`bootSubtitle` gone), recovered the exact prior values via
+the document history API (`GET .../data/history/<dataset>/documents/<id>
+?revision=<transaction-id-just-before-the-mistake>` — transaction IDs for
+one document come from `GET .../data/history/<dataset>/transactions/<id>
+?excludeContent=true`, which returns newline-delimited JSON, not a single
+JSON array), and re-patched using dotted-path keys instead —
+`{"set":{"loadingScreen.motif":"naga"}}` touches only that one leaf
+field, leaving siblings on the object untouched. **Always use dotted
+paths (`objectField.subField`) when patching one field inside an object
+via the raw mutations API — never `{"set":{"objectField":{...}}}` unless
+you genuinely intend to replace every key on that object.** Sanity
+Studio's own form UI doesn't have this failure mode (it always patches
+individual fields); this only bites direct API mutations, which is the
+pattern this repo's sessions use for genreTheme content changes.
+
 **Sanity's REST API version segment needs a `v` prefix — fixed
 2026-08-19, first-deploy bug.** `src/lib/sanity.js`'s `apiBase()` (and
 `seed/seed.js`'s copy of the same logic) originally built
