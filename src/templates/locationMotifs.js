@@ -1,5 +1,5 @@
 /**
- * Location-section decorative visuals — 4 reusable modules, selected by
+ * Location-section decorative visuals — reusable modules, selected by
  * `theme.locationMotif`, NOT hardcoded per genre/campaign name (same
  * rule as loading-screen motifs.js, see CLAUDE.md § Data model). Sits
  * inside the Location section's left panel (`.mapbox`), pure CSS
@@ -15,11 +15,15 @@
  *                      much more literal/full-bleed than static-scan's
  *                      subtle VHS tracking — a distinct look, not a
  *                      louder version of an existing one.
- *   shadow-lantern    — ancient asia: lamplit rose-compass (a filigree
- *                      cross pattern behind the compass rose, echoing
- *                      the Wayang Shadow boot motif's oil-lamp glow —
- *                      see motifs.js — without literally reusing the
- *                      puppet silhouette) + a slowly swaying needle.
+ *   shadow-lantern   — ancient asia (unused default as of 2026-08-29,
+ *                      superseded by "naga" below, kept as a selectable
+ *                      option): lamplit rose-compass, a filigree cross
+ *                      pattern behind the compass rose + swaying needle.
+ *   naga             — ancient asia: the SAME serpent-dragon silhouette
+ *                      as motifs.js's "naga" boot motif (identical SVG
+ *                      path data, on purpose — see that file's comment)
+ *                      + lamp glow + a slow coiling sway. Current
+ *                      Ancient Asia default as of 2026-08-29.
  *
  * Each entry provides `html` (the .mapbox inner markup) and `css`
  * (.mapbox-scoped rules — the container's own size/position/overflow
@@ -148,6 +152,45 @@ export const LOCATION_MOTIFS = {
       .mapbox .compass .point.w{left:2px; top:50%; transform:translateY(-50%);}
       .mapbox .compass .needle{position:absolute; left:50%; top:50%; width:2px; height:40px; margin:-40px 0 0 -1px; transform-origin:50% 40px; background:linear-gradient(to top, var(--accent-b), transparent); animation:locsway 4.5s ease-in-out infinite;}
       @keyframes locsway{0%,100%{transform:rotate(-6deg);}50%{transform:rotate(6deg);}}
+    `,
+  },
+
+  // Deliberately the SAME <path> data as motifs.js's "naga" boot motif,
+  // not a reinterpretation — the point of this entry is that the Location
+  // section carries the identical naga artwork the boot screen just
+  // showed, not a second, different piece of art for the same idea. Keep
+  // both in sync if the shape ever changes.
+  naga: {
+    html: `
+      <div class="lampglow"></div>
+      <div class="ncoil">
+        <svg viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg">
+          <path class="n-body" d="M50 150 C20 130 78 112 48 90 C22 72 76 54 48 34 C26 18 62 10 52 2"/>
+          <path class="n-fin" d="M40 120 L28 111 L40 106 Z"/>
+          <path class="n-fin" d="M62 100 L74 91 L62 86 Z"/>
+          <path class="n-fin" d="M40 66 L28 57 L40 52 Z"/>
+          <g class="n-head">
+            <path class="n-crest" d="M44 -4 L38 -16 L48 -8 Z"/>
+            <path class="n-crest" d="M52 -6 L52 -20 L58 -8 Z"/>
+            <path class="n-crest" d="M60 -4 L68 -14 L58 -8 Z"/>
+            <path d="M42 6 L52 -10 L62 6 L52 14 Z"/>
+            <circle class="n-eye" cx="49" cy="4" r="1.5"/>
+          </g>
+        </svg>
+      </div>
+    `,
+    css: `
+      .mapbox{background:radial-gradient(circle at 50% 55%, rgba(255,255,255,.05), rgba(0,0,0,.3) 75%);}
+      .mapbox .lampglow{position:absolute; width:170px; height:170px; border-radius:50%; background:radial-gradient(circle, var(--accent-a) 0%, transparent 68%); opacity:.16; animation:loclampflicker 3.4s ease-in-out infinite;}
+      @keyframes loclampflicker{0%,100%{opacity:.12; transform:scale(1);}40%{opacity:.22; transform:scale(1.05);}55%{opacity:.09;}80%{opacity:.18;}}
+      .mapbox .ncoil{width:70px; height:118px; position:relative; filter:drop-shadow(0 0 6px rgba(0,0,0,.5)); transform-origin:50% 100%; animation:locnagasway 3.6s ease-in-out infinite;}
+      .mapbox .ncoil svg{width:100%; height:100%; overflow:visible;}
+      .mapbox .n-body{fill:none; stroke:#160f08; stroke-width:9; stroke-linecap:round;}
+      .mapbox .n-fin{fill:#160f08;}
+      .mapbox .n-head path:not(.n-crest){fill:#160f08;}
+      .mapbox .n-crest{fill:var(--accent-a); opacity:.85;}
+      .mapbox .n-eye{fill:var(--accent-b);}
+      @keyframes locnagasway{0%,100%{transform:rotate(-4deg);}50%{transform:rotate(4deg);}}
     `,
   },
 };

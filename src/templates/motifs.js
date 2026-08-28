@@ -1,11 +1,19 @@
 /**
- * Loading-screen boot motifs — 4 reusable animation modules, selected by
- * `theme.loadingScreen.motif`, NOT hardcoded per genre/campaign name. Each
- * ports the exact animation from its respective concept HTML:
+ * Loading-screen boot motifs — reusable animation modules, selected by
+ * `theme.loadingScreen.motif`, NOT hardcoded per genre/campaign name. The
+ * original 4 each port the exact animation from their respective concept
+ * HTML; later additions are original work built for this template:
  *   terminal-decrypt — concepts/campaign-dossier-concept.html (sci-fi/Bureau Noir)
  *   wax-seal         — concepts/campaign-dossier-fantasy-concept.html
  *   vhs-tracking     — concepts/campaign-dossier-horror-concept.html
  *   file-unlock      — concepts/campaign-dossier-modern-concept.html
+ *   wayang-shadow    — ancient asia: shadow-puppet silhouette + lamp glow
+ *   naga             — ancient asia: coiling serpent-dragon silhouette +
+ *                      lamp glow. Its exact SVG shape is reused verbatim
+ *                      by locationMotifs.js's "naga" entry, by design —
+ *                      the boot screen and the Location section should
+ *                      show the SAME naga artwork, not two different
+ *                      depictions of the same idea.
  *
  * Each entry provides `html` (the #boot inner markup), `css` (motif-only
  * rules — shared #boot chrome lives in dossier.js's base stylesheet), and
@@ -150,6 +158,48 @@ export const MOTIFS = {
       #boot .wp-arm{transform-origin:62px 58px; animation:wayangsway 2.8s ease-in-out infinite;}
       @keyframes wayangsway{0%,100%{transform:rotate(0deg);}30%{transform:rotate(-14deg);}65%{transform:rotate(6deg);}}
       @keyframes lampflicker{0%,100%{opacity:.55;}30%{opacity:.4;}45%{opacity:.6;}70%{opacity:.35;}85%{opacity:.58;}}
+    `,
+  },
+
+  // Same silhouette (identical <path> data) is reused verbatim by
+  // locationMotifs.js's "naga" entry — see that file's own comment. Keep
+  // both in sync if this shape ever changes; that's the whole point of
+  // this motif existing as a matched pair.
+  naga: {
+    html: (bootTitle, bootSubtitle, code) => `
+      <div class="nglow"></div>
+      <div class="ncoil" id="ncoil">
+        <svg viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg">
+          <path class="n-body" d="M50 150 C20 130 78 112 48 90 C22 72 76 54 48 34 C26 18 62 10 52 2"/>
+          <path class="n-fin" d="M40 120 L28 111 L40 106 Z"/>
+          <path class="n-fin" d="M62 100 L74 91 L62 86 Z"/>
+          <path class="n-fin" d="M40 66 L28 57 L40 52 Z"/>
+          <g class="n-head">
+            <path class="n-crest" d="M44 -4 L38 -16 L48 -8 Z"/>
+            <path class="n-crest" d="M52 -6 L52 -20 L58 -8 Z"/>
+            <path class="n-crest" d="M60 -4 L68 -14 L58 -8 Z"/>
+            <path d="M42 6 L52 -10 L62 6 L52 14 Z"/>
+            <circle class="n-eye" cx="49" cy="4" r="1.5"/>
+          </g>
+        </svg>
+      </div>
+      <div class="glyph">${escapeHtml(bootTitle)}</div>
+      <div class="bootbar"></div>
+      <div class="bootline">${escapeHtml(bootSubtitle)} · ${escapeHtml(code)}</div>
+    `,
+    css: `
+      #boot .glyph{font-size:13px; letter-spacing:4px; opacity:.75; font-style:italic;}
+      #boot .bootline{font-size:10.5px; color:var(--text-dim); letter-spacing:1.5px;}
+      #boot .nglow{position:absolute; width:220px; height:220px; border-radius:50%; background:radial-gradient(circle, var(--accent-a) 0%, rgba(200,140,40,.15) 45%, transparent 72%); opacity:.5; animation:nagaflicker 3.6s ease-in-out infinite; pointer-events:none;}
+      #boot .ncoil{width:88px; height:150px; position:relative; filter:drop-shadow(0 0 6px rgba(0,0,0,.6)); transform-origin:50% 100%; animation:nagasway 3.2s ease-in-out infinite;}
+      #boot .ncoil svg{width:100%; height:100%; overflow:visible;}
+      #boot .n-body{fill:none; stroke:#160f08; stroke-width:13; stroke-linecap:round;}
+      #boot .n-fin{fill:#160f08;}
+      #boot .n-head path:not(.n-crest){fill:#160f08;}
+      #boot .n-crest{fill:var(--accent-a); opacity:.9;}
+      #boot .n-eye{fill:var(--accent-b);}
+      @keyframes nagasway{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
+      @keyframes nagaflicker{0%,100%{opacity:.5;}30%{opacity:.36;}45%{opacity:.55;}70%{opacity:.32;}85%{opacity:.52;}}
     `,
   },
 };
