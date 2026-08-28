@@ -201,6 +201,14 @@ export default defineType({
       title: "Hero Image",
       type: "image",
       options: { hotspot: true },
+      description: "Shown in the Evidence/Media section, not at the top of the page — see headerImage for the banner shown right below the nav tabs.",
+    }),
+    defineField({
+      name: "headerImage",
+      title: "Header Image",
+      type: "image",
+      options: { hotspot: true },
+      description: "Banner image shown right below the nav tabs, before the Overview section — a second, separate image slot from heroImage.",
     }),
     defineField({
       name: "quickFacts",

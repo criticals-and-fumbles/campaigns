@@ -642,6 +642,8 @@ function dossierFieldsBlock(prefix) {
         <label>Overview</label>
         <textarea id="${prefix}Overview" rows="3"></textarea>
       </div>
+      <p class="field-tip">Banner shown right below the page's nav tabs, before Overview — separate from the Hero Image below (which appears in the Evidence section further down the page).</p>
+      ${heroImageFieldBlock(prefix + "Header", "Header Image")}
       ${heroImageFieldBlock(prefix)}
       <div class="field">
         <p class="field-tip">Any highlights of this session? Loot, Key Moments, Implications, Aftermath facts, etc.</p>
@@ -1443,6 +1445,9 @@ const CONSOLE_JS = `
     if(cdHeroImageAsset){
       body.heroImage = { _type: 'image', asset: { _type: 'reference', _ref: cdHeroImageAsset } };
     }
+    if(cdHeaderImageAsset){
+      body.headerImage = { _type: 'image', asset: { _type: 'reference', _ref: cdHeaderImageAsset } };
+    }
     if(!body.campaign || !body.code || !body.title){
       flag.textContent = 'Campaign, Code, and Title are required.';
       flag.className = 'savedflag show err';
@@ -1456,14 +1461,17 @@ const CONSOLE_JS = `
       });
       const result = await res.json();
       if(!res.ok) throw new Error(result.error || res.statusText);
-      dossiers.unshift({ _id: result.id, code: body.code, title: body.title, location: body.location, overview: body.overview, heroImage: body.heroImage, objectives: body.objectives, campaignId: body.campaign });
+      dossiers.unshift({ _id: result.id, code: body.code, title: body.title, location: body.location, overview: body.overview, heroImage: body.heroImage, headerImage: body.headerImage, objectives: body.objectives, campaignId: body.campaign });
       flag.textContent = '✓ Created.';
       flag.className = 'savedflag show';
       ['cdCode','cdTitle','cdClassification','cdDistribution','cdSessionLabel','cdLocation','cdOverview'].forEach(id=>document.getElementById(id).value='');
       ['cdQuickFacts','cdLocationFacts','cdStatTiles','cdThreatAssessment','cdObjectives','cdLog'].forEach(clearRepeater);
       cdHeroImageAsset = null;
+      cdHeaderImageAsset = null;
       renderExistingThumb('cd', null);
+      renderExistingThumb('cdHeader', null);
       document.getElementById('cdSizeWarn').textContent = '';
+      document.getElementById('cdHeaderSizeWarn').textContent = '';
       setTimeout(()=>switchView('bulk'), 900);
     }catch(err){
       flag.textContent = 'Failed: ' + err.message;
@@ -1523,6 +1531,8 @@ const CONSOLE_JS = `
     });
     renderExistingThumb('ed', d.heroImage);
     document.getElementById('edSizeWarn').textContent = '';
+    renderExistingThumb('edHeader', d.headerImage);
+    document.getElementById('edHeaderSizeWarn').textContent = '';
     navSingle.style.display = 'flex';
     navSingle.textContent = 'Editing: ' + (d.code||d._id);
     switchView('single');
@@ -1670,12 +1680,19 @@ const CONSOLE_JS = `
     if(!activeId) return;
     await patchDossierField(activeId, 'heroImage', { _type: 'image', asset: { _type: 'reference', _ref: assetId } });
   });
+  // Same, for the separate header-banner slot.
+  wireImageUpload('edHeader', async (assetId)=>{
+    if(!activeId) return;
+    await patchDossierField(activeId, 'headerImage', { _type: 'image', asset: { _type: 'reference', _ref: assetId } });
+  });
 
-  // Create-dossier form — stores the reference locally (cdHeroImageAsset)
-  // since the dossier doesn't exist yet to PATCH; included in the POST
-  // body when it's actually created.
+  // Create-dossier form — stores the reference locally (cdHeroImageAsset/
+  // cdHeaderImageAsset) since the dossier doesn't exist yet to PATCH;
+  // included in the POST body when it's actually created.
   let cdHeroImageAsset = null;
   wireImageUpload('cd', async (assetId)=>{ cdHeroImageAsset = assetId; });
+  let cdHeaderImageAsset = null;
+  wireImageUpload('cdHeader', async (assetId)=>{ cdHeaderImageAsset = assetId; });
 
   // Edit-campaign form — same immediate-PATCH pattern as 'ed'.
   wireImageUpload('ec', async (assetId)=>{

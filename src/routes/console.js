@@ -27,7 +27,7 @@ const MY_CAMPAIGNS_QUERY = `*[_type == "campaign" && ownerEmailHash == $hash] | 
 // (see schema/dossier.js), so it needs every field fetched up front.
 const MY_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->ownerEmailHash == $hash] | order(_createdAt desc){
   _id, code, title, classification, distribution, sessionLabel, location,
-  overview, heroImage, quickFacts, locationFacts, statTiles,
+  overview, heroImage, headerImage, quickFacts, locationFacts, statTiles,
   threatAssessment, objectives, log,
   "campaignId": campaign._ref, "campaignTitle": campaign->title
 }`;

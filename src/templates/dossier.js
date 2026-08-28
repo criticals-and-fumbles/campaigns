@@ -78,6 +78,13 @@ export function renderDossierPage({ dossier, campaign, theme, embedded, colorMod
     ? urlFor(dossier.heroImage).width(1600).height(800).url()
     : null;
 
+  // Separate from heroUrl above — headerImage is the banner shown right
+  // below the nav tabs; heroUrl still only appears in the Evidence
+  // section further down. Two distinct image slots per dossier.
+  const headerUrl = dossier.headerImage
+    ? urlFor(dossier.headerImage).width(1600).height(500).url()
+    : null;
+
   const statPanel =
     dossier.statTiles && dossier.statTiles.length > 0
       ? `
@@ -188,6 +195,12 @@ ${embedded ? "" : `<button id="themeToggle"><span class="dot"></span><span id="t
     <a href="#media">05 ${esc(labels.media)}</a>
     <a href="#log">06 ${esc(labels.log)}</a>
   </nav>
+
+  ${headerUrl ? `
+  <div class="frame" style="margin-bottom:40px; aspect-ratio:16/5; overflow:hidden;"><span class="bl"></span><span class="br"></span>
+    <img src="${esc(headerUrl)}" alt="${esc(dossier.title)}" style="width:100%;height:100%;object-fit:cover;display:block;" />
+  </div>
+  ` : ""}
 
   <section id="overview">
     <div class="sechead"><span class="num">01</span><h2>${esc(labels.overview)}</h2><span class="rule"></span></div>
@@ -324,8 +337,24 @@ const BASE_CSS = `
   h1.title.glitching .glitch-layer{opacity:.7; animation:glitchmove .18s steps(2) 3;}
   @keyframes glitchmove{0%{clip-path:inset(0 0 80% 0); transform:translate(-4px,-1px)}50%{clip-path:inset(40% 0 30% 0); transform:translate(4px,1px)}100%{clip-path:inset(80% 0 0 0); transform:translate(-2px,0)}}
   .subtitle{font-family:var(--font-mono); font-size:1rem; letter-spacing:3px; color:var(--text); opacity:.6; margin-top:10px;}
-  nav.tabs{position:sticky; top:0; z-index:40; display:flex; gap:2px; flex-wrap:wrap; justify-content:center; margin:0 -24px 40px; padding:12px 24px; background:linear-gradient(180deg, var(--bg) 60%, transparent); backdrop-filter:blur(8px);}
-  nav.tabs a{font-family:var(--font-mono); font-size:1rem; letter-spacing:2px; color:var(--text); opacity:.6; text-decoration:none; padding:8px 14px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.02); text-transform:uppercase; transition:.25s;}
+  nav.tabs{position:sticky; top:0; z-index:40; display:flex; gap:2px; flex-wrap:wrap; justify-content:center; margin:0 -24px 40px; padding:12px 24px; background:linear-gradient(180deg, var(--bg) 60%, transparent); backdrop-filter:blur(8px); -webkit-text-size-adjust:100%; text-size-adjust:100%;}
+  /* -webkit-text-size-adjust/text-size-adjust re-asserted here, not just
+     relying on html's declaration cascading down — reported intermittent
+     oversized nav text, in some browsers, that survives a refresh, is the
+     signature of WebKit/Blink's mobile font-boost heuristic misfiring on
+     a cluster of short flex-wrapped text runs like these pills; it's most
+     likely to misbehave for exactly this element since (a) short isolated
+     text in a wrapping flex row is the case that heuristic is worst at,
+     and (b) this page is also loaded inside a freshly-inserted iframe
+     (session-index's iframe element is recreated via innerHTML on every
+     session click, not just re-pointed at a new src — see templates/
+     console.js), which is a known trigger for a fresh document not
+     reliably re-establishing text-size-adjust from its outer context in
+     every engine. A per-site browser zoom/font-boost preference, once
+     set, persists across refreshes since the browser stores it outside
+     the page — explaining "doesn't reset on refresh" without there being
+     any state this app itself is holding onto. */
+  nav.tabs a{font-family:var(--font-mono); font-size:1rem; letter-spacing:2px; color:var(--text); opacity:.6; text-decoration:none; padding:8px 14px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.02); text-transform:uppercase; transition:.25s; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
   nav.tabs a:hover{opacity:1; color:var(--bg); background:var(--accent-a); border-color:var(--accent-a);}
   /* On narrow viewports (phones, or this page embedded in the session
      browser's constrained iframe) the sticky section nav eats screen
@@ -477,7 +506,16 @@ const BASE_JS = `
         io.unobserve(e.target);
       }
     });
-  }, {threshold:.2});
+  // threshold:.2 previously required 20% of a section's own height to
+  // already be scrolled into view before it started revealing — for a
+  // long section (the Log/Timeline section especially, which can run to
+  // dozens of entries) that meant hundreds of px of pure blank scroll
+  // between sections, since section{opacity:0} until .in is added but
+  // still occupies its full layout height. rootMargin brings the trigger
+  // point down near the bottom of the viewport instead, so a section
+  // starts revealing as soon as it enters view, not once a fifth of it
+  // already has.
+  }, {threshold:0, rootMargin:'0px 0px -10% 0px'});
   document.querySelectorAll('section').forEach(s=>io.observe(s));
 
   document.querySelectorAll('.audiolog').forEach(log=>{
