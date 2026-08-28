@@ -7,13 +7,23 @@
  *   wax-seal         — concepts/campaign-dossier-fantasy-concept.html
  *   vhs-tracking     — concepts/campaign-dossier-horror-concept.html
  *   file-unlock      — concepts/campaign-dossier-modern-concept.html
- *   wayang-shadow    — ancient asia: shadow-puppet silhouette + lamp glow
- *   naga             — ancient asia: coiling serpent-dragon silhouette +
- *                      lamp glow. Its exact SVG shape is reused verbatim
- *                      by locationMotifs.js's "naga" entry, by design —
- *                      the boot screen and the Location section should
- *                      show the SAME naga artwork, not two different
- *                      depictions of the same idea.
+ *   wayang-shadow    — ancient asia (unused default as of 2026-08-29,
+ *                      kept as a selectable option): shadow-puppet
+ *                      silhouette + lamp glow.
+ *   naga             — ancient asia (unused default as of 2026-08-29,
+ *                      kept as a selectable option): coiling serpent-
+ *                      dragon silhouette + lamp glow. Exact SVG shape
+ *                      was reused verbatim by locationMotifs.js's "naga".
+ *   scroll-unfurl    — ancient asia: a scroll unrolling between two rods,
+ *                      wax seal fading out as it opens and reforming as
+ *                      it re-rolls ("unsealing" made literal — matches
+ *                      this template's default Ancient Asia boot copy).
+ *                      Its exact SVG shape is reused verbatim by
+ *                      locationMotifs.js's "scroll-unfurl" entry, same
+ *                      rule as naga — the boot screen and the Location
+ *                      section show the SAME artwork, not two different
+ *                      depictions of the same idea. Current Ancient Asia
+ *                      default as of 2026-08-29.
  *
  * Each entry provides `html` (the #boot inner markup), `css` (motif-only
  * rules — shared #boot chrome lives in dossier.js's base stylesheet), and
@@ -165,6 +175,57 @@ export const MOTIFS = {
   // locationMotifs.js's "naga" entry — see that file's own comment. Keep
   // both in sync if this shape ever changes; that's the whole point of
   // this motif existing as a matched pair.
+  // Same shape (identical SVG coordinates) reused verbatim by
+  // locationMotifs.js's "scroll-unfurl" entry — see that file's comment,
+  // same rule as naga above. Built specifically to match this dossier
+  // template's default Ancient Asia boot copy ("UNSEALING THE SCROLL" /
+  // "the lamp is lit...") — the wax seal fades out as the parchment
+  // unrolls and reforms as it re-rolls, so "unsealing" is literal, not
+  // just a caption.
+  "scroll-unfurl": {
+    html: (bootTitle, bootSubtitle, code) => `
+      <div class="sglow"></div>
+      <div class="sscroll" id="sscroll">
+        <svg viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg">
+          <rect class="s-rod" x="10" y="11" width="80" height="6" rx="3"/>
+          <circle class="s-finial" cx="10" cy="14" r="5"/>
+          <circle class="s-finial" cx="90" cy="14" r="5"/>
+          <g class="s-doc">
+            <rect class="s-paper" x="22" y="14" width="56" height="128"/>
+            <line class="s-line" x1="30" y1="34" x2="70" y2="34"/>
+            <line class="s-line" x1="30" y1="48" x2="64" y2="48"/>
+            <line class="s-line" x1="30" y1="62" x2="70" y2="62"/>
+            <circle class="s-seal" cx="50" cy="90" r="9"/>
+          </g>
+          <rect class="s-rod s-rod-bottom" x="10" y="139" width="80" height="6" rx="3"/>
+          <circle class="s-finial s-finial-bottom" cx="10" cy="142" r="5"/>
+          <circle class="s-finial s-finial-bottom" cx="90" cy="142" r="5"/>
+        </svg>
+      </div>
+      <div class="glyph">${escapeHtml(bootTitle)}</div>
+      <div class="bootbar"></div>
+      <div class="bootline">${escapeHtml(bootSubtitle)} · ${escapeHtml(code)}</div>
+    `,
+    css: `
+      #boot .glyph{font-size:13px; letter-spacing:4px; opacity:.75; font-style:italic;}
+      #boot .bootline{font-size:10.5px; color:var(--text-dim); letter-spacing:1.5px;}
+      #boot .sglow{position:absolute; width:220px; height:220px; border-radius:50%; background:radial-gradient(circle, var(--accent-a) 0%, rgba(200,140,40,.15) 45%, transparent 72%); opacity:.5; animation:scrollflicker 3.8s ease-in-out infinite; pointer-events:none;}
+      #boot .sscroll{width:90px; height:150px; position:relative; filter:drop-shadow(0 0 6px rgba(0,0,0,.55));}
+      #boot .sscroll svg{width:100%; height:100%; overflow:visible;}
+      #boot .s-rod{fill:#160f08;}
+      #boot .s-finial{fill:var(--accent-a); opacity:.9;}
+      #boot .s-paper{fill:#e8d9ae; stroke:rgba(0,0,0,.25); stroke-width:.6;}
+      #boot .s-line{stroke:rgba(60,40,15,.45); stroke-width:1.4; stroke-linecap:round;}
+      #boot .s-seal{fill:var(--accent-b); animation:sealbreak 4.6s ease-in-out infinite;}
+      #boot .s-doc{transform-origin:50% 14px; animation:scrollunfurl 4.6s ease-in-out infinite;}
+      #boot .s-rod-bottom, #boot .s-finial-bottom{animation:scrollrodmove 4.6s ease-in-out infinite;}
+      @keyframes scrollunfurl{0%{transform:scaleY(.04);}40%,60%{transform:scaleY(1);}100%{transform:scaleY(.04);}}
+      @keyframes scrollrodmove{0%{transform:translateY(-124px);}40%,60%{transform:translateY(0);}100%{transform:translateY(-124px);}}
+      @keyframes sealbreak{0%{opacity:1;}38%{opacity:0;}62%{opacity:0;}100%{opacity:1;}}
+      @keyframes scrollflicker{0%,100%{opacity:.5;}30%{opacity:.36;}45%{opacity:.55;}70%{opacity:.32;}85%{opacity:.52;}}
+    `,
+  },
+
   naga: {
     html: (bootTitle, bootSubtitle, code) => `
       <div class="nglow"></div>

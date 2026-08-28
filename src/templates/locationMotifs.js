@@ -16,14 +16,20 @@
  *                      subtle VHS tracking — a distinct look, not a
  *                      louder version of an existing one.
  *   shadow-lantern   — ancient asia (unused default as of 2026-08-29,
- *                      superseded by "naga" below, kept as a selectable
- *                      option): lamplit rose-compass, a filigree cross
- *                      pattern behind the compass rose + swaying needle.
- *   naga             — ancient asia: the SAME serpent-dragon silhouette
- *                      as motifs.js's "naga" boot motif (identical SVG
- *                      path data, on purpose — see that file's comment)
- *                      + lamp glow + a slow coiling sway. Current
- *                      Ancient Asia default as of 2026-08-29.
+ *                      kept as a selectable option): lamplit rose-
+ *                      compass, a filigree cross pattern behind the
+ *                      compass rose + swaying needle.
+ *   naga             — ancient asia (unused default as of 2026-08-29,
+ *                      kept as a selectable option): the SAME serpent-
+ *                      dragon silhouette as motifs.js's "naga" boot
+ *                      motif (identical SVG path data) + lamp glow +
+ *                      a slow coiling sway.
+ *   scroll-unfurl    — ancient asia: the SAME scroll-and-wax-seal
+ *                      artwork as motifs.js's "scroll-unfurl" boot motif
+ *                      (identical SVG markup, on purpose — see that
+ *                      file's comment) + lamp glow + the same unroll/
+ *                      reseal loop. Current Ancient Asia default as of
+ *                      2026-08-29.
  *
  * Each entry provides `html` (the .mapbox inner markup) and `css`
  * (.mapbox-scoped rules — the container's own size/position/overflow
@@ -160,6 +166,50 @@ export const LOCATION_MOTIFS = {
   // section carries the identical naga artwork the boot screen just
   // showed, not a second, different piece of art for the same idea. Keep
   // both in sync if the shape ever changes.
+  // Deliberately the SAME <svg> markup/coordinates as motifs.js's
+  // "scroll-unfurl" boot motif — see that file's comment. Scaled down to
+  // fit .mapbox via the wrapper's width/height only; the internal SVG
+  // numbers are untouched, same approach as the "naga" entry below.
+  "scroll-unfurl": {
+    html: `
+      <div class="lampglow"></div>
+      <div class="sscroll">
+        <svg viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg">
+          <rect class="s-rod" x="10" y="11" width="80" height="6" rx="3"/>
+          <circle class="s-finial" cx="10" cy="14" r="5"/>
+          <circle class="s-finial" cx="90" cy="14" r="5"/>
+          <g class="s-doc">
+            <rect class="s-paper" x="22" y="14" width="56" height="128"/>
+            <line class="s-line" x1="30" y1="34" x2="70" y2="34"/>
+            <line class="s-line" x1="30" y1="48" x2="64" y2="48"/>
+            <line class="s-line" x1="30" y1="62" x2="70" y2="62"/>
+            <circle class="s-seal" cx="50" cy="90" r="9"/>
+          </g>
+          <rect class="s-rod s-rod-bottom" x="10" y="139" width="80" height="6" rx="3"/>
+          <circle class="s-finial s-finial-bottom" cx="10" cy="142" r="5"/>
+          <circle class="s-finial s-finial-bottom" cx="90" cy="142" r="5"/>
+        </svg>
+      </div>
+    `,
+    css: `
+      .mapbox{background:radial-gradient(circle at 50% 55%, rgba(255,255,255,.05), rgba(0,0,0,.3) 75%);}
+      .mapbox .lampglow{position:absolute; width:170px; height:170px; border-radius:50%; background:radial-gradient(circle, var(--accent-a) 0%, transparent 68%); opacity:.16; animation:loclampflicker 3.4s ease-in-out infinite;}
+      @keyframes loclampflicker{0%,100%{opacity:.12; transform:scale(1);}40%{opacity:.22; transform:scale(1.05);}55%{opacity:.09;}80%{opacity:.18;}}
+      .mapbox .sscroll{width:72px; height:120px; position:relative; filter:drop-shadow(0 0 6px rgba(0,0,0,.45));}
+      .mapbox .sscroll svg{width:100%; height:100%; overflow:visible;}
+      .mapbox .s-rod{fill:#160f08;}
+      .mapbox .s-finial{fill:var(--accent-a); opacity:.9;}
+      .mapbox .s-paper{fill:#e8d9ae; stroke:rgba(0,0,0,.25); stroke-width:.6;}
+      .mapbox .s-line{stroke:rgba(60,40,15,.45); stroke-width:1.4; stroke-linecap:round;}
+      .mapbox .s-seal{fill:var(--accent-b); animation:locsealbreak 4.6s ease-in-out infinite;}
+      .mapbox .s-doc{transform-origin:50% 14px; animation:locscrollunfurl 4.6s ease-in-out infinite;}
+      .mapbox .s-rod-bottom, .mapbox .s-finial-bottom{animation:locscrollrodmove 4.6s ease-in-out infinite;}
+      @keyframes locscrollunfurl{0%{transform:scaleY(.04);}40%,60%{transform:scaleY(1);}100%{transform:scaleY(.04);}}
+      @keyframes locscrollrodmove{0%{transform:translateY(-124px);}40%,60%{transform:translateY(0);}100%{transform:translateY(-124px);}}
+      @keyframes locsealbreak{0%{opacity:1;}38%{opacity:0;}62%{opacity:0;}100%{opacity:1;}}
+    `,
+  },
+
   naga: {
     html: `
       <div class="lampglow"></div>
