@@ -676,12 +676,17 @@ function dossierFieldsBlock(prefix) {
         <button type="button" class="btn small" data-add-row="${prefix}Objectives:objective">+ Add Objective</button>
       </div>
       <div class="field">
+        <p class="field-tip">Photos, audio, or video for this session's Evidence gallery. Images are downscaled/recompressed the same as Hero/Header Image; audio and video upload as-is, up to 15MB.</p>
+        <label>Media</label>
+        <div class="repeater" id="${prefix}Media"></div>
+        <button type="button" class="btn small" data-add-media-row="${prefix}Media">+ Add Media Item</button>
+      </div>
+      <div class="field">
         <p class="field-tip">A running record of what happened, in order — session log entries build up the campaign's timeline session over session.</p>
         <label>Log</label>
         <div class="repeater" id="${prefix}Log"></div>
         <button type="button" class="btn small" data-add-row="${prefix}Log:logEntry">+ Add Entry</button>
       </div>
-      <p class="hint">Media gallery items (image/audio/video) aren't in this form yet — add those directly in Sanity Studio.</p>
   `;
 }
 
@@ -1440,6 +1445,7 @@ const CONSOLE_JS = `
       statTiles: collectRepeaterRows('cdStatTiles'),
       threatAssessment: collectRepeaterRows('cdThreatAssessment'),
       objectives: collectRepeaterRows('cdObjectives'),
+      media: collectMediaRows('cdMedia'),
       log: collectRepeaterRows('cdLog'),
     };
     if(cdHeroImageAsset){
@@ -1461,11 +1467,11 @@ const CONSOLE_JS = `
       });
       const result = await res.json();
       if(!res.ok) throw new Error(result.error || res.statusText);
-      dossiers.unshift({ _id: result.id, code: body.code, title: body.title, location: body.location, overview: body.overview, heroImage: body.heroImage, headerImage: body.headerImage, objectives: body.objectives, campaignId: body.campaign });
+      dossiers.unshift({ _id: result.id, code: body.code, title: body.title, location: body.location, overview: body.overview, heroImage: body.heroImage, headerImage: body.headerImage, objectives: body.objectives, media: body.media, campaignId: body.campaign });
       flag.textContent = '✓ Created.';
       flag.className = 'savedflag show';
       ['cdCode','cdTitle','cdClassification','cdDistribution','cdSessionLabel','cdLocation','cdOverview'].forEach(id=>document.getElementById(id).value='');
-      ['cdQuickFacts','cdLocationFacts','cdStatTiles','cdThreatAssessment','cdObjectives','cdLog'].forEach(clearRepeater);
+      ['cdQuickFacts','cdLocationFacts','cdStatTiles','cdThreatAssessment','cdObjectives','cdMedia','cdLog'].forEach(clearRepeater);
       cdHeroImageAsset = null;
       cdHeaderImageAsset = null;
       renderExistingThumb('cd', null);
@@ -1533,6 +1539,7 @@ const CONSOLE_JS = `
     document.getElementById('edSizeWarn').textContent = '';
     renderExistingThumb('edHeader', d.headerImage);
     document.getElementById('edHeaderSizeWarn').textContent = '';
+    populateMediaRepeater('edMedia', d.media);
     navSingle.style.display = 'flex';
     navSingle.textContent = 'Editing: ' + (d.code||d._id);
     switchView('single');
@@ -1552,6 +1559,7 @@ const CONSOLE_JS = `
     DOSSIER_FIELD_MAP.forEach(({ field, id, kind })=>{
       updates[field] = kind === 'text' ? document.getElementById(id).value.trim() : collectRepeaterRows(id);
     });
+    updates.media = collectMediaRows('edMedia');
     flag.textContent = 'Saving…';
     flag.className = 'savedflag show';
     // silent:true — 12 fields patching in parallel would otherwise race
@@ -1674,6 +1682,113 @@ const CONSOLE_JS = `
       e.target.value = '';
     });
   }
+
+  // ---------- MEDIA REPEATER (dossier.media — image/audio/video items) ----------
+  // Bespoke, not the generic REPEATER_SHAPES system — each row needs its
+  // own file upload (image goes through the same downscale+webp pipeline
+  // as Hero/Header Image; audio/video upload as-is via kind:'file'), which
+  // addRepeaterRow()/collectRepeaterRows() have no concept of. The
+  // uploaded asset ref lives in the row's own dataset until collected on
+  // Save — same "upload now, save the reference on submit" split the
+  // create-dossier hero/header image fields already use.
+  async function uploadFileAsset(file){
+    const form = new FormData();
+    form.append('file', file);
+    form.append('kind', 'file');
+    const res = await fetch('/api/upload', { method: 'POST', body: form });
+    const body = await res.json();
+    if(!res.ok) throw new Error(body.error || res.statusText);
+    return body.asset;
+  }
+
+  function addMediaRow(containerId, item){
+    const container = document.getElementById(containerId);
+    const row = document.createElement('div');
+    row.className = 'repeater-row';
+    row.dataset.shape = 'mediaItem';
+    const kind = (item && item.kind) || 'image';
+    const existingRef = item && ((item.image && item.image.asset && item.image.asset._ref) || (item.file && item.file.asset && item.file.asset._ref));
+    row.dataset.assetRef = existingRef || '';
+    const existingThumbUrl = item && item.image ? sanityImageUrl(item.image, 80, 80) : null;
+    row.innerHTML = \`
+      <select data-key="kind">
+        <option value="image"\${kind==='image'?' selected':''}>Image</option>
+        <option value="audio"\${kind==='audio'?' selected':''}>Audio</option>
+        <option value="video"\${kind==='video'?' selected':''}>Video</option>
+      </select>
+      <input type="text" data-key="caption" placeholder="Caption" value="\${item && item.caption ? String(item.caption).replace(/"/g,'&quot;') : ''}">
+      <span class="media-status" style="font-family:var(--font-mono); font-size:.85rem; color:var(--text-dim); align-self:center;">\${existingThumbUrl ? '' : (existingRef ? '✓ uploaded' : 'no file yet')}</span>
+      \${existingThumbUrl ? \`<img src="\${existingThumbUrl}" alt="" style="width:40px;height:40px;object-fit:cover;align-self:center;">\` : ''}
+      <input type="file" data-role="mediaFileInput" style="display:none;">
+      <button type="button" class="btn small" data-role="mediaUploadBtn">Upload</button>
+      <button type="button" class="rm">Remove</button>
+    \`;
+    const fileInput = row.querySelector('[data-role="mediaFileInput"]');
+    const uploadBtn = row.querySelector('[data-role="mediaUploadBtn"]');
+    const status = row.querySelector('.media-status');
+    const kindSelect = row.querySelector('[data-key="kind"]');
+    kindSelect.addEventListener('change', ()=>{
+      fileInput.accept = kindSelect.value === 'image' ? 'image/*' : (kindSelect.value === 'audio' ? 'audio/*' : 'video/*');
+    });
+    kindSelect.dispatchEvent(new Event('change'));
+    uploadBtn.addEventListener('click', ()=> fileInput.click());
+    fileInput.addEventListener('change', async (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      status.textContent = 'Uploading…';
+      try{
+        if(kindSelect.value === 'image'){
+          const { asset, webp } = await uploadImageAsset(file);
+          row.dataset.assetRef = asset._id;
+          const existingImg = row.querySelector('img');
+          if(existingImg) existingImg.remove();
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(webp);
+          img.style.cssText = 'width:40px;height:40px;object-fit:cover;align-self:center;';
+          status.after(img);
+          status.textContent = '';
+        } else {
+          const asset = await uploadFileAsset(file);
+          row.dataset.assetRef = asset._id;
+          status.textContent = '✓ ' + file.name;
+        }
+      }catch(err){
+        status.textContent = 'Failed: ' + err.message;
+      }
+      e.target.value = '';
+    });
+    row.querySelector('.rm').addEventListener('click', ()=> row.remove());
+    container.appendChild(row);
+  }
+
+  function populateMediaRepeater(containerId, items){
+    clearRepeater(containerId);
+    (items || []).forEach(item => addMediaRow(containerId, item));
+  }
+
+  function collectMediaRows(containerId){
+    const container = document.getElementById(containerId);
+    if(!container) return [];
+    return Array.from(container.querySelectorAll('.repeater-row')).map(row=>{
+      const kind = row.querySelector('[data-key="kind"]').value;
+      const caption = row.querySelector('[data-key="caption"]').value.trim();
+      const assetRef = row.dataset.assetRef;
+      const obj = {
+        _key: (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).slice(0, 12),
+        _type: 'mediaItem',
+        kind,
+      };
+      if(caption) obj.caption = caption;
+      if(assetRef){
+        if(kind === 'image') obj.image = { _type: 'image', asset: { _type: 'reference', _ref: assetRef } };
+        else obj.file = { _type: 'file', asset: { _type: 'reference', _ref: assetRef } };
+      }
+      return obj;
+    }).filter(o => o.image || o.file || o.caption);
+  }
+
+  document.querySelectorAll('[data-add-media-row]').forEach(btn=>{
+    btn.addEventListener('click', ()=> addMediaRow(btn.dataset.addMediaRow));
+  });
 
   // Dossier editor — PATCHes heroImage onto the live document immediately.
   wireImageUpload('ed', async (assetId)=>{
