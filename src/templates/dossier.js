@@ -151,9 +151,10 @@ ${themeToCssVars(theme)}
 ${BASE_CSS}
 ${motif.css}
 ${locationMotif.css}
+${theme?.ornateBorders ? ORNATE_BORDERS_CSS : ""}
 </style>
 </head>
-<body>
+<body${theme?.ornateBorders ? ' class="ornate"' : ""}>
 
 <div id="boot">
   ${motif.html}
@@ -423,6 +424,34 @@ const BASE_CSS = `
   footer .starlogo{width:26px; height:26px; margin:0 auto 16px; position:relative;}
   footer .starlogo::before{content:'\\2726'; color:var(--accent-a); font-size:22px; display:block; text-align:center; animation:pulse 3s ease-in-out infinite;}
   @keyframes pulse{0%,100%{opacity:.5; transform:scale(1);}50%{opacity:1; transform:scale(1.15);}}
+`;
+
+// Opt-in per theme (theme.ornateBorders) — swaps the plain corner-accent
+// panel borders for a gilded double-line border with filigree corner
+// flourishes. Built for the Ancient Asia theme's wood-and-gold look, but
+// gated on the flag, not the genre name, per this file's own
+// data-driven-not-genre-keyed rule — see themeToCssVars/resolveMotif.
+// The flourish's gold tone is baked into the SVG itself (data URIs can't
+// read CSS custom properties), so this is tuned for a gold accent
+// specifically, not guaranteed to match every future theme that opts in.
+const ORNATE_BORDERS_CSS = `
+  body.ornate .frame{border:2px solid var(--accent-a); box-shadow:inset 0 0 0 1px var(--accent-b), 0 2px 10px rgba(0,0,0,.35);}
+  body.ornate .frame::before, body.ornate .frame::after, body.ornate .frame .bl, body.ornate .frame .br{
+    width:30px; height:30px; border:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M2 30 C2 14 14 2 30 2' stroke='%23D4AF37' stroke-width='1.6' fill='none'/%3E%3Cpath d='M2 22 C2 12 12 2 22 2' stroke='%23D4AF37' stroke-width='1' fill='none' opacity='.55'/%3E%3Ccircle cx='30' cy='2' r='2.1' fill='%23D4AF37'/%3E%3Ccircle cx='2' cy='30' r='1.5' fill='%23D4AF37'/%3E%3Cpath d='M7 25 Q11 21 9 17 Q7 21 3 23' stroke='%23D4AF37' stroke-width='1' fill='none' opacity='.65'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; opacity:.9;
+  }
+  body.ornate .frame::before{top:-6px; left:-6px; transform:scaleY(-1);}
+  body.ornate .frame::after{top:-6px; right:-6px; transform:scale(-1,-1);}
+  body.ornate .frame .bl{bottom:-6px; left:-6px;}
+  body.ornate .frame .br{bottom:-6px; right:-6px; transform:scaleX(-1);}
+  body.ornate .panel{
+    background:repeating-linear-gradient(180deg, rgba(212,175,55,.035) 0px, rgba(212,175,55,.035) 2px, transparent 2px, transparent 7px), rgba(0,0,0,.18);
+    border:1px solid rgba(212,175,55,.18);
+  }
+  body.ornate header.classbar{border-top:3px double var(--accent-a); border-bottom:1px solid rgba(212,175,55,.25);}
+  body.ornate .sechead .rule{height:2px; background:linear-gradient(90deg, var(--accent-a), rgba(212,175,55,.1), transparent);}
+  body.ornate .titleblock .eyebrow::before, body.ornate .titleblock .eyebrow::after{background:linear-gradient(90deg, transparent, var(--accent-a));}
 `;
 
 const BASE_JS = `

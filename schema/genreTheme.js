@@ -128,6 +128,7 @@ export default defineType({
               { title: "Wax Seal (fantasy)", value: "wax-seal" },
               { title: "VHS Tracking (horror)", value: "vhs-tracking" },
               { title: "File Unlock (modern)", value: "file-unlock" },
+              { title: "Wayang Shadow (ancient asia)", value: "wayang-shadow" },
             ],
           },
         }),
@@ -150,6 +151,14 @@ export default defineType({
           { title: "End of Broadcast (apocalyptic)", value: "end-of-broadcast" },
         ],
       },
+    }),
+    defineField({
+      name: "ornateBorders",
+      title: "Ornate Borders",
+      type: "boolean",
+      description:
+        "Swaps the dossier page's plain corner-accent panel borders for a gilded double-line border with filigree corner flourishes — an opt-in look for a theme, not tied to genre/campaign name directly (same rule as loadingScreen.motif/locationMotif). Off/unset for every existing theme.",
+      initialValue: false,
     }),
   ],
   preview: {

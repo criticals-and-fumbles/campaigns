@@ -125,6 +125,33 @@ export const MOTIFS = {
       setTimeout(()=> document.getElementById('lock').classList.add('open'), 1100);
     `,
   },
+
+  "wayang-shadow": {
+    html: (bootTitle, bootSubtitle, code) => `
+      <div class="wglow"></div>
+      <div class="wpuppet" id="wpuppet">
+        <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg">
+          <path class="wp-crown" d="M60 2 L68 26 L80 10 L78 34 L96 22 L84 42 L60 34 L36 42 L24 22 L42 34 L40 10 L52 26 Z"/>
+          <path class="wp-body" d="M60 34 C40 46 32 80 38 120 C42 150 34 176 24 196 L96 196 C86 176 78 150 82 120 C88 80 80 46 60 34 Z"/>
+          <path class="wp-arm" id="wpArm" d="M62 58 C86 56 100 44 108 24 C110 34 108 50 96 60 C110 58 118 66 120 78 C108 72 96 74 88 82 C78 76 68 68 62 58 Z"/>
+        </svg>
+      </div>
+      <div class="glyph">${escapeHtml(bootTitle)}</div>
+      <div class="bootbar"></div>
+      <div class="bootline">${escapeHtml(bootSubtitle)} · ${escapeHtml(code)}</div>
+    `,
+    css: `
+      #boot .glyph{font-size:13px; letter-spacing:4px; opacity:.75; font-style:italic;}
+      #boot .bootline{font-size:10.5px; color:var(--text-dim); letter-spacing:1.5px;}
+      #boot .wglow{position:absolute; width:220px; height:220px; border-radius:50%; background:radial-gradient(circle, var(--accent-a) 0%, rgba(200,140,40,.15) 45%, transparent 72%); opacity:.55; animation:lampflicker 3.4s ease-in-out infinite; pointer-events:none;}
+      #boot .wpuppet{width:96px; height:160px; position:relative; filter:drop-shadow(0 0 6px rgba(0,0,0,.6));}
+      #boot .wpuppet svg{width:100%; height:100%;}
+      #boot .wpuppet path{fill:#160f08;}
+      #boot .wp-arm{transform-origin:62px 58px; animation:wayangsway 2.8s ease-in-out infinite;}
+      @keyframes wayangsway{0%,100%{transform:rotate(0deg);}30%{transform:rotate(-14deg);}65%{transform:rotate(6deg);}}
+      @keyframes lampflicker{0%,100%{opacity:.55;}30%{opacity:.4;}45%{opacity:.6;}70%{opacity:.35;}85%{opacity:.58;}}
+    `,
+  },
 };
 
 function escapeHtml(s) {
