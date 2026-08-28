@@ -15,6 +15,11 @@
  *                      much more literal/full-bleed than static-scan's
  *                      subtle VHS tracking — a distinct look, not a
  *                      louder version of an existing one.
+ *   shadow-lantern    — ancient asia: lamplit rose-compass (a filigree
+ *                      cross pattern behind the compass rose, echoing
+ *                      the Wayang Shadow boot motif's oil-lamp glow —
+ *                      see motifs.js — without literally reusing the
+ *                      puppet silhouette) + a slowly swaying needle.
  *
  * Each entry provides `html` (the .mapbox inner markup) and `css`
  * (.mapbox-scoped rules — the container's own size/position/overflow
@@ -116,6 +121,33 @@ export const LOCATION_MOTIFS = {
         font-family:var(--font-mono); font-size:11px; letter-spacing:5px; color:#fff;
         text-shadow:2px 0 var(--accent-b), -2px 0 var(--accent-a); animation:tvblink 2.8s steps(1) infinite;}
       @keyframes tvblink{0%,100%{opacity:0;}4%{opacity:1;}9%{opacity:0;}68%{opacity:0;}73%{opacity:.85;}78%{opacity:0;}}
+    `,
+  },
+  "shadow-lantern": {
+    html: `
+      <div class="lampglow"></div>
+      <div class="compass rose">
+        <div class="needle"></div>
+        <span class="point n">N</span><span class="point s">S</span><span class="point e">E</span><span class="point w">W</span>
+      </div>
+    `,
+    css: `
+      .mapbox{background:radial-gradient(circle at 50% 55%, rgba(255,255,255,.05), rgba(0,0,0,.3) 75%);}
+      .mapbox .lampglow{position:absolute; width:170px; height:170px; border-radius:50%; background:radial-gradient(circle, var(--accent-a) 0%, transparent 68%); opacity:.16; animation:loclampflicker 3.4s ease-in-out infinite;}
+      @keyframes loclampflicker{0%,100%{opacity:.12; transform:scale(1);}40%{opacity:.22; transform:scale(1.05);}55%{opacity:.09;}80%{opacity:.18;}}
+      .mapbox .compass.rose{position:relative; width:120px; height:120px; border:1px solid var(--accent-a); border-radius:50%; opacity:.75;}
+      .mapbox .compass.rose::before{content:''; position:absolute; inset:16px; border:1px solid var(--accent-a); border-radius:50%; opacity:.5;}
+      .mapbox .compass.rose::after{content:''; position:absolute; inset:0; border-radius:50%; opacity:.25;
+        background:
+          linear-gradient(45deg, transparent 48%, var(--accent-b) 49%, var(--accent-b) 51%, transparent 52%),
+          linear-gradient(-45deg, transparent 48%, var(--accent-b) 49%, var(--accent-b) 51%, transparent 52%);}
+      .mapbox .compass .point{position:absolute; font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--text); opacity:.55;}
+      .mapbox .compass .point.n{top:2px; left:50%; transform:translateX(-50%);}
+      .mapbox .compass .point.s{bottom:2px; left:50%; transform:translateX(-50%);}
+      .mapbox .compass .point.e{right:2px; top:50%; transform:translateY(-50%);}
+      .mapbox .compass .point.w{left:2px; top:50%; transform:translateY(-50%);}
+      .mapbox .compass .needle{position:absolute; left:50%; top:50%; width:2px; height:40px; margin:-40px 0 0 -1px; transform-origin:50% 40px; background:linear-gradient(to top, var(--accent-b), transparent); animation:locsway 4.5s ease-in-out infinite;}
+      @keyframes locsway{0%,100%{transform:rotate(-6deg);}50%{transform:rotate(6deg);}}
     `,
   },
 };
