@@ -557,11 +557,24 @@ const BASE_CSS = `
      pushed its value to a different starting x-position per row (a
      "KNOWN SETTLEMENT" row's value landed nowhere near a "NORTH" row's),
      which read as misaligned/unprofessional. Grid auto-sizes the label
-     column to the WIDEST label across every row in the same .kvtable, so
-     every value column starts at one consistent x — this is the fix for
-     the dossier text-alignment issue reported 2026-08-28. */
-  .kvtable{display:grid; grid-template-columns:max-content minmax(0,1fr); column-gap:20px;}
-  .kv-label{padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:1rem; color:var(--text); opacity:.5; letter-spacing:1px; white-space:nowrap;}
+     column to one consistent x — this is the fix for the dossier
+     text-alignment issue reported 2026-08-28.
+
+     Label column fixed 2026-09-02: was max-content (sized to the WIDEST
+     label with white-space:nowrap), which meant a single long label like
+     "IMMEDIATE THREAT"/"ENEMY STRONGHOLD" could claim however much width
+     it wanted regardless of how little was left for values — fine at
+     true mobile widths (a separate stacked layout below already existed
+     for those) and fine at wide desktop, but pinched values badly at
+     in-between widths (an unmaximized desktop window, or the dossier
+     embedded in the campaign index page's iframe, which is narrower than
+     the outer browser window because of the session-list sidebar).
+     Capping the label column and letting it wrap fixes this at every
+     width uniformly, standalone or embedded — same standard "fixed label
+     column, flexible value column" spec-sheet pattern as the site's
+     other tables. */
+  .kvtable{display:grid; grid-template-columns:minmax(0,140px) minmax(0,1fr); column-gap:20px;}
+  .kv-label{padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:1rem; color:var(--text); opacity:.5; letter-spacing:1px; overflow-wrap:break-word;}
   .kv-value{padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:1rem; color:var(--accent-a); word-break:break-word;}
   @media(max-width:480px){
     /* Very narrow viewports: the widest label can crowd the value
