@@ -17,6 +17,12 @@ import { themeToCssVars, resolveLabels, resolveMotif, resolveLocationMotif } fro
 import { renderMotif } from "./motifs.js";
 import { renderLocationMotif } from "./locationMotifs.js";
 import { urlFor } from "../lib/sanity-image.js";
+import { SOCIAL_ICON_SVG, LINK_ICON_SVG, EMBED_ICON_SVG } from "../lib/icons.js";
+
+// This Worker's own public domain — for canonical/OG URLs and the share
+// row's Facebook/WhatsApp/embed links. Distinct from routes/dossier.js's
+// MAIN_SITE (criticalsandfumbles.com, the separate Next.js site).
+const SITE_URL = "https://campaigns.criticalsandfumbles.com";
 
 function esc(s) {
   return String(s ?? "")
@@ -25,6 +31,113 @@ function esc(s) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+// Plain-text truncation for og:description/twitter:description — same
+// ~155-char SERP/social-preview convention cnf-website's lib/metadata.ts
+// uses, hand-copied since this Worker can't import that module.
+function truncate(s, max) {
+  const text = String(s ?? "").trim();
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+// Shared by renderDossierPage and renderCampaignIndexPage — builds the
+// <meta> tag block for Open Graph + Twitter Card, the prerequisite for
+// any of the share buttons actually producing a good link preview on
+// Facebook/Discord/WhatsApp/iMessage/etc. (all of them read these tags,
+// not the page's visible content). image may be null — Facebook/Discord
+// still render a text-only card without one, just a plainer one.
+function ogTags({ url, title, description, image }) {
+  return `
+<meta property="og:type" content="article">
+<meta property="og:url" content="${esc(url)}">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(description)}">
+${image ? `<meta property="og:image" content="${esc(image)}">` : ""}
+<meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}">
+<meta name="twitter:title" content="${esc(title)}">
+<meta name="twitter:description" content="${esc(description)}">
+${image ? `<meta name="twitter:image" content="${esc(image)}">` : ""}
+<link rel="canonical" href="${esc(url)}">`;
+}
+
+// Shared by both pages — the actual share row/menu buttons. Facebook and
+// WhatsApp have real share-intent URLs (open in a new tab, no JS
+// needed). Discord has no share API at all; Instagram has none either
+// except the OS-level Web Share sheet on mobile — both fall back to
+// "copy the link" with a toast explaining where to paste it. "Website"
+// copies an <iframe> embed snippet rather than the link itself, for
+// sites that want to embed a live preview rather than just link out
+// (see console.js/campaign index page's own iframe-embedding pattern —
+// same idea, offered to outside sites here). See SHARE_JS below for the
+// click handlers all the data-share buttons rely on.
+function shareButtonsHtml({ url, title }) {
+  const embedSnippet = `<iframe src="${url}?embed=1" width="100%" height="800" style="border:0;" loading="lazy" title="${title}"></iframe>`;
+  const waText = `${title} ${url}`;
+  return `
+    <a class="share-btn" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook" title="Share on Facebook">${SOCIAL_ICON_SVG.Facebook}<span>Facebook</span></a>
+    <a class="share-btn" href="https://wa.me/?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp" title="Share on WhatsApp">${SOCIAL_ICON_SVG.WhatsApp}<span>WhatsApp</span></a>
+    <button type="button" class="share-btn" data-share="discord" data-url="${esc(url)}" aria-label="Copy link for Discord" title="Copy link for Discord">${SOCIAL_ICON_SVG.Discord}<span>Discord</span></button>
+    <button type="button" class="share-btn" data-share="instagram" data-url="${esc(url)}" data-title="${esc(title)}" aria-label="Share to Instagram" title="Share to Instagram">${SOCIAL_ICON_SVG.Instagram}<span>Instagram</span></button>
+    <button type="button" class="share-btn" data-share="embed" data-embed="${esc(embedSnippet)}" aria-label="Copy embed code" title="Copy embed code for your website">${EMBED_ICON_SVG}<span>Website</span></button>
+    <button type="button" class="share-btn" data-share="link" data-url="${esc(url)}" aria-label="Copy link" title="Copy link">${LINK_ICON_SVG}<span>Copy Link</span></button>
+  `;
+}
+
+// Click handlers for every [data-share] button above, plus the toast
+// element they report through (#shareToast, added once per page). Plain
+// string, not a function, since it's inlined into a <script> block in
+// two different template functions below (renderDossierPage and
+// renderCampaignIndexPage each get their own copy — no shared module
+// boundary between server-rendered HTML documents).
+const SHARE_JS = `
+  (function(){
+    function toast(msg){
+      var t = document.getElementById('shareToast');
+      if(!t) return;
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(t._hideTimer);
+      t._hideTimer = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+    }
+    function fallbackCopy(text){
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+    function copyText(text){
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(function(){ fallbackCopy(text); });
+      } else {
+        fallbackCopy(text);
+      }
+    }
+    document.querySelectorAll('[data-share]').forEach(function(btn){
+      var kind = btn.getAttribute('data-share');
+      btn.addEventListener('click', function(e){
+        if (kind === 'link') {
+          copyText(btn.dataset.url);
+          toast('Link copied');
+        } else if (kind === 'discord') {
+          copyText(btn.dataset.url);
+          toast('Link copied — paste it in Discord for a preview');
+        } else if (kind === 'instagram') {
+          if (navigator.share) {
+            navigator.share({ title: btn.dataset.title, url: btn.dataset.url }).catch(function(){});
+          } else {
+            copyText(btn.dataset.url);
+            toast('Link copied — paste it into Instagram');
+          }
+        } else if (kind === 'embed') {
+          copyText(btn.dataset.embed);
+          toast('Embed code copied');
+        }
+      });
+    });
+  })();
+`;
 
 function kvRows(rows) {
   if (!rows || rows.length === 0) return "";
@@ -108,6 +221,23 @@ export function renderDossierPage({ dossier, campaign, theme, embedded, colorMod
     ? urlFor(dossier.headerImage).width(1600).height(500).url()
     : null;
 
+  // Share row + OG tags — own image sized for social cards (1200x630),
+  // not reusing headerUrl/heroUrl above since those are cropped for
+  // in-page use. Falls back to the parent campaign's heroImage, then to
+  // no image at all (Facebook/Discord still render a text-only card).
+  const pageUrl = `${SITE_URL}/${encodeURIComponent(campaign.slug?.current || "")}/${encodeURIComponent(code)}`;
+  const ogImageUrl = dossier.headerImage
+    ? urlFor(dossier.headerImage).width(1200).height(630).url()
+    : dossier.heroImage
+      ? urlFor(dossier.heroImage).width(1200).height(630).url()
+      : campaign.heroImage
+        ? urlFor(campaign.heroImage).width(1200).height(630).url()
+        : null;
+  const ogDescription = truncate(
+    dossier.overview || campaign.hook || `${labels.dossier} from ${campaign.title}.`,
+    155,
+  );
+
   const statPanel =
     dossier.statTiles && dossier.statTiles.length > 0
       ? `
@@ -167,6 +297,12 @@ export function renderDossierPage({ dossier, campaign, theme, embedded, colorMod
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>// ${esc(campaign.title)} :: ${esc(dossier.title)}</title>
+${ogTags({
+  url: pageUrl,
+  title: `${campaign.title} :: ${dossier.title}`,
+  description: ogDescription,
+  image: ogImageUrl,
+})}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(theme?.fonts?.display || "Space Grotesk")}:wght@500;700;900&family=${encodeURIComponent(theme?.fonts?.body || "Inter")}:wght@400;500;600;700&family=${encodeURIComponent(theme?.fonts?.mono || "JetBrains Mono")}&display=swap" rel="stylesheet">
 <style>
@@ -210,6 +346,17 @@ ${embedded ? "" : `<button id="themeToggle"><span class="dot"></span><span id="t
     <h1 class="title" id="mainTitle">${esc(dossier.title)}<span class="glitch-layer" aria-hidden="true">${esc(dossier.title)}</span></h1>
     <div class="subtitle">${esc(dossier.location || "")}</div>
   </div>
+
+  ${
+    // Omitted when embedded (inside the campaign index page's iframe) —
+    // that page has its own share control; a second one in the embedded
+    // view would be redundant and its "Copy Link"/embed-code URL should
+    // point at the standalone page anyway, which the surrounding chrome
+    // already links to.
+    embedded
+      ? ""
+      : `<div class="share-row">${shareButtonsHtml({ url: pageUrl, title: dossier.title })}</div>`
+  }
 
   <nav class="tabs">
     <a href="#overview">01 ${esc(labels.overview)}</a>
@@ -310,9 +457,12 @@ ${embedded ? "" : `<button id="themeToggle"><span class="dot"></span><span id="t
   <div class="sig">— ${esc(campaign.signOff || "END OF DOSSIER")} —</div>
 </footer>
 
+${embedded ? "" : `<div id="shareToast" class="share-toast"></div>`}
+
 <script>
 ${motif ? motif.js || "" : ""}
 ${BASE_JS}
+${embedded ? "" : SHARE_JS}
 </script>
 </body>
 </html>`;
@@ -361,6 +511,13 @@ const BASE_CSS = `
   h1.title.glitching .glitch-layer{opacity:.7; animation:glitchmove .18s steps(2) 3;}
   @keyframes glitchmove{0%{clip-path:inset(0 0 80% 0); transform:translate(-4px,-1px)}50%{clip-path:inset(40% 0 30% 0); transform:translate(4px,1px)}100%{clip-path:inset(80% 0 0 0); transform:translate(-2px,0)}}
   .subtitle{font-family:var(--font-mono); font-size:1rem; letter-spacing:3px; color:var(--text); opacity:.6; margin-top:10px;}
+  .share-row{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin:0 0 40px;}
+  .share-btn{display:inline-flex; align-items:center; gap:7px; padding:9px 15px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.15); color:var(--text); font-family:var(--font-mono); font-size:.72rem; letter-spacing:1.5px; text-transform:uppercase; text-decoration:none; cursor:pointer; transition:.15s; opacity:.85;}
+  .share-btn:hover{border-color:var(--accent-a); color:var(--accent-a); opacity:1;}
+  .share-btn svg{width:15px; height:15px; flex-shrink:0;}
+  .share-toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(14px); background:var(--accent-a); color:#0a0a0a; font-family:var(--font-mono); font-size:.78rem; letter-spacing:.5px; padding:11px 20px; border-radius:3px; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; z-index:1000; max-width:min(90vw,420px); text-align:center;}
+  .share-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  @media(max-width:600px){.share-btn span{display:none;} .share-btn{padding:10px;}}
   nav.tabs{position:sticky; top:0; z-index:40; display:flex; gap:2px; flex-wrap:wrap; justify-content:center; margin:0 -24px 40px; padding:12px 24px; background:linear-gradient(180deg, var(--bg) 60%, transparent); backdrop-filter:blur(8px); -webkit-text-size-adjust:100%; text-size-adjust:100%;}
   /* -webkit-text-size-adjust/text-size-adjust re-asserted here, not just
      relying on html's declaration cascading down — reported intermittent
@@ -659,6 +816,15 @@ export function renderCampaignIndexPage({ campaign, dossiers, theme, colorMode =
   const slugJson = JSON.stringify(campaign.slug?.current || "");
   const list = dossiers || [];
 
+  const pageUrl = `${SITE_URL}/${encodeURIComponent(campaign.slug?.current || "")}`;
+  const ogImageUrl = campaign.heroImage
+    ? urlFor(campaign.heroImage).width(1200).height(630).url()
+    : null;
+  const ogDescription = truncate(
+    campaign.hook || campaign.motto || `${labels.dossier || "Session logs"} for ${campaign.title}.`,
+    155,
+  );
+
   const items = list
     .map((d, i) => {
       const date = d._createdAt ? new Date(d._createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "";
@@ -675,6 +841,12 @@ export function renderCampaignIndexPage({ campaign, dossiers, theme, colorMode =
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(campaign.title)} — ${esc(labels.dossier || "Sessions")}</title>
+${ogTags({
+  url: pageUrl,
+  title: campaign.title,
+  description: ogDescription,
+  image: ogImageUrl,
+})}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(theme?.fonts?.display || "Orbitron")}:wght@600;700&family=${encodeURIComponent(theme?.fonts?.body || "Rajdhani")}:wght@400;500;600&family=${encodeURIComponent(theme?.fonts?.mono || "Share Tech Mono")}&display=swap" rel="stylesheet">
 <style>
@@ -744,6 +916,29 @@ body{background:var(--bg); color:var(--text); font-family:var(--font-body); over
 .icon-btn .icon-moon{display:none;}
 html[data-theme="light"] .icon-btn .icon-sun{display:none;}
 html[data-theme="light"] .icon-btn .icon-moon{display:block;}
+/* Share icon-button + popover — same .icon-btn sizing as the theme
+   toggle beside it, just with a dropdown instead of a direct toggle.
+   Compact icon-only buttons inside (labels shown via title="" tooltip
+   only) since this page is a fixed-height app, not a scrolling one — no
+   room for a labeled row like the standalone dossier page's .share-row. */
+.share-wrap{position:relative;}
+.share-pop{
+  display:none; position:absolute; top:calc(100% + 8px); right:0; z-index:50;
+  background:var(--panel-2); border:1px solid var(--line-strong);
+  border-radius:6px; padding:8px; gap:6px; flex-wrap:wrap; width:168px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+.share-pop.open{display:flex;}
+.share-pop .share-btn{
+  display:flex; align-items:center; justify-content:center; width:34px; height:34px;
+  background:none; border:1px solid var(--line); border-radius:4px; color:var(--text-dim);
+  cursor:pointer; padding:0; transition:.15s; text-decoration:none;
+}
+.share-pop .share-btn:hover{color:var(--accent-a); border-color:var(--accent-a);}
+.share-pop .share-btn svg{width:15px; height:15px;}
+.share-pop .share-btn span{display:none;}
+.share-toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(14px); background:var(--accent-a); color:var(--bg); font-family:var(--font-mono); font-size:.78rem; letter-spacing:.5px; padding:11px 20px; border-radius:3px; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; z-index:1000; max-width:min(90vw,420px); text-align:center;}
+.share-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 .list-scroll{overflow-y:auto; flex:1; min-height:0;}
 
 .session-item{
@@ -866,6 +1061,12 @@ html[data-theme="light"] .vignette{opacity:0;}
         <div class="list-head">
           <span class="list-head-text">SESSION LOG — ${list.length} ENTR${list.length === 1 ? "Y" : "IES"}</span>
           <div class="list-head-controls">
+            <div class="share-wrap">
+              <button class="icon-btn" id="shareToggle" aria-label="Share this campaign" title="Share this campaign" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5 15.4 6.5M8.6 13.5 15.4 17.5"/></svg>
+              </button>
+              <div class="share-pop" id="sharePop">${shareButtonsHtml({ url: pageUrl, title: campaign.title })}</div>
+            </div>
             <button class="icon-btn" id="themeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
               <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
               <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -885,6 +1086,8 @@ html[data-theme="light"] .vignette{opacity:0;}
   <div class="scrim" id="scrim"></div>
 </div>
 
+<div id="shareToast" class="share-toast"></div>
+
 <script>
   const SLUG = ${slugJson};
   const listScroll = document.getElementById('listScroll');
@@ -892,9 +1095,30 @@ html[data-theme="light"] .vignette{opacity:0;}
   const appEl = document.getElementById('app');
   const htmlEl = document.documentElement;
   const themeToggle = document.getElementById('themeToggle');
+  const shareToggle = document.getElementById('shareToggle');
+  const sharePop = document.getElementById('sharePop');
 
   function openDeck(){ appEl.setAttribute('data-deck', 'open'); }
   function closeDeck(){ appEl.setAttribute('data-deck', 'closed'); }
+
+  function closeSharePop(){
+    sharePop.classList.remove('open');
+    shareToggle.setAttribute('aria-expanded', 'false');
+  }
+  shareToggle.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const open = sharePop.classList.toggle('open');
+    shareToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  // Close on any outside click or Escape — a popover is only useful if
+  // it gets out of the way again without a dedicated close button.
+  document.addEventListener('click', (e)=>{
+    if(!sharePop.contains(e.target) && e.target !== shareToggle) closeSharePop();
+  });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeSharePop(); });
+  // Sharing (not just navigating) closes the popover too — Facebook/
+  // WhatsApp open a new tab so this page stays open behind it either way.
+  sharePop.addEventListener('click', (e)=>{ if(e.target.closest('.share-btn')) closeSharePop(); });
 
   // One toggle drives both this page's own chrome AND the embedded
   // dossier iframe's theme — same-origin, so contentWindow.setDossierTheme
@@ -948,6 +1172,7 @@ html[data-theme="light"] .vignette{opacity:0;}
   document.getElementById('scrim').addEventListener('click', closeDeck);
 
   renderDetail(listScroll.querySelector('.session-item.active'));
+${SHARE_JS}
 </script>
 </body>
 </html>`;
