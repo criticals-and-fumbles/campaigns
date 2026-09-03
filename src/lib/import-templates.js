@@ -9,11 +9,14 @@
  * If either parser's expected shape ever changes, update the matching
  * template here in the same commit — nothing else keeps them in sync.
  *
- * WIKI_JSON_TEMPLATE below is template-only for now — there is no
- * src/lib/wiki-import.js parser yet, so nothing consumes this shape at
- * runtime. It's shipped ahead of the parser so the template/schema
- * design can be reviewed before the import route is built against it.
- * Whoever builds that parser should treat this file as the spec.
+ * WIKI_JSON_TEMPLATE (unit-scoped bulk import) and
+ * WIKI_RESTRUCTURE_TEMPLATE (world-level sections/entries, added
+ * 2026-09-04 for the Wiki Restructure Kit — see cnf-website issue #26)
+ * are both live — src/lib/wiki-import.js parses either shape (or a file
+ * mixing both) into the same kind of transaction. This comment
+ * previously said WIKI_JSON_TEMPLATE was template-only ahead of its own
+ * parser; that parser has existed since before the restructure work,
+ * this note was stale.
  */
 
 export const DOSSIER_XML_TEMPLATE = `<?xml version="1.0" encoding="UTF-8"?>
@@ -214,6 +217,101 @@ export const WIKI_JSON_TEMPLATE = JSON.stringify(
         tone: "Investigative",
       },
     ],
+  },
+  null,
+  2,
+);
+
+/**
+ * World-level restructure template — added 2026-09-04 for the Wiki
+ * Restructure Kit (cnf-website issue #26). Same conventions as
+ * WIKI_JSON_TEMPLATE above (instructions block, enums, cross-reference
+ * by local "id" or existing exact name), extended with two new
+ * top-level keys `sections` (full-replace of the target world's own
+ * world.sections) and `worldLevelEntries` (the same five sub-document
+ * arrays, but not scoped to any worldUnit). See lib/wiki-import.js's
+ * file-level comment for exactly how these are resolved — this is the
+ * spec that parser implements, keep both in sync by hand.
+ *
+ * The actual per-world AI prompts (one each for Titan's Gate, Temasek
+ * Tales, SingaporeZ, Shattered Tales — pre-loaded with that world's
+ * current heading map and a voice-preservation note) are NOT
+ * duplicated here; they're long, specific to content that lives in
+ * Sanity rather than this repo, and already published at the Wiki
+ * Restructure Kit link the console UI points to. This template is
+ * generic across all four worlds — only the prompt differs per world.
+ */
+export const WIKI_RESTRUCTURE_TEMPLATE = JSON.stringify(
+  {
+    _instructions: [
+      "Wiki world restructure template — Criticals & Fumbles Wiki",
+      "",
+      "This describes ONE world's restructured lore. Which world it",
+      "belongs to is chosen in the console UI when this file is",
+      "uploaded — do not add a \"world\" key here.",
+      "",
+      "Get the actual AI prompt for your specific world (with that",
+      "world's current heading map and voice notes already filled in)",
+      "from the console's Wiki Import/Export tab — this file alone is",
+      "just the output shape, not the conversion instructions.",
+      "",
+      "sections (optional) — the world's lore, reorganized under the",
+      "canonical taxonomy. REPLACES the world's entire existing set of",
+      "Lore Sections — make sure this array is complete, not partial,",
+      "before uploading. Each entry:",
+      "  heading — a short section title.",
+      "  bucket  — exactly one of: OV, HO, GS, PC, PF, TA, CC, TL, SA.",
+      "            Sections are re-sorted into this order on import,",
+      "            regardless of what order you list them in here.",
+      "            Never stored — only used to sort at import time.",
+      "  body    — plain markdown text (blank line between paragraphs).",
+      "",
+      "worldLevelEntries (optional) — factions / keyFigures / magicItems",
+      "/ notablePlaces / loreEntries that belong to the WORLD as a",
+      "whole, not to one specific territory/unit. Same field shapes as",
+      "the arrays below (worldUnit/factions/keyFigures/etc.) — the only",
+      "difference is these are never scoped to a worldUnit, even if one",
+      "is also present in this same file.",
+      "",
+      "worldUnit / factions / keyFigures / magicItems / notablePlaces",
+      "(all optional, outside worldLevelEntries) — for content that DOES",
+      "belong to one specific territory/unit. worldUnit.overview is",
+      "APPENDED to that unit's existing overview if it already exists.",
+      "If worldUnit is omitted, these same arrays still work — they",
+      "just become world-level too (same rule as worldLevelEntries).",
+      "",
+      "Cross-references: give an entry a short lowercase-hyphenated",
+      "\"id\" and reference it elsewhere via that id. To reference",
+      "something that already exists in the wiki, use its exact name",
+      "as a plain string. A worldLevelEntries item can only resolve",
+      "references against OTHER worldLevelEntries items (or existing",
+      "world-level docs) — not against a worldUnit-scoped item in the",
+      "same file, and vice versa.",
+      "",
+      "Enum fields (omit the field if none of these fit — never guess):",
+      "  keyFigure.status: alive | dead | unknown | missing",
+      "  keyFigure.threatLevel: friendly | neutral | cautious | dangerous | deadly",
+      "  magicItem.rarity: common | uncommon | rare | very-rare | legendary | artifact",
+      "  loreEntry.category: Location | Faction | NPC | History | Creature | Artefact | Magic | Pantheon | Culture",
+      "  loreEntry.canonStatus: canon | homebrew | disputed | rumour | retconned | dm-eyes-only",
+      "  notablePlace.dangerLevel: safe | low-risk | dangerous | deadly",
+      "  worldUnit.developmentStatus: draft | in-progress | established | canonical",
+    ].join("\n"),
+    sections: [
+      { heading: "Overview", bucket: "OV", body: "..." },
+    ],
+    worldLevelEntries: {
+      factions: [],
+      keyFigures: [],
+      magicItems: [],
+      notablePlaces: [],
+      loreEntries: [],
+    },
+    worldUnit: null,
+    factions: [],
+    keyFigures: [],
+    magicItems: [],
+    notablePlaces: [],
   },
   null,
   2,

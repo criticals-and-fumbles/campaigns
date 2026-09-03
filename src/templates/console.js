@@ -499,6 +499,23 @@ export function renderConsolePage({
         <button class="btn" id="bwCopyPrompt">Copy AI Prompt</button>
         <span class="savedflag" id="bwCopyFlag"></span>
       </div>
+
+      <p class="hint" style="margin-top:18px;">
+        <strong>Restructuring an existing World's lore into the standard heading layout</strong>
+        (rather than adding brand-new factions/figures/places) uses a different template —
+        it can replace a World's whole Lore Sections list and/or add content that belongs to
+        the World as a whole rather than one Unit. Uploaded through the same file picker below.
+      </p>
+      <div class="field">
+        <a class="btn" href="/console/templates/wiki-restructure.json">Download Restructure Template</a>
+        <a class="btn" href="https://claude.ai/code/artifact/8a8c8826-3fad-48b2-88f0-cc4e010fd153" target="_blank" rel="noopener noreferrer">Open Wiki Restructure Kit ↗</a>
+      </div>
+      <p class="hint">
+        The Kit has the actual AI prompt for each World (Titan's Gate, Temasek Tales,
+        SingaporeZ, Shattered Tales — each pre-loaded with that World's current headings)
+        plus an offline preview so you can check the JSON before uploading it here.
+      </p>
+
       <div class="field">
         <label>Target World *</label>
         <select id="bwWorld"></select>

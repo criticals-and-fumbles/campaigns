@@ -6,6 +6,7 @@ import {
   OBJECTIVES_CSV_TEMPLATE,
   WIKI_JSON_TEMPLATE,
   WIKI_IMPORT_PROMPT,
+  WIKI_RESTRUCTURE_TEMPLATE,
 } from "../lib/import-templates.js";
 import { blocksToMarkdown } from "../lib/portable-text.js";
 import { resolveMyTeamMember, hashEmail } from "../lib/identity.js";
@@ -196,6 +197,19 @@ app.get("/templates/wiki-import.json", (c) =>
 // this via fetch() and writes it to the clipboard directly.
 app.get("/templates/wiki-import-prompt.txt", (c) =>
   c.body(WIKI_IMPORT_PROMPT, 200, { "content-type": "text/plain; charset=utf-8" }),
+);
+
+// Added 2026-09-04 for the Wiki Restructure Kit (cnf-website issue #26)
+// — a second template for the same /api/import/wiki endpoint, covering
+// `sections`/`worldLevelEntries` in addition to (or instead of) a
+// worldUnit. Uploaded through the same file input as the original Wiki
+// bulk import below; the parser (lib/wiki-import.js) accepts either
+// shape, or a file mixing both.
+app.get("/templates/wiki-restructure.json", (c) =>
+  c.body(WIKI_RESTRUCTURE_TEMPLATE, 200, {
+    "content-type": "application/json",
+    "content-disposition": 'attachment; filename="wiki-restructure-template.json"',
+  }),
 );
 
 export default app;
