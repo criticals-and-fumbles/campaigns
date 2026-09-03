@@ -508,7 +508,7 @@ export function renderConsolePage({
       </p>
       <div class="field">
         <a class="btn" href="/console/templates/wiki-restructure.json">Download Restructure Template</a>
-        <a class="btn" href="https://claude.ai/code/artifact/8a8c8826-3fad-48b2-88f0-cc4e010fd153" target="_blank" rel="noopener noreferrer">Open Wiki Restructure Kit ↗</a>
+        <a class="btn" href="https://www.criticalsandfumbles.com/wiki-restructure-kit" target="_blank" rel="noopener noreferrer">Open Wiki Restructure Kit ↗</a>
       </div>
       <p class="hint">
         The Kit has the actual AI prompt for each World (Titan's Gate, Temasek Tales,
