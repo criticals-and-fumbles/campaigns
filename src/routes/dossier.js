@@ -123,6 +123,77 @@ function socialIconsBlock(siteLinks) {
     .join("\n")}</div>`;
 }
 
+// Astrolabe backdrop + outer ornate frame markup — see the matching CSS
+// block (search "Astrolabe backdrop" in pageShell's <style>) for the
+// full porting rationale. Static, siteLinks-independent, so this is a
+// plain top-level constant rather than something pageShell recomputes
+// per request.
+const ASTROLABE_BACKDROP = `
+<div class="astrolabe-backdrop" aria-hidden="true">
+  <div class="nebula-a"></div>
+  <div class="nebula-b"></div>
+  <div class="astrolabe-ring">
+    <svg class="spin-slow" viewBox="0 0 1000 1000" fill="none">
+      <defs>
+        <radialGradient cx="50%" cy="50%" id="coreGlow" r="50%">
+          <stop offset="0%" stop-color="#00e5c8" stop-opacity="0.35"/>
+          <stop offset="30%" stop-color="#d4af37" stop-opacity="0.18"/>
+          <stop offset="70%" stop-color="#031826" stop-opacity="0.05"/>
+          <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="500" cy="500" fill="url(#coreGlow)" r="480"/>
+      <circle cx="500" cy="500" opacity="0.4" r="480" stroke="#d4af37" stroke-dasharray="3 9" stroke-width="0.8"/>
+      <circle cx="500" cy="500" opacity="0.45" r="460" stroke="#00e5c8" stroke-width="1"/>
+      <circle cx="500" cy="500" opacity="0.5" r="390" stroke="#38bdf8" stroke-width="1.2"/>
+      <circle cx="500" cy="500" opacity="0.6" r="340" stroke="#d4af37" stroke-dasharray="6 6" stroke-width="1"/>
+      <circle cx="500" cy="500" opacity="0.7" r="210" stroke="#d4af37" stroke-width="1.2"/>
+      <circle cx="500" cy="500" opacity="0.85" r="70" stroke="#d4af37" stroke-dasharray="2 2" stroke-width="1.2"/>
+      <polygon fill="none" opacity="0.7" points="500,60 881,720 119,720" stroke="#d4af37" stroke-width="1.2"/>
+      <polygon fill="none" opacity="0.7" points="500,940 881,280 119,280" stroke="#d4af37" stroke-width="1.2"/>
+      <line opacity="0.55" stroke="#d4af37" stroke-width="0.9" x1="500" x2="500" y1="10" y2="990"/>
+      <line opacity="0.55" stroke="#d4af37" stroke-width="0.9" x1="10" x2="990" y1="500" y2="500"/>
+    </svg>
+    <svg class="spin-reverse" viewBox="0 0 1000 1000" fill="none">
+      <g opacity="0.45" stroke="#d4af37" stroke-width="0.7">
+        <line x1="500" x2="500" y1="500" y2="40"/>
+        <line x1="500" x2="890" y1="500" y2="275"/>
+        <line x1="500" x2="890" y1="500" y2="725"/>
+        <line x1="500" x2="500" y1="500" y2="960"/>
+        <line x1="500" x2="110" y1="500" y2="725"/>
+        <line x1="500" x2="110" y1="500" y2="275"/>
+      </g>
+      <ellipse cx="440" cy="460" opacity="0.35" rx="350" ry="190" stroke="#00e5c8" stroke-width="0.9" transform="rotate(-30 440 460)"/>
+    </svg>
+  </div>
+</div>
+<div class="outer-frame" aria-hidden="true">
+  <div class="frame-row">
+    ${compassIcon("M4 4 L22 4 M4 4 L4 22 M10 10 L28 10 M10 10 L10 28")}
+    ${compassIcon("M56 4 L38 4 M56 4 L56 22 M50 10 L32 10 M50 10 L50 28")}
+  </div>
+  <div class="frame-rails">
+    <div class="rail"><div class="rail-notch"></div></div>
+    <div class="rail"><div class="rail-notch"></div></div>
+  </div>
+  <div class="frame-row">
+    ${compassIcon("M4 56 L22 56 M4 56 L4 38 M10 50 L28 50 M10 50 L10 32")}
+    ${compassIcon("M56 56 L38 56 M56 56 L56 38 M50 50 L32 50 M50 50 L50 32")}
+  </div>
+</div>`;
+
+function compassIcon(ticks) {
+  return `<div class="compass">
+    <svg viewBox="0 0 60 60" fill="currentColor">
+      <circle cx="30" cy="30" fill="none" r="16" stroke="#d4af37" stroke-width="1.2"/>
+      <circle cx="30" cy="30" fill="none" r="22" stroke="#d4af37" stroke-dasharray="2 2" stroke-width="0.8"/>
+      <path d="M30 4 L33 24 L56 30 L33 36 L30 56 L27 36 L4 30 L27 24 Z"/>
+      <circle cx="30" cy="30" fill="#fff" r="3"/>
+      <path d="${ticks}" fill="none" stroke="#c5a044" stroke-width="1"/>
+    </svg>
+  </div>`;
+}
+
 // Page chrome for the public campaign DIRECTORY ONLY ("/") — styled to
 // match the main criticalsandfumbles.com site's design system (see that
 // repo's docs/design-system.md) since this page is meant to be launched
@@ -357,9 +428,51 @@ function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
   .footer-social-pills a:hover{border-color:var(--emerald); color:var(--emerald);}
   .site-footer-bottom{max-width:1440px; margin:2.5rem auto 0; padding-top:1.5rem; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:.5rem; font-size:.75rem; color:var(--text-muted);}
   @media(min-width:768px){.site-footer-bottom{flex-direction:row; justify-content:space-between;}}
+
+  /* Astrolabe backdrop + outer ornate frame — hand-ported from
+     cnf-website's components/celestial/CelestialBackdrop.tsx (React/
+     Tailwind there, plain CSS/SVG here, same reason the rest of this
+     page's decorative CSS is hand-copied rather than shared: no build
+     step/shared package between the two repos). Fixed + pointer-events
+     none, so it never interferes with clicks or affects document flow.
+     Simplified from the source slightly (fewer overlapping rings/lines,
+     no planetary pulse markers) — this page is a plain server-rendered
+     directory list, not the homepage hero it was originally built for,
+     and the full ornament density read as too busy over a list of
+     cards. Respects prefers-reduced-motion, matching the source. */
+  .astrolabe-backdrop{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;}
+  .astrolabe-backdrop .nebula-a{position:absolute; top:5%; right:2%; width:800px; height:800px; border-radius:999px; background:radial-gradient(circle at center, rgba(0,149,138,.16) 0%, rgba(6,95,90,.1) 40%, transparent 70%); filter:blur(60px);}
+  .astrolabe-backdrop .nebula-b{position:absolute; top:45%; left:2%; width:700px; height:700px; border-radius:999px; background:radial-gradient(circle at center, rgba(146,114,31,.1) 0%, rgba(79,219,200,.06) 40%, transparent 75%); filter:blur(60px);}
+  .astrolabe-backdrop .astrolabe-ring{position:absolute; top:-100px; left:50%; transform:translateX(-50%); width:1500px; max-width:none; aspect-ratio:1; opacity:.55; mix-blend-mode:screen;}
+  @media(max-width:900px){.astrolabe-backdrop .astrolabe-ring{width:1100px;}}
+  .astrolabe-backdrop .astrolabe-ring svg{width:100%; height:100%;}
+  .astrolabe-backdrop .spin-slow{animation:astrolabe-spin-slow 180s linear infinite;}
+  .astrolabe-backdrop .spin-reverse{position:absolute; inset:0; width:100%; height:100%; animation:astrolabe-spin-reverse 240s linear infinite;}
+  @keyframes astrolabe-spin-slow{from{transform:rotate(0deg);} to{transform:rotate(360deg);}}
+  @keyframes astrolabe-spin-reverse{from{transform:rotate(360deg);} to{transform:rotate(0deg);}}
+  @media(prefers-reduced-motion:reduce){.astrolabe-backdrop .spin-slow, .astrolabe-backdrop .spin-reverse{animation:none;}}
+
+  .outer-frame{position:fixed; inset:0; z-index:50; padding:.5rem; pointer-events:none; display:flex; flex-direction:column; justify-content:space-between;}
+  @media(min-width:640px){.outer-frame{padding:1rem;}}
+  .outer-frame .frame-row{position:relative; width:100%; display:flex; align-items:center; justify-content:space-between;}
+  .outer-frame .frame-rails{width:100%; flex:1; display:flex; justify-content:space-between; position:relative; padding:0 .25rem;}
+  .outer-frame .rail{height:100%; width:1px; background:linear-gradient(to bottom, rgba(212,175,55,.8), rgba(212,175,55,.3), rgba(212,175,55,.8)); position:relative;}
+  .outer-frame .rail-notch{position:absolute; top:50%; transform:translateY(-50%) rotate(45deg); width:10px; height:10px; border:1px solid #d4af37; background:var(--bg);}
+  .outer-frame .rail:first-child .rail-notch{left:-4px;}
+  .outer-frame .rail:last-child .rail-notch{right:-4px;}
+  .compass{position:relative; width:2.5rem; height:2.5rem; color:#d4af37; filter:drop-shadow(0 0 6px rgba(212,175,55,.7));}
+  @media(min-width:640px){.compass{width:3rem; height:3rem;}}
+  .compass svg{width:100%; height:100%;}
+  /* Non-positioned in-flow content actually paints BEHIND a position:fixed
+     z-index:0 element in CSS's stacking order (fixed/positioned elements
+     outrank plain in-flow boxes regardless of z-index value) — without
+     this, .astrolabe-backdrop would sit on top of the nav/cards/footer
+     instead of behind them. */
+  .site-nav, .container, .site-footer{position:relative; z-index:1;}
 </style>
 </head>
 <body>
+${ASTROLABE_BACKDROP}
 <header class="site-nav">
   <nav class="site-nav-inner">
     <a class="site-nav-brand" href="${MAIN_SITE}/">

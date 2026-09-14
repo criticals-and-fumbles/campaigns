@@ -197,22 +197,29 @@ verified name, not the brief's placeholder guess.
 
 ## Visual design — two deliberately different skins, split by audience
 
-**Main-site-styled** (dark-mode-default palette, Bebas Neue/Crimson Pro/
-Space Mono fonts, the three-color brand title treatment): the public
-campaign **directory** (`GET /`) and **the console** (`/console`,
-`templates/console.js`). Both are chrome around the main site's product
-— the directory launches *from* criticalsandfumbles.com, the console is
-an admin tool a DM uses the same way they'd use any other internal main-
-site tool — so both use that site's actual design system, not an
-invented one. Values were copied by hand from `app/(site)/globals.css`
-and `components/content/ArticleCard.tsx` in that repo (see its
-`docs/design-system.md` for the source of truth) — there's no shared
-package/token file between the two repos, so if the main site's palette
-or fonts change, both this page's inline `<style>` block AND
-`templates/console.js`'s `CONSOLE_CSS` have to be updated by hand;
-nothing keeps them in sync automatically. Nav/header is deliberately
-absent on the directory page — the main site will link into it directly
-once that's built, this repo doesn't own that navigation.
+**Main-site-styled**: the public campaign **directory** (`GET /`) and
+**the console** (`/console`, `templates/console.js`). Both are chrome
+around the main site's product — the directory launches *from*
+criticalsandfumbles.com, the console is an admin tool a DM uses the same
+way they'd use any other internal main-site tool — so both use that
+site's actual design system, not an invented one.
+
+**Source of truth lives in the cnf-website repo, not here.** Read
+`docs/design-system.md` in `cnf-website` before touching this page's
+`<style>` block or `templates/console.js`'s `CONSOLE_CSS` — do not
+hand-copy hex values, font names, or component treatments into this file
+as prose, and do not describe the current palette/fonts/decorative
+elements here either, since that's exactly the duplication that caused
+this section to silently go stale before (a full recolor/refont/nav
+shape change shipped on the main site while this doc still described the
+old three-color brand title and old font stack, months after they were
+retired there). This directory page's actual CSS still has to be
+updated by hand each time the main site's system changes — there's no
+shared package/token file between the two repos — but the *description*
+of what that system currently looks like belongs in exactly one place.
+Nav/header is deliberately absent on the directory page — the main site
+will link into it directly once that's built, this repo doesn't own
+that navigation.
 
 **Genre-themed** (via `src/lib/theme.js`'s `themeToCssVars`/
 `resolveLabels`, driven by the campaign's referenced `genreTheme`
