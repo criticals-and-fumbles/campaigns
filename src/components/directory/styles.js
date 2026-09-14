@@ -15,6 +15,19 @@ export const DIRECTORY_CSS = `
     --bg:#020509; --surface:#0d141d; --border:#2a2a2a;
     --text:#e5e7eb; --text-muted:#9ca3af;
     --emerald:#d4af37; --amber:#eab308; --magenta:#f9a8d4;
+    /* Real green — NOT the same as --emerald above (that means gold
+       everywhere else, post-recolour). Only for the "Criticals" word in
+       the nav wordmark's tri-colour split, which needs actual emerald
+       green, not gold. Mirrors cnf-website's --criticals-emerald. */
+    --criticals-emerald:#2ec56b;
+    /* Pre-mixed, not a live color-mix() — Tailwind's /NN opacity
+       modifier on an arbitrary var() (which color-mix() compiles to)
+       empirically does NOT repaint on a live theme toggle in Chromium
+       (confirmed on cnf-website, see that repo's globals.css .celestial
+       scope comment for the full writeup); this page's theme toggle is
+       the same live data-theme attribute swap, so the same bug applies
+       here. A literal pre-mixed rgba() sidesteps color-mix() entirely. */
+    --surface-75:rgba(13,20,29,.75);
     --font-display:'EB Garamond', serif;
     --font-body:'Plus Jakarta Sans', sans-serif;
     --font-ui:'Cinzel', serif;
@@ -27,6 +40,8 @@ export const DIRECTORY_CSS = `
     --bg:#f7f2e6; --surface:#fdf9f0; --border:#d8c69a;
     --text:#2b2416; --text-muted:#6b6152;
     --emerald:#92721f; --amber:#a67c00; --magenta:#be185d;
+    --criticals-emerald:#1a7a45;
+    --surface-75:rgba(253,249,240,.75);
   }
   *{box-sizing:border-box;}
   html{font-size:18px; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
@@ -58,7 +73,10 @@ export const DIRECTORY_CSS = `
      .ornate-card/.corner-notch (celestial.css) — same technique, hand-
      copied since there's no shared stylesheet between the two apps. */
   .card{position:relative;}
-  .card a{position:relative; display:flex; flex-direction:row; align-items:stretch; overflow:hidden; border:1px solid color-mix(in srgb, var(--emerald) 45%, transparent); border-radius:.5rem; background:var(--surface); text-decoration:none; box-shadow:inset 0 0 20px rgba(0,0,0,.4); transition:border-color .2s ease;}
+  /* 75% opacity, not fully solid — matches cnf-website's Article/World/
+     Team/Event cards (bg-surface/75), a deliberate amount of astrolabe
+     backdrop show-through rather than hiding it entirely. */
+  .card a{position:relative; display:flex; flex-direction:row; align-items:stretch; overflow:hidden; border:1px solid color-mix(in srgb, var(--emerald) 45%, transparent); border-radius:.5rem; background:var(--surface-75); text-decoration:none; box-shadow:inset 0 0 20px rgba(0,0,0,.4); transition:border-color .2s ease;}
   .card a:hover{border-color:var(--emerald);}
   .card::before, .card::after{content:''; position:absolute; width:8px; height:8px; pointer-events:none; z-index:1;}
   .card::before{top:4px; left:4px; border-left:1px solid var(--emerald); border-top:1px solid var(--emerald);}
@@ -91,7 +109,7 @@ export const DIRECTORY_CSS = `
   .meta{display:flex; justify-content:space-between; gap:1rem; font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted); margin-top:auto;}
   .empty{color:var(--text-muted);}
 
-  .sidebar{position:relative; position:sticky; top:2rem; border:1px solid color-mix(in srgb, var(--emerald) 45%, transparent); border-radius:.5rem; background:var(--surface); padding:1.25rem; box-shadow:inset 0 0 20px rgba(0,0,0,.4);}
+  .sidebar{position:relative; position:sticky; top:2rem; border:1px solid color-mix(in srgb, var(--emerald) 45%, transparent); border-radius:.5rem; background:var(--surface-75); padding:1.25rem; box-shadow:inset 0 0 20px rgba(0,0,0,.4);}
   .sidebar::before, .sidebar::after{content:''; position:absolute; width:8px; height:8px; pointer-events:none;}
   .sidebar::before{top:4px; left:4px; border-left:1px solid var(--emerald); border-top:1px solid var(--emerald);}
   .sidebar::after{bottom:4px; right:4px; border-right:1px solid var(--emerald); border-bottom:1px solid var(--emerald);}
@@ -117,7 +135,12 @@ export const DIRECTORY_CSS = `
   .site-nav-inner{max-width:1460px; margin:0 auto; padding:0 1.5rem; height:4rem; display:flex; align-items:center; justify-content:space-between;}
   @media(min-width:768px){.site-nav-inner{padding:0 2rem;}}
   .site-nav-right{display:flex; align-items:center; gap:1.5rem; flex-shrink:0;}
-  .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.875rem; letter-spacing:.14em; text-transform:uppercase; color:var(--emerald); flex-shrink:0;}
+  /* color:var(--text), not --emerald — this class is shared between the
+     nav wordmark (tri-colour spans with their own inline colour now, see
+     SiteNav.jsx, so this rule doesn't actually apply there any more) and
+     the footer's brand link, which cnf-website's Footer.tsx renders as
+     plain text-text, not gold. */
+  .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.875rem; letter-spacing:.14em; text-transform:uppercase; color:var(--text); flex-shrink:0;}
   .site-nav-brand img{width:auto; display:block;}
   .site-nav .site-nav-brand img{height:2.25rem;}
   .site-footer .site-nav-brand img{height:2rem;}
@@ -229,7 +252,9 @@ export const DIRECTORY_CSS = `
   .outer-frame .frame-row{position:relative; width:100%; display:flex; align-items:center; justify-content:space-between;}
   .outer-frame .frame-rails{width:100%; flex:1; display:flex; justify-content:space-between; position:relative; padding:0 .25rem;}
   .outer-frame .rail{height:100%; width:1px; background:linear-gradient(to bottom, rgba(212,175,55,.8), rgba(212,175,55,.3), rgba(212,175,55,.8)); position:relative;}
-  .outer-frame .rail-notch{position:absolute; top:50%; transform:translateY(-50%) rotate(45deg); width:10px; height:10px; border:1px solid #d4af37; background:var(--bg);}
+  /* Magenta (#f9a8d4, matching "Fumbles"), not gold — mirrors
+     cnf-website's CelestialBackdrop.tsx rail-notch fix. */
+  .outer-frame .rail-notch{position:absolute; top:50%; transform:translateY(-50%) rotate(45deg); width:10px; height:10px; border:1px solid #f9a8d4; background:var(--bg);}
   .outer-frame .rail:first-child .rail-notch{left:-4px;}
   .outer-frame .rail:last-child .rail-notch{right:-4px;}
   .compass{position:relative; width:2.5rem; height:2.5rem; color:#d4af37; filter:drop-shadow(0 0 6px rgba(212,175,55,.7));}

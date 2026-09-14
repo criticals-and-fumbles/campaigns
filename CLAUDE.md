@@ -202,24 +202,56 @@ verified name, not the brief's placeholder guess.
 around the main site's product — the directory launches *from*
 criticalsandfumbles.com, the console is an admin tool a DM uses the same
 way they'd use any other internal main-site tool — so both use that
-site's actual design system, not an invented one.
+site's actual design system, not an invented one. The directory page
+*does* have its own nav/header now (`src/components/directory/
+SiteNav.jsx`, added with the 2026-09-15 JSX conversion) — it is not
+chrome-free, don't assume otherwise from older comments.
 
-**Source of truth lives in the cnf-website repo, not here.** Read
-`docs/design-system.md` in `cnf-website` before touching this page's
-`<style>` block or `templates/console.js`'s `CONSOLE_CSS` — do not
-hand-copy hex values, font names, or component treatments into this file
-as prose, and do not describe the current palette/fonts/decorative
-elements here either, since that's exactly the duplication that caused
-this section to silently go stale before (a full recolor/refont/nav
-shape change shipped on the main site while this doc still described the
-old three-color brand title and old font stack, months after they were
-retired there). This directory page's actual CSS still has to be
-updated by hand each time the main site's system changes — there's no
-shared package/token file between the two repos — but the *description*
-of what that system currently looks like belongs in exactly one place.
-Nav/header is deliberately absent on the directory page — the main site
-will link into it directly once that's built, this repo doesn't own
-that navigation.
+**Source of truth is cnf-website's LIVE CURRENT STATE, not a doc, and
+not memory of what it looked like last time you checked.** This has
+already gone stale twice: once when a full recolor/refont/nav shape
+change shipped on the main site while this section's old prose
+description still described the retired three-color brand title and old
+font stack; again when the main site's brand-title tri-colour split was
+restored and its "Criticals" word given its own real-emerald-green token
+(`--criticals-emerald`, distinct from `--emerald`, which now means
+gold) — this page's nav still had the OLD plain-gold wordmark for a full
+session afterward because nothing forced a re-check. Reading
+`docs/design-system.md` once, early in a session, is not enough —
+that doc describes intent, and this page's actual hand-copied CSS can
+still drift from it silently in between sessions when the main site
+changes again.
+
+**Before considering any directory-page styling work done, diff these
+specific cnf-website files against what this repo's directory page
+currently renders** (not just against the doc's prose):
+- `components/layout/Nav.tsx` — wordmark treatment (colour split,
+  tokens used), nav shape, link styling.
+- `app/(site)/globals.css` — every token value (`--bg`/`--surface`/
+  `--border-color`/`--text-color`/`--text-muted`/`--emerald`/`--amber`/
+  `--magenta`/`--criticals-emerald` and any new ones added since), plus
+  card-background opacity (currently `bg-surface/75` on Article/World/
+  Team/Event cards — mirror as a pre-mixed `rgba()`, not a live
+  `color-mix()`, see the toggle-repaint note below).
+- `components/celestial/CelestialBackdrop.tsx` — astrolabe/outer-frame
+  colours (e.g. the rail-notch diamonds are magenta, not gold).
+- `docs/design-system.md` — for the *rationale* behind current values,
+  once you already know what they are from the files above.
+
+This directory page's actual CSS still has to be updated by hand each
+time the main site's system changes — there's no shared package/token
+file between the two repos — but the *description* of what that system
+currently looks like belongs in exactly one place (that doc), and the
+*current values* belong in exactly one other place (the four files
+above), never re-described from memory here.
+
+**Toggle-repaint note:** this page's theme toggle does a live
+`data-theme` attribute swap, no reload — the same mechanism cnf-website
+uses. A `color-mix()`-compiled opacity value (Tailwind's `/NN` modifier,
+or a raw CSS `color-mix()`) does not reliably repaint on that kind of
+live toggle in Chromium; use a pre-mixed literal `rgba()` custom
+property instead (see `--surface-75` in `src/components/directory/
+styles.js` for the pattern).
 
 **Genre-themed** (via `src/lib/theme.js`'s `themeToCssVars`/
 `resolveLabels`, driven by the campaign's referenced `genreTheme`

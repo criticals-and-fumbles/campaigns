@@ -27,7 +27,15 @@ export function SiteNav({ siteLinks }) {
         <nav class="site-nav-inner">
           <a class="site-nav-brand" href={`${MAIN_SITE}/`}>
             <img src={`${MAIN_SITE}/logo.png`} alt="Criticals and Fumbles logo" />
-            <span>Criticals & Fumbles</span>
+            {/* Tri-colour split, matching cnf-website's Nav.tsx wordmark
+                exactly: "Criticals" real emerald green (--criticals-
+                emerald, NOT --emerald, which means gold everywhere
+                else), "&" gold, "Fumbles" magenta. */}
+            <span>
+              <span style={{ color: "var(--criticals-emerald)" }}>Criticals</span>{" "}
+              <span style={{ color: "var(--amber)" }}>&amp;</span>{" "}
+              <span style={{ color: "var(--magenta)" }}>Fumbles</span>
+            </span>
           </a>
           <div class="site-nav-links">
             {SITE_NAV_LINKS.map((l) => (
