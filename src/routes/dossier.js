@@ -131,6 +131,23 @@ function socialIconsBlock(siteLinks) {
 // Everything downstream of a campaign — its session index and the
 // dossier page itself — is genre-themed instead (renderCampaignIndexPage/
 // renderDossierPage, via theme.js), NOT run through this shell.
+//
+// 2026-09-14: recoloured to match cnf-website's "celestial" design system
+// (see that repo's app/(site)/globals.css .celestial scope + docs/
+// design-system.md — same source-of-truth relationship this file always
+// had to the main site, just a different palette on that site's end now).
+// This Worker has no CSP, unlike cnf-website (which has to self-host
+// these same fonts) — a direct Google Fonts <link> works fine here.
+// --emerald is kept as the token NAME (renaming it would mean re-touching
+// every rule below for no functional reason) but now holds celestial's
+// gold as its value — gold is celestial's primary interactive accent,
+// filling the same "the one accent color most links/hovers/badges use"
+// role emerald filled in the old palette. --amber holds a second,
+// slightly brighter gold shade (kept distinct from --emerald for the
+// "recruiting" solid-fill badge specifically, which wants to stand out
+// from the plain outline badges). --magenta is celestial's actual
+// magenta/pink accent, used the same sparingly-in-a-few-spots way it
+// always was here.
 function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
   const nav = SITE_NAV_LINKS.map(
     (l) => `<a href="${escapeHtml(l.href)}"${l.current ? ' class="current"' : ""}>${escapeHtml(l.label)}</a>`,
@@ -148,23 +165,25 @@ function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escapeHtml(title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:wght@400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#111111; --surface:#1a1a1a; --border:#2a2a2a;
-    --text:#f0eae0; --text-muted:#666666;
-    --emerald:#2ec56b; --amber:#c8893a; --magenta:#d946a8;
-    --font-display:'Bebas Neue', sans-serif;
-    --font-body:'Crimson Pro', serif;
-    --font-ui:'Space Mono', monospace;
+    --bg:#020509; --surface:#0d141d; --border:#2a2a2a;
+    --text:#e5e7eb; --text-muted:#9ca3af;
+    --emerald:#d4af37; --amber:#eab308; --magenta:#f9a8d4;
+    --font-display:'EB Garamond', serif;
+    --font-body:'Plus Jakarta Sans', sans-serif;
+    --font-ui:'Cinzel', serif;
+    --font-mono:'Space Grotesk', monospace;
   }
-  /* Light mode — same palette cnf-website's own light theme uses, see
-     that repo's app/(site)/globals.css. This page never had a light
-     variant before; added alongside the nav toggle below. */
+  /* Light mode — same off-white/parchment palette cnf-website's
+     /celestial route uses, see that repo's app/(site)/globals.css
+     .celestial.celestial-light block. */
   html[data-theme="light"]{
-    --bg:#fbf0e0; --surface:#f0e8d8; --border:#e0d4c0;
-    --text:#1a1208; --text-muted:#8a7055;
-    --emerald:#1a7a45; --amber:#b36a1a; --magenta:#c4306a;
+    --bg:#f7f2e6; --surface:#fdf9f0; --border:#d8c69a;
+    --text:#2b2416; --text-muted:#6b6152;
+    --emerald:#92721f; --amber:#a67c00; --magenta:#be185d;
   }
   *{box-sizing:border-box;}
   html{font-size:18px; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
@@ -192,8 +211,15 @@ function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
   @media(max-width:860px){.directory-layout{grid-template-columns:1fr;}}
 
   ul.campaign-list{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:1rem;}
-  .card a{display:flex; flex-direction:row; align-items:stretch; overflow:hidden; border:1px solid var(--border); border-radius:.5rem; background:var(--surface); text-decoration:none; transition:border-color .2s ease;}
+  /* Ornate card bevel + corner notches, matching /celestial's
+     .ornate-card/.corner-notch (celestial.css) — same technique, hand-
+     copied since there's no shared stylesheet between the two apps. */
+  .card{position:relative;}
+  .card a{position:relative; display:flex; flex-direction:row; align-items:stretch; overflow:hidden; border:1px solid color-mix(in srgb, var(--emerald) 45%, transparent); border-radius:.5rem; background:var(--surface); text-decoration:none; box-shadow:inset 0 0 20px rgba(0,0,0,.4); transition:border-color .2s ease;}
   .card a:hover{border-color:var(--emerald);}
+  .card::before, .card::after{content:''; position:absolute; width:8px; height:8px; pointer-events:none; z-index:1;}
+  .card::before{top:4px; left:4px; border-left:1px solid var(--emerald); border-top:1px solid var(--emerald);}
+  .card::after{bottom:4px; right:4px; border-right:1px solid var(--emerald); border-bottom:1px solid var(--emerald);}
   /* "not more than a quarter of the card" — capped at 25% width, with a
      sane minimum so it doesn't collapse to nothing on a narrow card. */
   .card-image{flex:0 0 25%; max-width:25%; min-width:120px; aspect-ratio:4/3; background:#0c1a10; overflow:hidden;}
@@ -207,7 +233,7 @@ function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
   .card-image img{width:100%; height:100%; object-fit:contain;}
   .card-body{flex:1; min-width:0; display:flex; flex-direction:column; gap:.6rem; padding:1.25rem 1.5rem;}
   .badge-row{display:flex; flex-wrap:wrap; align-items:center; gap:.5rem;}
-  .badge{border:1px solid var(--emerald); color:var(--emerald); font-family:var(--font-ui); font-size:.875rem; padding:.25rem 1rem; border-radius:999px;}
+  .badge{border:1px solid var(--emerald); color:var(--emerald); font-family:var(--font-ui); font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; padding:.25rem 1rem; border-radius:999px;}
   /* Status is the one thing a visitor most needs to spot at a glance —
      "recruiting" campaigns are what the intro copy explicitly points
      people at, so it gets a solid fill instead of the genre badge's
@@ -219,17 +245,20 @@ function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
   .status-badge.status-concluded{background:transparent; color:var(--text-muted); border:1px solid var(--border); opacity:.7;}
   .card-body h2{font-family:var(--font-display); letter-spacing:.02em; font-size:1.5rem; margin:0; line-height:1.2;}
   .hook{font-size:1.1rem; color:var(--text-muted); margin:0;}
-  .meta{display:flex; justify-content:space-between; gap:1rem; font-family:var(--font-ui); font-size:.75rem; color:var(--text-muted); margin-top:auto;}
+  .meta{display:flex; justify-content:space-between; gap:1rem; font-family:var(--font-mono); font-size:.75rem; color:var(--text-muted); margin-top:auto;}
   .empty{color:var(--text-muted);}
 
-  .sidebar{position:sticky; top:2rem; border:1px solid var(--border); border-radius:.5rem; background:var(--surface); padding:1.25rem;}
+  .sidebar{position:relative; position:sticky; top:2rem; border:1px solid color-mix(in srgb, var(--emerald) 45%, transparent); border-radius:.5rem; background:var(--surface); padding:1.25rem; box-shadow:inset 0 0 20px rgba(0,0,0,.4);}
+  .sidebar::before, .sidebar::after{content:''; position:absolute; width:8px; height:8px; pointer-events:none;}
+  .sidebar::before{top:4px; left:4px; border-left:1px solid var(--emerald); border-top:1px solid var(--emerald);}
+  .sidebar::after{bottom:4px; right:4px; border-right:1px solid var(--emerald); border-bottom:1px solid var(--emerald);}
   .sidebar h3{font-family:var(--font-display); letter-spacing:.02em; font-size:1.15rem; margin:0 0 1rem; color:var(--emerald);}
   .activity-list{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.9rem;}
   .activity-item a{display:block; text-decoration:none; color:inherit; padding-bottom:.9rem; border-bottom:1px solid var(--border);}
   .activity-item:last-child a{border-bottom:none; padding-bottom:0;}
   .activity-item a:hover .activity-title{color:var(--emerald);}
   .activity-title{display:block; font-size:.95rem; margin-bottom:.25rem; transition:color .15s ease;}
-  .activity-meta{display:flex; justify-content:space-between; gap:.5rem; font-family:var(--font-ui); font-size:.68rem; color:var(--text-muted);}
+  .activity-meta{display:flex; justify-content:space-between; gap:.5rem; font-family:var(--font-mono); font-size:.68rem; color:var(--text-muted);}
 
   /* Site nav/footer — hand-matched to cnf-website's Nav.tsx/Footer.tsx
      (can't share the actual React components, this is a separate app —
@@ -237,11 +266,15 @@ function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
      the "/" directory — the genre-themed session-index/dossier pages
      deliberately don't get this chrome, it would clash with their
      immersive full-bleed design. */
-  .site-nav{position:sticky; top:0; z-index:50; border-bottom:1px solid var(--border); background:color-mix(in srgb, var(--bg) 95%, transparent); backdrop-filter:blur(8px);}
-  .site-nav-inner{max-width:1440px; margin:0 auto; padding:0 1rem; height:4rem; display:flex; align-items:center; justify-content:space-between;}
+  /* Floating ornate pill — matches /celestial's CelestialNav.tsx shape
+     (a genuinely different shape from this page's old full-width bar,
+     not just a re-colour); the toggle/hamburger/drawer JS below is
+     completely untouched, only these box/shape properties changed. */
+  .site-nav{position:sticky; top:.75rem; z-index:50; max-width:1460px; margin:0 auto; border:1px solid color-mix(in srgb, var(--emerald) 40%, transparent); border-radius:999px; background:color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter:blur(8px); box-shadow:0 4px 25px rgba(0,0,0,.5);}
+  .site-nav-inner{max-width:1460px; margin:0 auto; padding:0 1.5rem; height:4rem; display:flex; align-items:center; justify-content:space-between;}
   @media(min-width:768px){.site-nav-inner{padding:0 2rem;}}
   .site-nav-right{display:flex; align-items:center; gap:1.5rem; flex-shrink:0;}
-  .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.875rem; flex-shrink:0;}
+  .site-nav-brand{display:flex; align-items:center; gap:.5rem; text-decoration:none; font-family:var(--font-ui); font-size:.875rem; letter-spacing:.14em; text-transform:uppercase; color:var(--emerald); flex-shrink:0;}
   .site-nav-brand img{width:auto; display:block;}
   .site-nav .site-nav-brand img{height:2.25rem;}
   .site-footer .site-nav-brand img{height:2rem;}
@@ -249,7 +282,8 @@ function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
   @media(min-width:768px){.site-nav .site-nav-brand span{display:inline;}}
   .site-nav-links{display:none; align-items:center; gap:1.5rem; flex-wrap:wrap; row-gap:.5rem; padding:.75rem 0;}
   @media(min-width:768px){.site-nav-links{display:flex;}}
-  .site-nav-links > a, .mobile-drawer-links > a{font-family:var(--font-ui); font-size:1rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
+  .site-nav-links > a{font-family:var(--font-ui); font-size:.75rem; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
+  .mobile-drawer-links > a{font-family:var(--font-display); font-size:1rem; color:var(--text-muted); text-decoration:none; transition:color .15s ease;}
   .site-nav-links > a:hover, .mobile-drawer-links > a:hover{color:var(--emerald);}
   .site-nav-links > a.current, .mobile-drawer-links > a.current{color:var(--emerald);}
   .site-nav-social{display:flex; align-items:center; gap:1rem; flex-shrink:0;}
@@ -305,6 +339,13 @@ function pageShell(title, bodyInner, siteLinks, colorMode = "dark") {
   @media(min-width:768px){.site-footer-grid{grid-template-columns:repeat(3, 1fr);}}
   .site-footer-desc{margin:1rem 0 0; max-width:30ch; font-size:.875rem; color:var(--text-muted);}
   .site-footer-values{margin:1rem 0 0; font-family:var(--font-ui); font-size:.75rem;}
+  /* Pre-existing markup (site-footer-values below) referenced these
+     span classes with no matching rule outside an h1 — genuinely
+     unstyled before this pass, fixed in passing since it's a one-line,
+     zero-risk addition directly in scope of this recolour. */
+  .emerald{color:var(--emerald);}
+  .amber{color:var(--amber);}
+  .magenta{color:var(--magenta);}
   .site-footer h3{margin:0 0 1rem; font-family:var(--font-ui); font-size:.85rem; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted);}
   .site-footer-nav{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem;}
   .site-footer-nav a{font-size:.875rem; text-decoration:none; color:var(--text); transition:color .15s ease;}
