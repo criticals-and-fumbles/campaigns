@@ -15,8 +15,20 @@ export function slugify(s) {
  * world/unit reference ids (not their slugs — avoids an extra Sanity
  * read just to build an id) plus a slug of its own name/title. Same
  * name re-submitted under the same world+unit resolves to the same id,
- * so createOrReplace() updates it in place instead of duplicating it. */
+ * so createOrReplace() updates it in place instead of duplicating it.
+ *
+ * Separator is "--", NOT "." — a dotted prefix (`type.rest`) collides
+ * with Sanity's own internal bundle/namespace id convention
+ * (`drafts.<id>`, `versions.<bundle>.<id>`), which silently excludes
+ * the document from the anonymous "published" perspective that
+ * cnf-website's public /wiki pages read with (no token — see that
+ * repo's sanity/lib/client.ts). Hit this for real with `article.<slug>`
+ * ids from api-me-articles.js (same bug, same fix, see that file and
+ * CLAUDE.md's lessons-learned for the full writeup) — worldUnit/
+ * keyFigure/notablePlace/magicItem/faction are all read anonymously by
+ * cnf-website too, so this would have hit the exact same failure the
+ * first time this import path got used against real content. */
 export function wikiDocId(type, worldId, unitId, name) {
-  const scope = `${worldId || "global"}.${unitId || "nounit"}`;
-  return `${type}.${scope}.${slugify(name)}`.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 200);
+  const scope = `${worldId || "global"}--${unitId || "nounit"}`;
+  return `${type}--${scope}--${slugify(name)}`.replace(/[^a-zA-Z0-9-]/g, "-").slice(0, 200);
 }
