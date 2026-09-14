@@ -1,5 +1,5 @@
 /**
- * Shared inline SVG icon markup — extracted from routes/dossier.js
+ * Shared inline SVG icon markup — extracted from routes/dossier.jsx
  * (2026-09-01) so templates/dossier.js's share row can reuse the exact
  * same platform icons instead of drawing its own second set. Same
  * "hand-copied, not imported" rule as before: Facebook/Instagram/
