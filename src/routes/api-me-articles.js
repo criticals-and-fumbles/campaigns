@@ -72,15 +72,27 @@ app.post("/", async (c) => {
   const existing = await query(c.env, `*[_type == "article" && slug.current == $slug][0]._id`, { slug });
   if (existing) return c.json({ error: `An article with slug "${slug}" already exists — try a different title` }, 409);
 
-  // Deterministic _id (same pattern as campaign/dossier/worldUnit) rather
-  // than a plain `create` mutation with an auto-generated id — Sanity's
-  // mutate response doesn't echo the new document's id back unless the
-  // caller supplies it (or opts into returnIds), so this is simpler than
-  // parsing that out, and createIfNotExists gives a second guard against
-  // the same slug race the uniqueness check above already covers.
-  const id = `article.${slug}`;
+  // Plain `create` with NO deterministic _id — unlike campaign/dossier,
+  // article documents are read anonymously (no token) by cnf-website's
+  // public pages (see sanity/lib/client.ts there: "the dataset is
+  // public-read, so this needs no token"). A dotted deterministic id
+  // like `article.${slug}` looks, to Sanity's document-versioning system,
+  // exactly like its own internal bundle-namespacing convention
+  // (`drafts.<id>`, `versions.<bundle>.<id>`) — an unrecognized dotted
+  // prefix gets silently excluded from the anonymous "published"
+  // perspective even though a token-authenticated read (which is what
+  // campaign/dossier always use, and what this console's own GET routes
+  // use) sees it fine. Confirmed live: an article created here with id
+  // "article.<slug>" existed with correct content and was fully
+  // queryable with a token, but never appeared on cnf-website's public
+  // /articles page. Every other article in the dataset (created via
+  // Sanity Studio) already has a plain, non-dotted id — this now matches
+  // that convention instead of inventing a second one. The prior
+  // comment's premise (mutate doesn't echo the new id back) doesn't hold
+  // for a plain `create` either — Sanity always returns `results[0].id`
+  // regardless of whether the caller supplied one, so nothing is lost
+  // by not setting `_id` here; see the response handling below.
   const doc = {
-    _id: id,
     _type: "article",
     title: String(payload.title).trim(),
     slug: { _type: "slug", current: slug },
@@ -101,7 +113,11 @@ app.post("/", async (c) => {
   };
 
   try {
-    const result = await mutate(c.env, [{ createIfNotExists: doc }]);
+    const result = await mutate(c.env, [{ create: doc }]);
+    // Sanity always echoes the created document's id back in
+    // results[0].id, whether or not the caller supplied one — no need
+    // for a self-constructed deterministic id to recover it.
+    const id = result?.results?.[0]?.id;
     return c.json({ ok: true, id, result });
   } catch (err) {
     return c.json({ error: err.message }, 502);
