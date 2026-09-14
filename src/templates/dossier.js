@@ -20,7 +20,7 @@ import { urlFor } from "../lib/sanity-image.js";
 import { SOCIAL_ICON_SVG, LINK_ICON_SVG, EMBED_ICON_SVG } from "../lib/icons.js";
 
 // This Worker's own public domain — for canonical/OG URLs and the share
-// row's Facebook/WhatsApp/embed links. Distinct from routes/dossier.js's
+// row's Facebook/WhatsApp/embed links. Distinct from routes/dossier.jsx's
 // MAIN_SITE (criticalsandfumbles.com, the separate Next.js site).
 const SITE_URL = "https://campaigns.criticalsandfumbles.com";
 

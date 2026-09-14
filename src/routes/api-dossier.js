@@ -34,7 +34,7 @@ app.patch("/:id", async (c) => {
   }
 
   // The public dossier route looks documents up by `code` (scoped to the
-  // parent campaign), not by _id — see routes/dossier.js's DOSSIER_QUERY.
+  // parent campaign), not by _id — see routes/dossier.jsx's DOSSIER_QUERY.
   // _id is fixed at creation from the *original* campaignSlug+code and
   // never re-derived, so `code` is safe to edit afterward, but two
   // dossiers in the same campaign ending up with the same `code` would

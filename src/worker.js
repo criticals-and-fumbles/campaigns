@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { requireAccessIdentity } from "./lib/auth.js";
 import { configureSanityImage } from "./lib/sanity-image.js";
-import dossierRoutes from "./routes/dossier.js";
+import dossierRoutes from "./routes/dossier.jsx";
 import consoleRoutes from "./routes/console.js";
 import apiDossierRoutes from "./routes/api-dossier.js";
 import apiCampaignRoutes from "./routes/api-campaign.js";
