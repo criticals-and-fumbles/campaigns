@@ -4,9 +4,6 @@ import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { query } from "../lib/sanity.js";
 import { renderDossierPage, renderCampaignIndexPage } from "../templates/dossier.js";
-import { PageShell } from "../components/directory/PageShell.jsx";
-import { CampaignCard } from "../components/directory/CampaignCard.jsx";
-import { ActivityItem } from "../components/directory/ActivityItem.jsx";
 
 const app = new Hono();
 
@@ -38,116 +35,31 @@ const CAMPAIGN_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->slug.current 
   _id, code, title, sessionLabel, location, _createdAt
 }`;
 
-// "Most recently updated" means actual campaign activity — a new or
-// edited session bumps the campaign to the top, not just edits to the
-// campaign document itself (which is what plain _updatedAt would give:
-// a GM adding a session without ever re-touching the campaign's own
-// fields would otherwise never move it). lastActivity is the newest of
-// (a) any of its dossiers' _updatedAt, or (b) the campaign's own
-// _updatedAt if it has no dossiers yet — see references(^._id), which
-// resolves to the campaign document being projected.
-const ALL_CAMPAIGNS_QUERY = `*[_type == "campaign" && visible == true]{
-  _id, title, slug, genre, system, status, hook, heroImage,
-  "lastActivity": coalesce(*[_type == "dossier" && references(^._id)] | order(_updatedAt desc)[0]._updatedAt, _updatedAt)
-} | order(lastActivity desc)`;
-
-// Sidebar activity feed — the most recently updated dossiers across every
-// visible campaign, newest first, capped at 10.
-const RECENT_ACTIVITY_QUERY = `*[_type == "dossier" && campaign->visible == true] | order(_updatedAt desc)[0...10]{
-  code, title, sessionLabel, _updatedAt,
-  "campaignSlug": campaign->slug.current, "campaignTitle": campaign->title
-}`;
-
-// siteSettings is a main-site document (cnf-website/sanity/schemas/
-// siteSettings.ts) — but it lives in the same Sanity project/dataset as
-// this Worker, so querying it directly (rather than hardcoding the
-// Discord/WhatsApp URLs, site title/description, or copyright line here)
-// keeps this page's CTAs AND its nav/footer chrome in sync with whatever
-// the main site's Studio has, same principle as that repo's own "never
-// hardcode the Discord invite string" rule (see its CLAUDE.md).
-const SITE_LINKS_QUERY = `*[_type == "siteSettings"][0]{
-  title, shortDescription, discordUrl, copyrightLine,
-  "whatsappUrl": socialLinks[platform == "WhatsApp"][0].url,
-  socialLinks
-}`;
-
-// GET / — public campaign directory. Only campaigns the owning DM has
-// marked visible show up here — see schema/campaign.js § visible.
-// Sorted by actual recent activity (see ALL_CAMPAIGNS_QUERY's lastActivity
-// projection), full-width list rows rather than a card grid, with a
-// sidebar feed of the most recently updated sessions across every
-// visible campaign.
+// GET / — retired 2026-09-15. The public campaign directory this used to
+// render (full campaign list + sidebar activity feed, converted to JSX
+// earlier the same day) now lives at cnf-website's own
+// app/(site)/campaigns/page.tsx instead — real Nav/Footer/design-system
+// reuse, which hand-copying this Worker's CSS could never keep in sync
+// with (see that repo's lessons-learned on this exact page for the full
+// story). A Cloudflare Route + host-based middleware rewrite was tried
+// first, sending campaigns.criticalsandfumbles.com/ traffic straight
+// into cnf-sg's Worker — reverted, because a relative-URL nav click from
+// there (e.g. "Events") stayed on this subdomain and 404'd on every page
+// this Worker doesn't itself serve. A plain redirect avoids that: once a
+// visitor lands on the real page, they're truly on that site's domain,
+// so every other link just works.
 //
-// 2026-09-15: this route (and everything it renders — PageShell,
-// SiteNav, SiteFooter, CampaignCard, ActivityItem, Backdrop, all under
-// src/components/directory/) was converted from a hand-rolled
-// template-string function to server-rendered JSX (hono/jsx), for the
-// same component-based authoring pattern cnf-website's own pages use.
-// Markup/CSS/behaviour are otherwise unchanged from the pre-conversion
-// version. Everything downstream of a campaign — its session index and
-// the dossier page itself — stays genre-themed template strings
-// (renderCampaignIndexPage/renderDossierPage, via theme.js), not part of
-// this conversion.
-app.get("/", async (c) => {
-  const [campaigns, recent, siteLinks] = await Promise.all([
-    query(c.env, ALL_CAMPAIGNS_QUERY),
-    query(c.env, RECENT_ACTIVITY_QUERY),
-    query(c.env, SITE_LINKS_QUERY),
-  ]);
-
-  const ctas = [];
-  if (siteLinks?.discordUrl) {
-    ctas.push(
-      <a key="discord" class="cta-btn cta-discord" href={siteLinks.discordUrl} target="_blank" rel="noopener noreferrer">
-        Join us on Discord
-      </a>,
-    );
-  }
-  if (siteLinks?.whatsappUrl) {
-    ctas.push(
-      <a key="whatsapp" class="cta-btn cta-whatsapp" href={siteLinks.whatsappUrl} target="_blank" rel="noopener noreferrer">
-        Join our WhatsApp Community
-      </a>,
-    );
-  }
-
-  // Rendered to a plain string (not passed to c.html() as a JSX object
-  // directly) specifically so "<!DOCTYPE html>" can be prepended —
-  // there's no way to put a doctype INSIDE the <html> JSX tree itself,
-  // and c.html(jsxElement) treats the JSX as the entire response body.
-  // Safe to call .toString() synchronously here: every component in this
-  // tree is a plain sync function with no async/Promise children.
-  const page = (
-    <PageShell title="Campaign Logs" siteLinks={siteLinks} colorMode={resolveColorMode(c)}>
-      <h1>Campaign Logs</h1>
-      <p class="intro">
-        Catch up on our games here. Please reach out to us if you are interested in any games that are still
-        recruiting.
-      </p>
-      {ctas.length > 0 && <div class="cta-row">{ctas}</div>}
-      <div class="directory-layout">
-        <ul class="campaign-list">
-          {campaigns && campaigns.length > 0 ? (
-            campaigns.map((camp) => <CampaignCard key={camp._id} campaign={camp} />)
-          ) : (
-            <p class="empty">No campaigns published yet.</p>
-          )}
-        </ul>
-        <aside class="sidebar">
-          <h3>Recent Updates</h3>
-          <ul class="activity-list">
-            {recent && recent.length > 0 ? (
-              recent.map((d) => <ActivityItem key={`${d.campaignSlug}-${d.code}`} item={d} />)
-            ) : (
-              <p class="empty">No sessions published yet.</p>
-            )}
-          </ul>
-        </aside>
-      </div>
-    </PageShell>
-  );
-  return c.html("<!DOCTYPE html>" + page.toString());
-});
+// PageShell/SiteNav/SiteFooter/CampaignCard/ActivityItem/Backdrop (all
+// under src/components/directory/) and DIRECTORY_CSS/DIRECTORY_SCRIPT in
+// styles.js are dead code as of this redirect — the ALL_CAMPAIGNS_QUERY/
+// RECENT_ACTIVITY_QUERY/SITE_LINKS_QUERY constants and PageShell/
+// CampaignCard/ActivityItem imports this route used to need were removed
+// along with the handler body itself; kept the components/directory/
+// files themselves for now rather than deleting them in the same pass
+// as this fix, since this comment already documents where the content
+// they rendered went. Delete them once this redirect's been live a
+// while and nothing else turns out to depend on them.
+app.get("/", (c) => c.redirect("https://www.criticalsandfumbles.com/campaigns", 308));
 
 // GET /:campaignSlug/:dossierCode — the dossier page itself. A dossier
 // under a non-visible campaign 404s here too, not just off the directory
