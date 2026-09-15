@@ -11,8 +11,11 @@ const app = new Hono();
 const MY_CAMPAIGN_SLUGS = `*[_type == "campaign" && ownerEmailHash == $hash]{ _id, "slug": slug.current }`;
 const MY_EXISTING_DOSSIER_IDS = `*[_type == "dossier" && campaign->ownerEmailHash == $hash]{ _id, code, "campaignSlug": campaign->slug.current }`;
 
+// "--" separator, not "." — see api-dossier.js's identical function for
+// why (same fix, kept duplicated here rather than shared, matching how
+// this pair already duplicated the function pre-fix).
 function dossierDocId(campaignSlug, code) {
-  return `dossier.${campaignSlug}.${code}`.replace(/[^a-zA-Z0-9._-]/g, "-");
+  return `dossier--${campaignSlug}--${code}`.replace(/[^a-zA-Z0-9-]/g, "-");
 }
 
 // POST /api/import — multipart XML upload; bulk createOrReplace in one

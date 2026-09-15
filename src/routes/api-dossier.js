@@ -4,8 +4,17 @@ import { hashEmail } from "../lib/identity.js";
 
 const app = new Hono();
 
+// "--" separator, not "." — a dotted id like `dossier.${slug}.${code}`
+// collides with Sanity's own drafts.<id>/versions.<bundle>.<id> namespace
+// convention and gets silently excluded from the anonymous "published"
+// perspective, which cnf-website's own /campaigns directory page now
+// reads dossiers with (no token). Same fix as api-campaign.js and
+// api-me-articles.js's identical bug — see either's comment for the
+// full story. Deterministic id itself is still wanted here (unlike
+// those two) — same name resubmitted under the same campaign+code
+// should update in place, not duplicate.
 function dossierDocId(campaignSlug, code) {
-  return `dossier.${campaignSlug}.${code}`.replace(/[^a-zA-Z0-9._-]/g, "-");
+  return `dossier--${campaignSlug}--${code}`.replace(/[^a-zA-Z0-9-]/g, "-");
 }
 
 // PATCH /api/dossier/:id — body: { field, value, ifRevisionId? }

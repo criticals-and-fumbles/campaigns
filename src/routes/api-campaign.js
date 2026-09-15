@@ -33,9 +33,17 @@ app.post("/", async (c) => {
   const existing = await query(c.env, `*[_type == "campaign" && slug.current == $slug][0]._id`, { slug });
   if (existing) return c.json({ error: `A campaign with slug "${slug}" already exists` }, 409);
 
+  // Plain id — see api-me-articles.js's identical fix (2026-09-15) for
+  // why: a dotted id like `campaign.${slug}` collides with Sanity's own
+  // drafts.<id>/versions.<bundle>.<id> namespace convention and gets
+  // silently excluded from the anonymous "published" perspective.
+  // campaign now needs anonymous reads too — cnf-website's own
+  // /campaigns directory page reads it with no token, unlike this
+  // Worker's own console routes. Hit this for real: had to migrate 5
+  // live campaigns + 26 dossiers off dotted ids once this page shipped
+  // and came up empty.
   const gmEmail = c.get("gmEmail");
   const doc = {
-    _id: `campaign.${slug}`,
     _type: "campaign",
     title: body.title,
     slug: { _type: "slug", current: slug },
@@ -54,8 +62,13 @@ app.post("/", async (c) => {
   };
 
   try {
-    const result = await mutate(c.env, [{ createIfNotExists: doc }]);
-    return c.json({ ok: true, id: doc._id, result });
+    // Plain create, not createIfNotExists — that action needs a known
+    // id to check against, which a plain-id doc no longer has up front;
+    // the slug-uniqueness check above is the actual duplicate guard now
+    // (same pattern api-me-articles.js already uses). Sanity always
+    // echoes the created document's id back in results[0].id.
+    const result = await mutate(c.env, [{ create: doc }]);
+    return c.json({ ok: true, id: result?.results?.[0]?.id, result });
   } catch (err) {
     return c.json({ error: err.message }, 502);
   }
