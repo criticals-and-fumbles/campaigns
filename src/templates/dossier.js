@@ -32,6 +32,24 @@ function esc(s) {
     .replace(/"/g, "&quot;");
 }
 
+// dossier.overview switched from plain text to sanitized HTML when the
+// console's WYSIWYG editor shipped (2026-09-15) — every NEW save is
+// sanitized server-side before it ever reaches here (see cnf-website's
+// apps/console/src/lib/html-sanitize.js), so trusting it as raw markup
+// is safe for anything written from that point on. Older dossiers
+// still hold the original plain-text shape (blank-line paragraphs, no
+// tags) — those get the exact rendering this section always used
+// (escaped, single paragraph) rather than being reinterpreted as HTML
+// they were never sanitized against. Detected by shape, not a stored
+// flag: real HTML from the editor always starts with a tag (Quill
+// wraps everything in block-level elements), which plain text saved
+// before this feature existed never did.
+function renderOverview(overview) {
+  if (!overview) return "";
+  if (/^\s*</.test(overview)) return overview;
+  return `<p>${esc(overview)}</p>`;
+}
+
 // Plain-text truncation for og:description/twitter:description — same
 // ~155-char SERP/social-preview convention cnf-website's lib/metadata.ts
 // uses, hand-copied since this Worker can't import that module.
@@ -39,6 +57,17 @@ function truncate(s, max) {
   const text = String(s ?? "").trim();
   if (text.length <= max) return text;
   return `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+// dossier.overview can now be HTML (see renderOverview's comment) — a
+// meta description/OG description tag needs the plain words, not the
+// markup, or a share-preview card would literally show "<p>" in it.
+// Deliberately a plain regex strip, not HTMLRewriter — this only ever
+// runs on overview's OWN already-sanitized content (never raw
+// unsanitized input), so there's no adversarial-markup case to guard
+// against here the way there is in html-sanitize.js.
+function stripTags(s) {
+  return String(s ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 // Shared by renderDossierPage and renderCampaignIndexPage — builds the
@@ -234,7 +263,7 @@ export function renderDossierPage({ dossier, campaign, theme, embedded, colorMod
         ? urlFor(campaign.heroImage).width(1200).height(630).url()
         : null;
   const ogDescription = truncate(
-    dossier.overview || campaign.hook || `${labels.dossier} from ${campaign.title}.`,
+    stripTags(dossier.overview) || campaign.hook || `${labels.dossier} from ${campaign.title}.`,
     155,
   );
 
@@ -377,7 +406,7 @@ ${embedded ? "" : `<button id="themeToggle"><span class="dot"></span><span id="t
     <div class="sechead"><span class="num">01</span><h2>${esc(labels.overview)}</h2><span class="rule"></span></div>
     <div class="grid-2">
       <div class="panel frame"><span class="bl"></span><span class="br"></span>
-        <p class="body-copy">${esc(dossier.overview || "")}</p>
+        <div class="body-copy">${renderOverview(dossier.overview)}</div>
       </div>
       <div class="panel frame"><span class="bl"></span><span class="br"></span>
         ${kvRows(dossier.quickFacts)}
