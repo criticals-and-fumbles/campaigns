@@ -2,7 +2,7 @@
   "name": "campaigns-worker",
   "version": "0.1.0",
   "private": true,
-  "description": "Cloudflare Worker serving campaigns.criticalsandfumbles.com — campaign dossier subsite for Criticals & Fumbles.",
+  "description": "Cloudflare Worker serving campaigns.criticalsandfumbles.com — public campaign dossier rendering only (read-only, no auth) as of 2026-09-15; the GM console (writes, uploads, XML/CSV import, Cloudflare Access) split out to its own Worker, see cnf-website/apps/console.",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
@@ -11,8 +11,7 @@
     "seed:dry": "DRY_RUN=true node --env-file=.env seed/seed.js"
   },
   "dependencies": {
-    "hono": "^4.6.0",
-    "fast-xml-parser": "^4.5.0"
+    "hono": "^4.6.0"
   },
   "devDependencies": {
     "wrangler": "4.86.0",
