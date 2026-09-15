@@ -49,16 +49,13 @@ const CAMPAIGN_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->slug.current 
 // visitor lands on the real page, they're truly on that site's domain,
 // so every other link just works.
 //
-// PageShell/SiteNav/SiteFooter/CampaignCard/ActivityItem/Backdrop (all
-// under src/components/directory/) and DIRECTORY_CSS/DIRECTORY_SCRIPT in
-// styles.js are dead code as of this redirect — the ALL_CAMPAIGNS_QUERY/
-// RECENT_ACTIVITY_QUERY/SITE_LINKS_QUERY constants and PageShell/
-// CampaignCard/ActivityItem imports this route used to need were removed
-// along with the handler body itself; kept the components/directory/
-// files themselves for now rather than deleting them in the same pass
-// as this fix, since this comment already documents where the content
-// they rendered went. Delete them once this redirect's been live a
-// while and nothing else turns out to depend on them.
+// PageShell/SiteNav/SiteFooter/CampaignCard/ActivityItem/Backdrop (were
+// under src/components/directory/) and the console/GM-mutation routes
+// this Worker used to also serve are both gone now, not just dead code
+// — the former were deleted outright once this redirect confirmed
+// nothing depended on them; the latter moved wholesale to their own
+// Worker (see cnf-website/apps/console) the same day console split out
+// as its own product. This Worker is now dossier rendering only.
 app.get("/", (c) => c.redirect("https://www.criticalsandfumbles.com/campaigns", 308));
 
 // GET /:campaignSlug/:dossierCode — the dossier page itself. A dossier
