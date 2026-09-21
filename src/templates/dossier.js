@@ -33,21 +33,35 @@ function esc(s) {
 }
 
 // dossier.overview switched from plain text to sanitized HTML when the
-// console's WYSIWYG editor shipped (2026-09-15) — every NEW save is
-// sanitized server-side before it ever reaches here (see cnf-website's
-// apps/console/src/lib/html-sanitize.js), so trusting it as raw markup
-// is safe for anything written from that point on. Older dossiers
-// still hold the original plain-text shape (blank-line paragraphs, no
-// tags) — those get the exact rendering this section always used
-// (escaped, single paragraph) rather than being reinterpreted as HTML
-// they were never sanitized against. Detected by shape, not a stored
-// flag: real HTML from the editor always starts with a tag (Quill
-// wraps everything in block-level elements), which plain text saved
-// before this feature existed never did.
+// console's WYSIWYG editor shipped (2026-09-15) — every NEW save made
+// THROUGH THAT EDITOR is sanitized server-side before it ever reaches
+// here (see cnf-website's apps/console/src/lib/html-sanitize.js), so
+// trusting it as raw markup is safe for that path. Detected by shape,
+// not a stored flag: real HTML from the editor always starts with a tag
+// (Quill wraps everything in block-level elements).
+//
+// Originally this function assumed anything NOT shaped like HTML was
+// legacy single-paragraph plain text and could just be escaped and
+// wrapped in one <p> — wrong. The schema field (dossier.overview,
+// schema/dossier.js) is a plain `text` type, and TWO live write paths
+// bypass the Quill editor entirely and still produce it: the console's
+// Bulk XML import (apps/console/src/lib/xml.js pulls <overview> CDATA
+// verbatim, no HTML conversion) and a DM editing the field directly in
+// Sanity Studio (a plain multi-line textarea — newlines only, never
+// tags). Both are real, ongoing paths, not just pre-2026-09-15
+// leftovers. Collapsing every blank-line-separated paragraph the DM
+// typed into one run-on <p> lost their formatting entirely — fixed
+// 2026-09-21. Plain text now gets split into real paragraphs (blank
+// line = paragraph break, single newline = <br> soft break within one).
 function renderOverview(overview) {
   if (!overview) return "";
   if (/^\s*</.test(overview)) return overview;
-  return `<p>${esc(overview)}</p>`;
+  return overview
+    .split(/\n\s*\n+/)
+    .map((para) => para.trim())
+    .filter(Boolean)
+    .map((para) => `<p>${esc(para).replace(/\n/g, "<br>")}</p>`)
+    .join("");
 }
 
 // Plain-text truncation for og:description/twitter:description — same
@@ -580,7 +594,17 @@ const BASE_CSS = `
   .panel{background:rgba(255,255,255,.03); padding:22px; position:relative;}
   .grid-2{display:grid; grid-template-columns:1.3fr 1fr; gap:20px;}
   @media(max-width:820px){.grid-2{grid-template-columns:1fr;}}
-  p.body-copy{font-size:1rem; line-height:1.75; color:var(--text); opacity:.85; margin-bottom:14px;}
+  /* .body-copy p covers renderOverview()'s output — a <div class="body-copy">
+     wrapping one or more plain <p> tags, none of which carry the class
+     themselves. p.body-copy covers the location line (line ~440), a <p>
+     with the class directly on it. Two different shapes, kept as one
+     rule since they want identical styling — was p.body-copy only,
+     which silently never matched the div-wrapped case at all (every
+     overview paragraph rendered with unstyled browser defaults on this
+     dark theme) until caught alongside the paragraph-collapse fix,
+     2026-09-21. */
+  .body-copy p, p.body-copy{font-size:1rem; line-height:1.75; color:var(--text); opacity:.85; margin-bottom:14px;}
+  .body-copy p:last-child{margin-bottom:0;}
   /* Real 2-column table via CSS Grid, not the old flex space-between
      row-by-row layout — with space-between, each row's own label width
      pushed its value to a different starting x-position per row (a
