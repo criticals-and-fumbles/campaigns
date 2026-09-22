@@ -193,6 +193,16 @@ function kvRows(rows) {
   return `<div class="kvtable">${cells}</div>`;
 }
 
+// Small genre-labeled heading above a quickFacts/locationFacts kvtable —
+// same "only render when the array actually has content" guard kvRows
+// itself uses, since an empty panel shouldn't show a heading over
+// nothing. title is already resolved against FALLBACK_LABELS by
+// resolveLabels() upstream, so it's never empty when rows exist.
+function panelTitle(title, rows) {
+  if (!rows || rows.length === 0) return "";
+  return `<div class="panel-title">${esc(title)}</div>`;
+}
+
 function meterLevelClass(level) {
   const l = String(level || "").toLowerCase();
   if (l.includes("very") || l.includes("v.")) return "vhigh";
@@ -423,6 +433,7 @@ ${embedded ? "" : `<button id="themeToggle"><span class="dot"></span><span id="t
         <div class="body-copy">${renderOverview(dossier.overview)}</div>
       </div>
       <div class="panel frame"><span class="bl"></span><span class="br"></span>
+        ${panelTitle(labels.quickFactsPanel, dossier.quickFacts)}
         ${kvRows(dossier.quickFacts)}
       </div>
     </div>
@@ -438,6 +449,7 @@ ${embedded ? "" : `<button id="themeToggle"><span class="dot"></span><span id="t
       </div>
       <div class="panel frame"><span class="bl"></span><span class="br"></span>
         <p class="body-copy"><b>${esc(dossier.location || "")}</b></p>
+        ${panelTitle(labels.locationFactsPanel, dossier.locationFacts)}
         ${kvRows(dossier.locationFacts)}
       </div>
     </div>
@@ -626,6 +638,7 @@ const BASE_CSS = `
      width uniformly, standalone or embedded — same standard "fixed label
      column, flexible value column" spec-sheet pattern as the site's
      other tables. */
+  .panel-title{font-family:var(--font-mono); font-size:.8rem; letter-spacing:2px; text-transform:uppercase; color:var(--accent-a); margin-bottom:10px;}
   .kvtable{display:grid; grid-template-columns:minmax(0,140px) minmax(0,1fr); column-gap:20px;}
   .kv-label{padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:1rem; color:var(--text); opacity:.5; letter-spacing:1px; overflow-wrap:break-word;}
   .kv-value{padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15); font-family:var(--font-mono); font-size:1rem; color:var(--accent-a); word-break:break-word;}

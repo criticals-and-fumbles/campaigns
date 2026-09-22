@@ -10,6 +10,8 @@ const FALLBACK_LABELS = {
   location: "Location",
   meterSection: "Assessment",
   meterItem: "Level",
+  quickFactsPanel: "Quick Facts",
+  locationFactsPanel: "Location Facts",
   objectives: "Objectives",
   objectivePriorityHigh: "Primary",
   objectivePriorityMid: "Secondary",
