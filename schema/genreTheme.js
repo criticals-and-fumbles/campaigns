@@ -84,6 +84,20 @@ export default defineType({
         defineField({ name: "location", title: "Location", type: "string" }),
         defineField({ name: "meterSection", title: "Meter Section", type: "string" }),
         defineField({ name: "meterItem", title: "Meter Item", type: "string" }),
+        defineField({
+          name: "quickFactsPanel",
+          title: "Quick Facts Panel",
+          type: "string",
+          description:
+            'Titles the quickFacts panel inside the Overview section (e.g. "Field Report" for sci-fi, "Rumors & Whispers" for fantasy). Falls back to "Quick Facts" if unset.',
+        }),
+        defineField({
+          name: "locationFactsPanel",
+          title: "Location Facts Panel",
+          type: "string",
+          description:
+            'Titles the locationFacts panel inside the Location section (e.g. "Sector Intel", "Local Knowledge"). Falls back to "Location Facts" if unset.',
+        }),
         defineField({ name: "objectives", title: "Objectives", type: "string" }),
         defineField({
           name: "objectivePriorityHigh",

@@ -30,10 +30,16 @@ export default defineType({
     }),
     defineField({
       name: "genre",
-      title: "Genre",
+      title: "Genre (derived)",
       type: "string",
-      description: 'Matches a genreTheme.genre value, e.g. "Sci-Fi", "Fantasy".',
-      validation: (rule) => rule.required(),
+      description:
+        'Always mirrors the referenced Genre Theme\'s own "genre" value — set automatically, never hand-typed (both here and in the console), so it can never drift from the theme actually driving this campaign\'s colors/labels. Change the Genre field below instead.',
+      // No rule.required() here — readOnly + required together would
+      // block publishing any document a Studio editor started from
+      // Studio's own "create new" form. The console's POST /api/campaign
+      // already enforces theme is present and derives genre from it
+      // before the document is ever created.
+      readOnly: true,
     }),
     defineField({
       name: "system",
@@ -65,9 +71,11 @@ export default defineType({
     }),
     defineField({
       name: "theme",
-      title: "Theme",
+      title: "Genre",
       type: "reference",
       to: [{ type: "genreTheme" }],
+      description:
+        "Picking a Genre here drives everything genre-specific about this campaign's dossiers — colors, fonts, section-label copy (\"Quest Objectives\" vs. \"Mission Objectives\", etc.) — and also sets the Genre (derived) field above automatically.",
       validation: (rule) => rule.required(),
     }),
     defineField({
