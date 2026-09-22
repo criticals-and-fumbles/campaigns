@@ -34,6 +34,20 @@ export default defineType({
       initialValue: false,
     }),
     defineField({
+      name: "classification",
+      title: "Default Classification",
+      type: "string",
+      description:
+        'Genre-wide default for a dossier\'s Classification (e.g. "CLASSIFIED" for sci-fi, "GUILD SECRET" for fantasy) — used when neither the dossier nor its campaign sets one. See campaign.classification and dossier.classification for the full fallback order.',
+    }),
+    defineField({
+      name: "distribution",
+      title: "Default Distribution",
+      type: "string",
+      description:
+        'Genre-wide default for a dossier\'s Distribution (e.g. "SQUAD-FACING", "PARTY-FACING") — same fallback order as classification above.',
+    }),
+    defineField({
       name: "colors",
       title: "Colors",
       type: "object",

@@ -174,13 +174,15 @@ export default defineType({
       name: "classification",
       title: "Classification",
       type: "string",
-      description: 'e.g. "TOP SECRET", "RESTRICTED", "Party Eyes Only".',
+      description:
+        'e.g. "TOP SECRET", "RESTRICTED", "Party Eyes Only". Leave blank to use the campaign\'s Default Classification (which itself falls back to its Genre Theme\'s default) — only set this on a dossier that needs to be an exception.',
     }),
     defineField({
       name: "distribution",
       title: "Distribution",
       type: "string",
-      description: 'e.g. "PLAYER-FACING", "SURVIVOR CELL ONLY".',
+      description:
+        'e.g. "PLAYER-FACING", "SURVIVOR CELL ONLY". Same fallback order as Classification above — leave blank to inherit from the campaign/genre default.',
     }),
     defineField({
       name: "sessionLabel",

@@ -240,6 +240,14 @@ export function renderDossierPage({ dossier, campaign, theme, embedded, colorMod
   const labels = resolveLabels(theme);
   const motifKey = resolveMotif(theme);
   const code = dossier.code || "";
+  // Fallback order: the dossier's own value (an explicit exception) →
+  // the campaign's default → the genre's default → blank. A DM no
+  // longer has to retype the same Classification/Distribution on every
+  // session — see cnf-website issue #29's addendum. campaign/theme here
+  // are the same objects resolveLabels()/resolveMotif() above already
+  // use, no extra query needed beyond DOSSIER_QUERY's own projection.
+  const resolvedClassification = dossier.classification || campaign?.classification || theme?.classification || "";
+  const resolvedDistribution = dossier.distribution || campaign?.distribution || theme?.distribution || "";
   const bootTitle = theme?.loadingScreen?.bootTitle || "LOADING";
   const bootSubtitle = theme?.loadingScreen?.bootSubtitle || "PLEASE WAIT";
   // A genreTheme can opt out of the built-in animated SVG motif and
@@ -387,8 +395,8 @@ ${embedded ? "" : `<button id="themeToggle"><span class="dot"></span><span id="t
       <div class="orgtext"><b>${esc(campaign.title)}</b><br>${esc(campaign.system || "")}</div>
     </div>
     <div class="right">
-      <div><span class="k">CLASS</span><br>${esc(dossier.classification || "—")}</div>
-      <div><span class="k">DIST</span><br>${esc(dossier.distribution || "—")}</div>
+      <div><span class="k">CLASS</span><br>${esc(resolvedClassification || "—")}</div>
+      <div><span class="k">DIST</span><br>${esc(resolvedDistribution || "—")}</div>
       <div><span class="k">${esc(dossier.sessionLabel ? "SESSION" : "")}</span><br>${esc(dossier.sessionLabel || "")}</div>
       <div><span class="k">CODE</span><br>${esc(code)}</div>
     </div>

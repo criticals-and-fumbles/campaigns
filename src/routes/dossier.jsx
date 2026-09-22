@@ -26,9 +26,15 @@ const CAMPAIGN_QUERY = `*[_type == "campaign" && slug.current == $slug][0]{
 // campaign.heroImage/hook added 2026-09-01 as OG-tag fallbacks for
 // dossiers with no headerImage/heroImage/overview of their own (share
 // row's link previews need SOME image/description, not a blank card).
+// classification/distribution added to the campaign projection so
+// renderDossierPage() can fall back to them when the dossier itself
+// doesn't set one (see that function's resolvedClassification/
+// resolvedDistribution) — theme is already a full dereference (no field
+// list), so genreTheme.classification/distribution flow through
+// automatically via campaign.theme, no change needed there.
 const DOSSIER_QUERY = `*[_type == "dossier" && code == $code && campaign->slug.current == $slug][0]{
   ...,
-  "campaign": campaign->{ _id, title, slug, system, motto, hook, heroImage, signOff, visible, "theme": theme-> }
+  "campaign": campaign->{ _id, title, slug, system, motto, hook, heroImage, signOff, visible, classification, distribution, "theme": theme-> }
 }`;
 
 const CAMPAIGN_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->slug.current == $slug] | order(_createdAt desc){

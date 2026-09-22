@@ -49,6 +49,20 @@ export default defineType({
         'The actual game system, e.g. "D&D 5e", "Pathfinder 2e", "Call of Cthulhu 7e", "Zombicide", "Infinity". Lives here, not per-dossier — it doesn\'t change session to session.',
     }),
     defineField({
+      name: "classification",
+      title: "Default Classification",
+      type: "string",
+      description:
+        'Default Classification for every dossier in this campaign (e.g. "TOP SECRET") — a dossier only needs its own value if it\'s an exception. Falls back to the campaign\'s Genre Theme\'s default if left blank here too. Optional — added so a DM doesn\'t have to retype the same value on every session.',
+    }),
+    defineField({
+      name: "distribution",
+      title: "Default Distribution",
+      type: "string",
+      description:
+        'Default Distribution for every dossier in this campaign (e.g. "PLAYER-FACING") — same fallback order as Default Classification above.',
+    }),
+    defineField({
       name: "status",
       title: "Status",
       type: "string",
