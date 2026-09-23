@@ -63,6 +63,28 @@ export default defineType({
         'Default Distribution for every dossier in this campaign (e.g. "PLAYER-FACING") — same fallback order as Default Classification above.',
     }),
     defineField({
+      name: "roster",
+      title: "Player Roster",
+      type: "array",
+      description:
+        "The party's player characters — campaign-level metadata (not per-dossier) so it's set once, not retyped every session. Surfaced to the AI Format Dossier tool (issue #29 addendum) so it can attribute session events to known character names/classes instead of guessing at who's who.",
+      of: [
+        {
+          type: "object",
+          name: "rosterMember",
+          fields: [
+            defineField({ name: "characterName", title: "Character Name", type: "string", validation: (rule) => rule.required() }),
+            defineField({ name: "level", title: "Level", type: "number" }),
+            defineField({ name: "race", title: "Race", type: "string" }),
+            defineField({ name: "characterClass", title: "Class", type: "string" }),
+          ],
+          preview: {
+            select: { title: "characterName", subtitle: "characterClass" },
+          },
+        },
+      ],
+    }),
+    defineField({
       name: "status",
       title: "Status",
       type: "string",

@@ -192,6 +192,13 @@ export default defineType({
         'Free text — "8", "Day 41", "28.06.119 IC". The genreTheme\'s labels decide whether the classbar calls this "SESSION" or "DATE".',
     }),
     defineField({
+      name: "partyLevel",
+      title: "Party Level",
+      type: "string",
+      description:
+        'Free text — "5", "5-6" if the party wasn\'t all the same level this session. Shown in the classbar alongside Session/Code. Optional — leave blank for campaigns that don\'t track levels (e.g. non-D&D systems).',
+    }),
+    defineField({
       name: "location",
       title: "Location",
       type: "string",

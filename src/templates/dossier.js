@@ -398,6 +398,7 @@ ${embedded ? "" : `<button id="themeToggle"><span class="dot"></span><span id="t
       <div><span class="k">CLASS</span><br>${esc(resolvedClassification || "—")}</div>
       <div><span class="k">DIST</span><br>${esc(resolvedDistribution || "—")}</div>
       <div><span class="k">${esc(dossier.sessionLabel ? "SESSION" : "")}</span><br>${esc(dossier.sessionLabel || "")}</div>
+      ${dossier.partyLevel ? `<div><span class="k">LEVEL</span><br>${esc(dossier.partyLevel)}</div>` : ""}
       <div><span class="k">CODE</span><br>${esc(code)}</div>
     </div>
   </header>
