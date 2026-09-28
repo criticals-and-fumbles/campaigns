@@ -19,6 +19,10 @@ const FALLBACK_LABELS = {
   log: "Log",
   media: "Media",
   statPanel: undefined,
+  // Added for the campaign overview page (src/templates/campaignOverview.js)
+  // — additive, same fallback-merge pattern as every label above.
+  campaignOverview: "Campaign Overview",
+  roster: "The Party",
 };
 
 const FALLBACK_MOTIF = "terminal-decrypt";

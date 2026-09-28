@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { query } from "../lib/sanity.js";
 import { renderDossierPage, renderCampaignIndexPage } from "../templates/dossier.js";
+import { renderCampaignOverviewPage } from "../templates/campaignOverview.js";
 
 const app = new Hono();
 
@@ -17,9 +18,15 @@ function resolveColorMode(c) {
   return getCookie(c, COLOR_MODE_COOKIE) === "light" ? "light" : "dark";
 }
 
+// roster/world added 2026-09-28 for the campaign overview page
+// (templates/campaignOverview.js) — world is a dereference-and-project
+// (only title/slug needed for the overview's "World" info row), not a
+// bare `worldRef->` like theme, since dossier.js's ogTags/kvRows callers
+// only need those two fields, not the world document's full shape.
 const CAMPAIGN_QUERY = `*[_type == "campaign" && slug.current == $slug][0]{
   _id, title, slug, genre, system, status, gmNames, heroImage, hook,
-  sessionCount, motto, signOff, visible,
+  sessionCount, motto, signOff, visible, roster,
+  "world": worldRef->{ title, "slug": slug.current },
   "theme": theme->
 }`;
 
@@ -63,6 +70,28 @@ const CAMPAIGN_DOSSIERS_QUERY = `*[_type == "dossier" && campaign->slug.current 
 // Worker (see cnf-website/apps/console) the same day console split out
 // as its own product. This Worker is now dossier rendering only.
 app.get("/", (c) => c.redirect("https://www.criticalsandfumbles.com/campaigns", 308));
+
+// GET /:campaignSlug/overview — the campaign overview page (renderCampaignOverviewPage,
+// templates/campaignOverview.js). Placed ahead of the /:dossierCode route
+// below so the literal "overview" segment can never be shadowed by that
+// route's :dossierCode param — Hono matches static path segments before
+// params regardless of registration order, but registering the more
+// specific route first keeps that invariant obvious from reading top to
+// bottom too. Same non-visible-campaign 404 gate as every other route
+// here — visible is a real access gate, not just a listing filter.
+app.get("/:campaignSlug/overview", async (c) => {
+  const { campaignSlug } = c.req.param();
+  const campaign = await query(c.env, CAMPAIGN_QUERY, { slug: campaignSlug });
+  if (!campaign || !campaign.visible) return c.notFound();
+
+  const html = renderCampaignOverviewPage({
+    campaign,
+    theme: campaign.theme,
+    embedded: c.req.query("embed") === "1",
+    colorMode: resolveColorMode(c),
+  });
+  return c.html(html);
+});
 
 // GET /:campaignSlug/:dossierCode — the dossier page itself. A dossier
 // under a non-visible campaign 404s here too, not just off the directory

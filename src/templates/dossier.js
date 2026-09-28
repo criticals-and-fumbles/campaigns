@@ -22,9 +22,9 @@ import { SOCIAL_ICON_SVG, LINK_ICON_SVG, EMBED_ICON_SVG } from "../lib/icons.js"
 // This Worker's own public domain — for canonical/OG URLs and the share
 // row's Facebook/WhatsApp/embed links. Distinct from routes/dossier.jsx's
 // MAIN_SITE (criticalsandfumbles.com, the separate Next.js site).
-const SITE_URL = "https://campaigns.criticalsandfumbles.com";
+export const SITE_URL = "https://campaigns.criticalsandfumbles.com";
 
-function esc(s) {
+export function esc(s) {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -53,7 +53,7 @@ function esc(s) {
 // typed into one run-on <p> lost their formatting entirely — fixed
 // 2026-09-21. Plain text now gets split into real paragraphs (blank
 // line = paragraph break, single newline = <br> soft break within one).
-function renderOverview(overview) {
+export function renderOverview(overview) {
   if (!overview) return "";
   if (/^\s*</.test(overview)) return overview;
   return overview
@@ -67,7 +67,7 @@ function renderOverview(overview) {
 // Plain-text truncation for og:description/twitter:description — same
 // ~155-char SERP/social-preview convention cnf-website's lib/metadata.ts
 // uses, hand-copied since this Worker can't import that module.
-function truncate(s, max) {
+export function truncate(s, max) {
   const text = String(s ?? "").trim();
   if (text.length <= max) return text;
   return `${text.slice(0, max - 1).trimEnd()}…`;
@@ -80,7 +80,7 @@ function truncate(s, max) {
 // runs on overview's OWN already-sanitized content (never raw
 // unsanitized input), so there's no adversarial-markup case to guard
 // against here the way there is in html-sanitize.js.
-function stripTags(s) {
+export function stripTags(s) {
   return String(s ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
@@ -90,7 +90,7 @@ function stripTags(s) {
 // Facebook/Discord/WhatsApp/iMessage/etc. (all of them read these tags,
 // not the page's visible content). image may be null — Facebook/Discord
 // still render a text-only card without one, just a plainer one.
-function ogTags({ url, title, description, image }) {
+export function ogTags({ url, title, description, image }) {
   return `
 <meta property="og:type" content="article">
 <meta property="og:url" content="${esc(url)}">
@@ -114,7 +114,7 @@ ${image ? `<meta name="twitter:image" content="${esc(image)}">` : ""}
 // (see console.js/campaign index page's own iframe-embedding pattern —
 // same idea, offered to outside sites here). See SHARE_JS below for the
 // click handlers all the data-share buttons rely on.
-function shareButtonsHtml({ url, title }) {
+export function shareButtonsHtml({ url, title }) {
   const embedSnippet = `<iframe src="${url}?embed=1" width="100%" height="800" style="border:0;" loading="lazy" title="${title}"></iframe>`;
   const waText = `${title} ${url}`;
   return `
@@ -133,7 +133,7 @@ function shareButtonsHtml({ url, title }) {
 // two different template functions below (renderDossierPage and
 // renderCampaignIndexPage each get their own copy — no shared module
 // boundary between server-rendered HTML documents).
-const SHARE_JS = `
+export const SHARE_JS = `
   (function(){
     function toast(msg){
       var t = document.getElementById('shareToast');
@@ -182,7 +182,7 @@ const SHARE_JS = `
   })();
 `;
 
-function kvRows(rows) {
+export function kvRows(rows) {
   if (!rows || rows.length === 0) return "";
   const cells = rows
     .map(
@@ -198,7 +198,7 @@ function kvRows(rows) {
 // itself uses, since an empty panel shouldn't show a heading over
 // nothing. title is already resolved against FALLBACK_LABELS by
 // resolveLabels() upstream, so it's never empty when rows exist.
-function panelTitle(title, rows) {
+export function panelTitle(title, rows) {
   if (!rows || rows.length === 0) return "";
   return `<div class="panel-title">${esc(title)}</div>`;
 }
@@ -532,7 +532,7 @@ ${embedded ? "" : SHARE_JS}
 </html>`;
 }
 
-const BASE_CSS = `
+export const BASE_CSS = `
   *{box-sizing:border-box; margin:0; padding:0;}
   html{scroll-behavior:smooth; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
   body{background:var(--bg); color:var(--text); font-family:var(--font-body); overflow-x:hidden; transition:background .6s ease, color .6s ease; position:relative;}
@@ -718,7 +718,7 @@ const BASE_CSS = `
 // The flourish's gold tone is baked into the SVG itself (data URIs can't
 // read CSS custom properties), so this is tuned for a gold accent
 // specifically, not guaranteed to match every future theme that opts in.
-const ORNATE_BORDERS_CSS = `
+export const ORNATE_BORDERS_CSS = `
   body.ornate .frame{border:2px solid var(--accent-a); box-shadow:inset 0 0 0 1px var(--accent-b), 0 2px 10px rgba(0,0,0,.35);}
   body.ornate .frame::before, body.ornate .frame::after, body.ornate .frame .bl, body.ornate .frame .br{
     width:30px; height:30px; border:none;
@@ -747,7 +747,7 @@ const ORNATE_BORDERS_CSS = `
 // the image. .glyph/.bootline here mirror the typography every other
 // motif already uses for bootTitle/bootSubtitle, just not tied to any
 // one motif's own rules.
-const CUSTOM_BOOT_IMAGE_CSS = `
+export const CUSTOM_BOOT_IMAGE_CSS = `
   #boot .boot-symbol{width:120px; height:120px; margin-bottom:4px; animation:bootimagepulse 3s ease-in-out infinite;}
   #boot .boot-symbol img{width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 0 18px var(--accent-a));}
   @keyframes bootimagepulse{0%,100%{opacity:.75; transform:scale(1);}50%{opacity:1; transform:scale(1.045);}}
@@ -755,7 +755,7 @@ const CUSTOM_BOOT_IMAGE_CSS = `
   #boot .bootline{font-size:10.5px; color:var(--text-dim); letter-spacing:1.5px; font-family:var(--font-mono);}
 `;
 
-const BASE_JS = `
+export const BASE_JS = `
   window.addEventListener('load', ()=>{
     setTimeout(()=>{ document.getElementById('boot').classList.add('hide'); }, 2200);
   });
@@ -895,8 +895,14 @@ const BASE_JS = `
  * bleed on ultrawide monitors. Below ~1000px portrait / 760px: the list
  * becomes an off-canvas drawer opened via "☰ Sessions". Below 640px: the
  * same drawer presents as a bottom sheet instead of a full-height side
- * panel. The most recent session (dossiers is already sorted
- * most-recent-first by the caller's GROQ query) auto-selects on load.
+ * panel. A "Campaign Overview" entry (renderCampaignOverviewPage,
+ * templates/campaignOverview.js — a distinct page, not a dossier) is
+ * always prepended as the list's first item and auto-selects on load —
+ * added 2026-09-28 so a first-time reader lands on "what is this
+ * campaign" before a session log they have no context for yet, rather
+ * than on whatever the most recent session happens to be. Real sessions
+ * (dossiers, already sorted most-recent-first by the caller's GROQ
+ * query) follow below it.
  */
 export function renderCampaignIndexPage({ campaign, dossiers, theme, colorMode = "dark" }) {
   const labels = resolveLabels(theme);
@@ -913,10 +919,15 @@ export function renderCampaignIndexPage({ campaign, dossiers, theme, colorMode =
     155,
   );
 
+  const overviewItem = `<button type="button" class="session-item overview-item active" data-kind="overview" data-title="${esc(labels.campaignOverview)}">
+  <div class="s-title">${esc(labels.campaignOverview)}</div>
+  <div class="s-meta"><span>${esc(campaign.genre || "")}</span><span></span></div>
+</button>`;
+
   const items = list
-    .map((d, i) => {
+    .map((d) => {
       const date = d._createdAt ? new Date(d._createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "";
-      return `<button type="button" class="session-item${i === 0 ? " active" : ""}" data-code="${esc(d.code)}" data-title="${esc(d.title)}" data-date="${esc(date)}">
+      return `<button type="button" class="session-item" data-kind="dossier" data-code="${esc(d.code)}" data-title="${esc(d.title)}" data-date="${esc(date)}">
   <div class="s-title">${esc(d.title)}</div>
   <div class="s-meta"><span>${esc(d.code)}</span><span>${esc(date)}</span></div>
 </button>`;
@@ -1162,7 +1173,7 @@ html[data-theme="light"] .vignette{opacity:0;}
             <button class="close-deck" id="closeDeck">&#10005;</button>
           </div>
         </div>
-        <div class="list-scroll" id="listScroll">${items || `<p class="empty">No sessions published yet.</p>`}</div>
+        <div class="list-scroll" id="listScroll">${overviewItem}${items || `<p class="empty">No sessions published yet.</p>`}</div>
       </aside>
 
       <section class="detail-pane">
@@ -1236,11 +1247,17 @@ html[data-theme="light"] .vignette{opacity:0;}
       detailInner.innerHTML = '<div class="empty-state"><strong>NO SESSIONS YET</strong><span>Sessions published to this campaign will appear here.</span></div>';
       return;
     }
-    const code = item.dataset.code, title = item.dataset.title, date = item.dataset.date;
+    const kind = item.dataset.kind, code = item.dataset.code, title = item.dataset.title, date = item.dataset.date;
+    const src = kind === 'overview'
+      ? '/' + encodeURIComponent(SLUG) + '/overview?embed=1'
+      : '/' + encodeURIComponent(SLUG) + '/' + encodeURIComponent(code) + '?embed=1';
+    const meta = kind === 'overview'
+      ? ''
+      : '<div class="detail-meta"><span>CODE <b>' + code + '</b></span>' + (date ? '<span>DATE <b>' + date + '</b></span>' : '') + '</div>';
     detailInner.innerHTML =
       '<div class="detail-title">' + title + '</div>' +
-      '<div class="detail-meta"><span>CODE <b>' + code + '</b></span>' + (date ? '<span>DATE <b>' + date + '</b></span>' : '') + '</div>' +
-      '<iframe class="detail-frame" title="Session detail" src="/' + encodeURIComponent(SLUG) + '/' + encodeURIComponent(code) + '?embed=1"></iframe>';
+      meta +
+      '<iframe class="detail-frame" title="' + (kind === 'overview' ? 'Campaign overview' : 'Session detail') + '" src="' + src + '"></iframe>';
     detailInner.querySelector('.detail-frame').addEventListener('load', syncFrameTheme);
   }
 
